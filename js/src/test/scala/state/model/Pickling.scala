@@ -6,9 +6,9 @@ import utest._
 import boopickle.Default._
 
 /**
-  *
+  * Testing the ability to save data through pickling
   */
-object Serialization extends TestSuite {
+object Pickling extends TestSuite {
   val tests = this {
     "pickling a node" - {
       val node = Node("test_id")
