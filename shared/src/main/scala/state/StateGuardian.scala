@@ -1,10 +1,11 @@
 package state
 
-import java.io.{BufferedOutputStream, File, FileOutputStream, PrintWriter}
+import java.io._
+import java.nio.ByteBuffer
 import java.util.Date
 
 import agent.model.Agent
-import state.model.{Coin, Donation, Node}
+import state.model.{Coin, Donation, Node, State}
 import boopickle.Default._
 
 /**
@@ -33,7 +34,16 @@ object StateGuardian {
   }
 
   def load(agentId: String): Agent = {
-    ???
+    val filename = s"./data-stores/current/${agentId}.plenty"
+    val reader = new BufferedInputStream(new FileInputStream(filename))
+
+    var bytes = Stream[Byte]()
+    while (reader.available() > 0) {
+      bytes = bytes :+ reader.read().toByte
+    }
+    val unpickledState = Unpickle[State].fromBytes(ByteBuffer.wrap(bytes.toArray))
+
+    Agent(id = agentId, state = unpickledState)
   }
 }
 
