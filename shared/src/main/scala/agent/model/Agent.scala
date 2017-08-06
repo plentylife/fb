@@ -5,4 +5,4 @@ import state.model.State
 /**
   * The model of an acting participant in the market
   */
-case class Agent(id: String, state: State)
+case class Agent(id: String, state: State, history: State)

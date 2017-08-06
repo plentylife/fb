@@ -21,4 +21,10 @@ case class Coin(id: String, belongsTo: Node, mintTime: Long,
   * Represents a donation made by a node
   * Currently has no privacy constraints
   * */
-case class Donation(title: String, description: String, by: Node)
+case class Donation(id: String, title: String, description: String, by: Node)
+
+/**
+  * Represents a bid for a donation
+  * @param amount can be anything >= 0
+  * */
+case class Bid(id: String, donation: Donation, amount: Int, by: Node, timestamp: Long)
