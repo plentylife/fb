@@ -1,7 +1,7 @@
 package agent
 
 import agent.model._
-import communication._
+import network.communication._
 import state.StateGuardian
 import state.model.{Bid, Donation, State}
 
@@ -13,7 +13,7 @@ private object StateLogic {
   message match {
     case m if m.payloadId.typeOfMsg == DonateAction.typeOfMsg => donate(m.asInstanceOf[DonateMessage])
     case m if m.payloadId.typeOfMsg == BidAction.typeOfMsg => bid(m.asInstanceOf[Message[Bid]])
-    case m if m.payloadId.typeOfMsg == BidAcceptance.typeOfMsg => bidAcceptance(m.asInstanceOf[Message[Bid]])
+    case m if m.payloadId.typeOfMsg == BidAcceptAction.typeOfMsg => bidAcceptance(m.asInstanceOf[Message[Bid]])
   }
 
   private def bidAcceptance(message: Message[Bid])(implicit agent: Agent): Agent = {
@@ -21,7 +21,8 @@ private object StateLogic {
     val safePayload = message.payload
     val stateUpdated = agent.state.copy(
       donations = agent.state.donations.filterNot(_.id == message.payload.donation.id),
-      bids = agent.state.bids.filterNot(_.id == message.payload.id)
+      bids = agent.state.bids.filterNot(_.id == message.payload.id),
+      nonSettledBids = agent.state.nonSettledBids + message.payload
     )
     val historyUpdated = agent.history.copy(
       donations = agent.history.donations + message.payload.donation,

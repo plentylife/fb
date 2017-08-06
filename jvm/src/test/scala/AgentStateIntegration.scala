@@ -1,6 +1,6 @@
 import agent.AgentGuardian
 import agent.model.Agent
-import communication.DonateMessage
+import network.communication.DonateMessage
 import state.StateGuardian
 import state.model.{Donation, Node, State}
 import utest._

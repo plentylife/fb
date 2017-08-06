@@ -7,5 +7,12 @@ case class State(
                   val nodes: Set[Node] = Set[Node](),
                   val coins: Set[Coin] = Set[Coin](),
                   val donations: Set[Donation] = Set[Donation](),
-                  val bids: Set[Bid] = Set()
+                  val bids: Set[Bid] = Set(),
+                  val nonSettledBids: Set[Bid] = Set()
                 )
+
+case class Log(
+                val donations: Set[Donation] = Set[Donation](),
+                val bids: Set[Bid] = Set(),
+                val coins: Set[Coin] = Set[Coin]()
+              )

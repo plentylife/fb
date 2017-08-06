@@ -1,7 +1,7 @@
 package agent
 
 import agent.model.Agent
-import communication.Message
+import network.communication.Message
 import state.model.Node
 
 /**

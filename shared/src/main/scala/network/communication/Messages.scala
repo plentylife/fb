@@ -1,9 +1,9 @@
-package communication
+package network.communication
 
 import java.util.Date
 
 import agent.model.Agent
-import state.model.{Bid, Donation}
+import state.model.{Bid, Donation, Transaction}
 
 /**
   * Various messaging formats
@@ -30,8 +30,11 @@ object DonateAction extends PayloadIdentifier[Donation] {
 object BidAction extends PayloadIdentifier[Bid] {
   override val typeOfMsg: String = "BID_ACTION"
 }
-object BidAcceptance extends PayloadIdentifier[Bid] {
-  override val typeOfMsg: String = "BID_ACCEPTANCE"
+object BidAcceptAction extends PayloadIdentifier[Bid] {
+  override val typeOfMsg: String = "BID_ACCEPT_ACTION"
+}
+object TransactionAction extends PayloadIdentifier[Transaction] {
+  override val typeOfMsg: String = "TRANSACTION_ACTION"
 }
 
 

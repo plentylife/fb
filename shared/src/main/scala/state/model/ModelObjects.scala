@@ -1,6 +1,7 @@
 package state.model
 
 import java.security.PublicKey
+import java.sql.Timestamp
 import java.util.Date
 
 /**
@@ -28,3 +29,8 @@ case class Donation(id: String, title: String, description: String, by: Node)
   * @param amount can be anything >= 0
   * */
 case class Bid(id: String, donation: Donation, amount: Int, by: Node, timestamp: Long)
+
+/**
+  * Represents a transaction of [[state.model.Coin]] between two [[state.model.Node]]s
+  * */
+case class Transaction(id: String, timestamp: Long, coins: Set[Coin], from: Node, to: Node)

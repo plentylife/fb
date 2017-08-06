@@ -2,9 +2,10 @@ package agent
 
 import java.util.Date
 
+import agent.Accounting.InsufficientBalance
 import agent.model.Agent
-import communication.CommsGuardian
-import state.model.Bid
+import network.communication.{CommsGuardian, Message}
+import state.model.{Bid, Node, Transaction}
 
 /**
   * Logic of agent's actions such as accepting bids, accepting coins, etc
@@ -26,6 +27,23 @@ private object ActionLogic {
 
     for (acceptedBid <- accepted) {
       CommsGuardian.acceptBidBeacon(acceptedBid, fromAgent = agent)
+    }
+  }
+
+  def transactOnPromisedBids(implicit agent: Agent) = {
+    for (bid <- agent.state.nonSettledBids) {
+      if (bid.by.id == AgentGuardian.agentAsNode(agent).id) {
+        transact(bid.donation.by, bid.amount)
+      }
+    }
+  }
+
+  def transact(to: Node, amount: Int)(implicit agent: Agent): Option[InsufficientBalance] = {
+    Accounting.createTransaction(to, amount) match {
+      case Left(e) => Option(e)
+      case Right(t: Transaction) =>
+        CommsGuardian.transact(t, agent)
+        None
     }
   }
 
