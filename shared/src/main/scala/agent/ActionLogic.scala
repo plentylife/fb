@@ -5,7 +5,7 @@ import java.util.Date
 import agent.Accounting.InsufficientBalance
 import agent.model.Agent
 import network.communication.{CommsGuardian, Message}
-import state.model.{Bid, Node, Transaction}
+import state.model.{Bid, Node, Transaction, TransactionProbe}
 
 /**
   * Logic of agent's actions such as accepting bids, accepting coins, etc
@@ -30,12 +30,23 @@ private object ActionLogic {
     }
   }
 
+  def receiveBid(agent: Agent): Unit = {
+
+  }
+
   def transactOnPromisedBids(implicit agent: Agent) = {
     for (bid <- agent.state.nonSettledBids) {
       if (bid.by.id == AgentGuardian.agentAsNode(agent).id) {
-        transact(bid.donation.by, bid.amount)
+//        transact(bid.donation.by, bid.amount)
+        probeTransaction(bid.donation.by, bid.amount)
       }
     }
+  }
+
+  def probeTransaction(to: Node, amount: Int)(implicit agent: Agent) = {
+    val now = new Date().getTime
+    val id = Seq(to.id, amount, now).mkString("-")
+    val probe = new TransactionProbe(id, now, amount, from=AgentGuardian.agentAsNode(agent), to=to)
   }
 
   def transact(to: Node, amount: Int)(implicit agent: Agent): Option[InsufficientBalance] = {

@@ -34,3 +34,9 @@ case class Bid(id: String, donation: Donation, amount: Int, by: Node, timestamp:
   * Represents a transaction of [[state.model.Coin]] between two [[state.model.Node]]s
   * */
 case class Transaction(id: String, timestamp: Long, coins: Set[Coin], from: Node, to: Node)
+
+/**
+  * Because of the nature of the network, when asking for transactions to be completed over parts of the network
+  * unknown to the transaction sender, a probe must be made first.
+  * */
+case class TransactionProbe(id: String, timestamp: Long, amount: Int, from: Node, to: Node)

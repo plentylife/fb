@@ -1,7 +1,9 @@
 package network.communication
 
+import java.util.Date
+
 import agent.model.Agent
-import state.model.{Bid, Transaction}
+import state.model.{Bid, Node, Transaction, TransactionProbe}
 
 /**
   * All communication requests are channeled through this module
@@ -15,29 +17,33 @@ object CommsGuardian {
 
   }
 
-  def acceptBidBeacon(bid: Bid, fromAgent: Agent) = {
-    val msgProto: MessagePrototype[Bid] = new MessagePrototype[Bid] {
-      override def apply(toAgent: Agent): Message[Bid] = new Message[Bid] {
-        override val to = toAgent
-        override val from = fromAgent
-        override val payloadId: PayloadIdentifier[Bid] = BidAcceptAction
-        override val payload: Bid = bid
-      }
-    }
-
-    beacon(msgProto: MessagePrototype[Bid])
-  }
-
-  def transact(transaction: Transaction, fromAgent: Agent) = {
-    val msgProto = new MessagePrototype[Transaction] {
-      override def apply(msgTo: Agent): Message[Transaction] = new Message[Transaction] {
-        override val payloadId: PayloadIdentifier[Transaction] = TransactionAction
-        override val payload: Transaction = transaction
-        override val from: Agent = fromAgent
-        override val to: Agent = msgTo
+  def transactionProbe(probe: TransactionProbe, from: Agent) = {
+    val msgProto = new MessagePrototype[TransactionProbe] {
+      override def apply(to: Agent): Message[TransactionProbe] = {
+        Message.createMessage(from, to, TransactionProbeAction, probe)
       }
     }
 
     beacon(msgProto)
+  }
+
+  def transact(transaction: Transaction, fromAgent: Agent) = {
+    val msgProto = new MessagePrototype[Transaction] {
+      override def apply(to: Agent): Message[Transaction] = {
+        Message.createMessage(fromAgent, to, TransactionProbeAction, transaction)
+      }
+    }
+
+    beacon(msgProto)
+  }
+
+  def acceptBidBeacon(bid: Bid, fromAgent: Agent) = {
+    val msgProto = new MessagePrototype[Bid] {
+      override def apply(to: Agent): Message[Bid] = {
+        Message.createMessage(fromAgent, to, TransactionProbeAction, bid)
+      }
+    }
+
+    beacon(msgProto: MessagePrototype[Bid])
   }
 }

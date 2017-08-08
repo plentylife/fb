@@ -43,6 +43,7 @@ private object StateLogic {
     val agentUpd = agent.copy(state = stateUpdated)
 
     StateGuardian.save(agentUpd)
+    ActionLogic.receiveBid(agentUpd)
 
     agentUpd
   }

@@ -1,5 +1,7 @@
 package state.model
 
+import network.communication.Message
+
 /**
   * Created by anton on 8/4/17.
   */
@@ -16,3 +18,7 @@ case class Log(
                 val bids: Set[Bid] = Set(),
                 val coins: Set[Coin] = Set[Coin]()
               )
+
+case class NetworkMemory(
+                        val messages: Set[Message[_]] = Set()
+                        )
