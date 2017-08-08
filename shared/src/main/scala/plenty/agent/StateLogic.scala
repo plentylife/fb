@@ -10,7 +10,7 @@ import plenty.state.model.{Bid, Donation, State}
   */
 object StateLogic {
 
-  def acceptBid(bid: Bid)(implicit agent: Agent): Agent = {
+  def registerAcceptedBid(bid: Bid)(implicit agent: Agent): Agent = {
     val history = agent.state.history
     val historyUpdated = history.copy(
       donations = history.donations + bid.donation,

@@ -29,5 +29,7 @@ object AgentManager {
     agent = StateLogic.registerBid(bid)
     agent
   }
-  def acceptBid(msg: Message[Bid])(implicit toAgent: Agent) = StateLogic.acceptBid(msg.payload)
+  def registerAcceptedBid(bid: Bid)(implicit toAgent: Agent) = StateLogic.registerAcceptedBid(bid)
+
+  def acceptBids(agent: Agent) = ActionLogic.acceptBids(agent)
 }

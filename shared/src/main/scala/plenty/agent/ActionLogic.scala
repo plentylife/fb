@@ -3,7 +3,7 @@ package plenty.agent
 import java.util.Date
 
 import plenty.agent.model.Agent
-import plenty.network.communication.{RelayIdentifiers, CommsManager, Message}
+import plenty.network.communication.{BidAcceptAction, CommsManager, Message, RelayIdentifiers}
 import plenty.state.model.{Bid, Donation, Node, Transaction}
 
 /**
@@ -25,7 +25,7 @@ object ActionLogic {
     })
 
     for (acceptedBid <- accepted) {
-      CommsManager.acceptBidBeacon(acceptedBid, fromAgent = agent)
+      CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = AgentManager.agentAsNode(agent))
     }
   }
 

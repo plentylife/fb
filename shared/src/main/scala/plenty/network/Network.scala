@@ -1,7 +1,9 @@
 package plenty.network
 
+import plenty.agent.{AgentManager, AgentPointer}
 import plenty.agent.model.Agent
 import plenty.network.communication.{CommsManager, Message}
+import plenty.state.model.Node
 
 import scala.collection.immutable.Queue
 import scala.concurrent.{Await, Future}
@@ -14,11 +16,12 @@ import scala.util.{Failure, Try}
 object Network {
   // registering sender method
   CommsManager.sender = send
-  CommsManager.getAllAgentsInNetwork = () => agents
+  CommsManager.getAllAgentsInNetwork = () => agentNodes
 
+
+  private var agents: Set[AgentPointer] = Set()
+  private var agentNodes: Set[Node] = Set()
   private var outgoingMessageQueue: Queue[Future[_]] = Queue.empty
-
-//  private var incomingMessageQueue: Queue[Future[_]] = Queue.empty
 
   def send(msg: Message[_]): Unit = {
     val msgF = Future(Network.receive(msg))
@@ -36,27 +39,21 @@ object Network {
 
   def messageCountInQueue = outgoingMessageQueue.size
 
-  def receive(msg: Message[_]) = synchronized {
-    val agent = CommsManager.receive(msg, toAgent = popAgent(msg.to.id))
-    println("receiving message", agent.id, msg)
-    reRegisterAgent(agent)
-    println("re-registered agent", agent)
+  def receive(msg: Message[_]) = {
+    val agentPointer = agents.find(_.id == msg.to.id).get
+    agentPointer.executeWhenAvailable(agent => {
+      val agentAfterReception = CommsManager.receive(msg, toAgent = agent)
+      agentPointer.set(agentAfterReception)
+//      println("receiving message", agent.id, msg)
+//      println("re-registered agent", agent)
+    })
   }
-
-  private var agents: Set[Agent] = Set()
 
   def registerAgent(agent: Agent) = {
-    agents += agent
+    agents += new AgentPointer(agent)
+    agentNodes += AgentManager.agentAsNode(agent)
   }
-  def popAgent(id: String): Agent = {
-    val a = agents.find(_.id == id).get
-    agents -= a
-    a
-  }
-  def reRegisterAgent(agent: Agent) = {
-    agents += agent
-  }
-  /** for testing purposes fixme */
+
   def getAgents = agents
 
   private def throwErrorFromMsg(e: Throwable) = throw e
