@@ -1,6 +1,6 @@
-package state.model
+package plenty.state.model
 
-import network.communication.Message
+import plenty.network.communication.Message
 
 /**
   * Created by anton on 8/4/17.
@@ -10,15 +10,12 @@ case class State(
                   val coins: Set[Coin] = Set[Coin](),
                   val donations: Set[Donation] = Set[Donation](),
                   val bids: Set[Bid] = Set(),
-                  val nonSettledBids: Set[Bid] = Set()
+                  val nonSettledBids: Set[Bid] = Set(),
+                  val history: History = History()
                 )
 
-case class Log(
+case class History(
                 val donations: Set[Donation] = Set[Donation](),
                 val bids: Set[Bid] = Set(),
                 val coins: Set[Coin] = Set[Coin]()
               )
-
-case class NetworkMemory(
-                        val messages: Set[Message[_]] = Set()
-                        )

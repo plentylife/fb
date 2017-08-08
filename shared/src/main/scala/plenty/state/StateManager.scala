@@ -1,18 +1,33 @@
-package state
+package plenty.state
 
 import java.io._
 import java.nio.ByteBuffer
+import java.security.SecureRandom
 import java.util.Date
 
-import agent.model.Agent
-import state.model.{Coin, Donation, Node, State}
+import plenty.agent.model.Agent
+import plenty.state.model.{Coin, Donation, History, Node, State}
 import boopickle.Default._
 
 /**
   * The entry point into state management.
   *
   */
-object StateGuardian {
+object StateManager {
+  private val random = new SecureRandom()
+
+  private def idGenerator(time: Long, additionalPiece: String = ""): String = {
+    Seq(random.nextInt(Int.MaxValue), time).mkString("-")
+  }
+
+  def createDonation(title: String, description: String, by: Node) = {
+    val now = new Date().getTime
+    val id = idGenerator(now, title + by.id)
+    Donation(id = id, title = title, description = description, by, now)
+  }
+
+  def updateHistory(oldState: State, newHistory: History): State = oldState.copy(history = newHistory)
+
   def save(agent: Agent) = {
     val archiveFilename = s"./data-stores/archive/${agent.id}-${new Date().getTime}.plenty"
     val currentFilename = s"./data-stores/current/${agent.id}.plenty"

@@ -1,4 +1,4 @@
-package state.model
+package plenty.state.model
 
 import java.security.PublicKey
 import java.sql.Timestamp
@@ -22,7 +22,7 @@ case class Coin(id: String, belongsTo: Node, mintTime: Long,
   * Represents a donation made by a node
   * Currently has no privacy constraints
   * */
-case class Donation(id: String, title: String, description: String, by: Node)
+case class Donation(id: String, title: String, description: String, by: Node, timestamp: Long)
 
 /**
   * Represents a bid for a donation
@@ -31,12 +31,6 @@ case class Donation(id: String, title: String, description: String, by: Node)
 case class Bid(id: String, donation: Donation, amount: Int, by: Node, timestamp: Long)
 
 /**
-  * Represents a transaction of [[state.model.Coin]] between two [[state.model.Node]]s
+  * Represents a transaction of [[plenty.state.model.Coin]] between two [[plenty.state.model.Node]]s
   * */
 case class Transaction(id: String, timestamp: Long, coins: Set[Coin], from: Node, to: Node)
-
-/**
-  * Because of the nature of the network, when asking for transactions to be completed over parts of the network
-  * unknown to the transaction sender, a probe must be made first.
-  * */
-case class TransactionProbe(id: String, timestamp: Long, amount: Int, from: Node, to: Node)

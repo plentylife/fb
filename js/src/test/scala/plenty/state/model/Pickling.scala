@@ -1,4 +1,4 @@
-package state.model
+package plenty.state.model
 
 import java.util.Date
 

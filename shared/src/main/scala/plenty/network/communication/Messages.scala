@@ -1,23 +1,23 @@
-package network.communication
+package plenty.network.communication
 
 import java.security.SecureRandom
 import java.util.Date
 
-import agent.model.Agent
-import state.model.{Bid, Donation, Node, Transaction}
+import plenty.agent.model.Agent
+import plenty.state.model.{Bid, Donation, Node, Transaction}
 
 /**
   * Various messaging formats
   */
 abstract class Message[P] {
-  val from: Agent
-  val to: Agent
+  val from: Node
+  val to: Node
   val payloadId: PayloadIdentifier[P]
   val payload: P
   val id: String
   val timestamp: Long
 
-  /** [[state.model.Node]] that have relayed on this message */
+  /** [[plenty.state.model.Node]] that have relayed on this message */
   val relayNodes: List[Node] = List()
 }
 
@@ -25,8 +25,12 @@ trait PayloadIdentifier[P] {
   val typeOfMsg: String
 }
 
-trait MessagePrototype[P] extends Function1[Agent, Message[P]]
+trait MessagePrototype[P] extends Function1[Node, Message[P]]
 
+
+object ActionIdentifiers {
+  val DONATION_RELAY = Message.createAction[Donation]("DONATION_RELAY")
+}
 
 object DonateAction extends PayloadIdentifier[Donation] {
   override val typeOfMsg: String = "DONATE_ACTION"
@@ -40,27 +44,19 @@ object BidAcceptAction extends PayloadIdentifier[Bid] {
   override val typeOfMsg: String = "BID_ACCEPT_ACTION"
 }
 
-object BidActions {
-  val BidRelayDeny = Message.createAction("BID_RELAY_DENY")
-
-}
-
 object TransactionAction extends PayloadIdentifier[Transaction] {
   override val typeOfMsg: String = "TRANSACTION_ACTION"
 }
 
-object TransactionProbeAction extends PayloadIdentifier[Transaction] {
-  override val typeOfMsg: String = "TRANSACTION_PROBE_ACTION"
-}
 
-private object Message {
+object Message {
   private val generator = new SecureRandom()
 
   def createAction[Type](constant: String) = new PayloadIdentifier[Type] {
     override val typeOfMsg: String = constant
   }
 
-  def createMessage[Type, TypeId <: PayloadIdentifier[Type]](fromAgent: Agent, toAgent: Agent,
+  def createMessage[Type, TypeId <: PayloadIdentifier[Type]](fromNode: Node, toNode: Node,
                                                              msgPayloadId: TypeId,
                                                              msgPayload: Type):
   Message[Type] = {
@@ -70,8 +66,8 @@ private object Message {
     new Message[Type] {
       override val payloadId: PayloadIdentifier[Type] = msgPayloadId
       override val payload: Type = msgPayload
-      override val from: Agent = fromAgent
-      override val to: Agent = toAgent
+      override val from = fromNode
+      override val to = toNode
       override val id: String = msgId
       override val timestamp: Long = now
     }
