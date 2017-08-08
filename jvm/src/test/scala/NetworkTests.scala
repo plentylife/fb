@@ -27,10 +27,25 @@ object NetworkTests extends TestSuite {
           DonateAction, donation)
 
         Network.send(msg)
+        waitClearQueue
 
         assert(Network.getAgents.size == 3)
+        for (a <- Network.getAgents) {
+          assert(a.state.donations.contains(donation))
+        }
       }
+
     }
 
+  }
+
+  def waitClearQueue = {
+    println("waiting for queue to clear")
+
+    while (Network.messageCountInQueue > 0) {
+      println("messages in queue", Network.messageCountInQueue)
+      Network.clearQueue
+      Thread.sleep(1000)
+    }
   }
 }

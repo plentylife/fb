@@ -19,6 +19,8 @@ abstract class Message[P] {
 
   /** [[plenty.state.model.Node]] that have relayed on this message */
   val relayNodes: List[Node] = List()
+
+  override def toString: String = from.id + " - " + to.id + "  " + payloadId.typeOfMsg + " @ " + timestamp
 }
 
 trait PayloadIdentifier[P] {

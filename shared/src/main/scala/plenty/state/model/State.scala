@@ -11,7 +11,8 @@ case class State(
                   val donations: Set[Donation] = Set[Donation](),
                   val bids: Set[Bid] = Set(),
                   val nonSettledBids: Set[Bid] = Set(),
-                  val history: History = History()
+                  val history: History = History(),
+                  val relay: Relay = Relay()
                 )
 
 case class History(
@@ -19,3 +20,7 @@ case class History(
                 val bids: Set[Bid] = Set(),
                 val coins: Set[Coin] = Set[Coin]()
               )
+
+case class Relay(
+                  val donations: Set[Donation] = Set[Donation]()
+                )

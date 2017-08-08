@@ -50,6 +50,19 @@ object StateLogic {
 
     agentUpd
   }
+//  def donationRelayOccured(donation: Donation)(implicit agent: Agent): Agent = {
+//    val updatedRelay = agent.state.relay.copy(
+//      donations = agent.state.relay.donations + donation
+//    )
+//    val stateUpdated = agent.state.copy(
+//      relay = updatedRelay
+//    )
+//    val agentUpd = agent.copy(state = stateUpdated)
+//
+//    StateManager.save(agentUpd)
+//
+//    agentUpd
+//  }
 
 
 }

@@ -30,12 +30,10 @@ object ActionLogic {
   }
 
   /**
-    * Checks the agent state, and relays the donation to other agents IFF the donation is not present in
-    * [[plenty.state.model.State]]
     * */
   def relayDonation(donation: Donation)(implicit agent: Agent) = {
-    if (! (agent.state.donations contains donation)) {
-      CommsManager.basicBeacon(donation, ActionIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
+    if (!agent.state.donations.contains(donation)) {
+      CommsManager.basicRelay(donation, ActionIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
     }
   }
 

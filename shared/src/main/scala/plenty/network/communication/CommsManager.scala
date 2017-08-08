@@ -6,6 +6,8 @@ import plenty.agent.AgentManager
 import plenty.agent.model.Agent
 import plenty.state.model.{Bid, Node, Transaction}
 
+import scala.concurrent.Future
+
 /**
   * All communication requests are channeled through this module
   */
@@ -20,6 +22,12 @@ object CommsManager {
 
   def beacon(msgProto: MessagePrototype[_]) = {
     getAllAgentsInNetwork().foreach(a => {
+      sender(msgProto(AgentManager.agentAsNode(a)))
+    })
+  }
+
+  def relay(msgProto: MessagePrototype[_], from: Node) = {
+    getAllAgentsInNetwork().filterNot(_.id == from.id).foreach(a => {
       sender(msgProto(AgentManager.agentAsNode(a)))
     })
   }
@@ -44,9 +52,9 @@ object CommsManager {
     beacon(msgProto: MessagePrototype[Bid])
   }
 
-  def basicBeacon[T](payload: T, payloadId: PayloadIdentifier[T], from: Node) = {
-    beacon(new MessagePrototype[T] {
+  def basicRelay[T](payload: T, payloadId: PayloadIdentifier[T], from: Node) = {
+    relay(new MessagePrototype[T] {
       override def apply(v1: Node): Message[T] = Message.createMessage(fromNode = from, toNode = v1, payloadId, payload)
-    })
+    }, from)
   }
 }
