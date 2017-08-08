@@ -11,9 +11,11 @@ private[communication] object Receiver {
 
   def receive(msg: Message[_])(implicit toAgent: Agent): Agent = msg match {
     case m if (m.payloadId.typeOfMsg == DonateAction.typeOfMsg) ||
-      (m.payloadId.typeOfMsg == ActionIdentifiers.DONATION_RELAY.typeOfMsg) =>
+      (m.payloadId.typeOfMsg == RelayIdentifiers.DONATION_RELAY.typeOfMsg) =>
       registerDonation(m.asInstanceOf[Message[Donation]].payload, toAgent)
-    case m if m.payloadId.typeOfMsg == BidAction.typeOfMsg => registerBid(m.asInstanceOf[Message[Bid]])
+    case m if (m.payloadId.typeOfMsg == BidAction.typeOfMsg) ||
+      (m.payloadId.typeOfMsg == RelayIdentifiers.BID_RELAY.typeOfMsg) =>
+      registerBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
     case m if m.payloadId.typeOfMsg == BidAcceptAction.typeOfMsg => acceptBid(m.asInstanceOf[Message[Bid]])
   }
 }

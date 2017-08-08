@@ -3,7 +3,7 @@ package plenty.agent
 import java.util.Date
 
 import plenty.agent.model.Agent
-import plenty.network.communication.{ActionIdentifiers, CommsManager, Message}
+import plenty.network.communication.{RelayIdentifiers, CommsManager, Message}
 import plenty.state.model.{Bid, Donation, Node, Transaction}
 
 /**
@@ -33,7 +33,13 @@ object ActionLogic {
     * */
   def relayDonation(donation: Donation)(implicit agent: Agent) = {
     if (!agent.state.donations.contains(donation)) {
-      CommsManager.basicRelay(donation, ActionIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
+      CommsManager.basicRelay(donation, RelayIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
+    }
+  }
+
+  def relayBid(bid: Bid)(implicit agent: Agent) = {
+    if (!agent.state.bids.contains(bid)) {
+      CommsManager.basicRelay(bid, RelayIdentifiers.BID_RELAY, AgentManager.agentAsNode(agent))
     }
   }
 

@@ -30,8 +30,9 @@ trait PayloadIdentifier[P] {
 trait MessagePrototype[P] extends Function1[Node, Message[P]]
 
 
-object ActionIdentifiers {
+object RelayIdentifiers {
   val DONATION_RELAY = Message.createAction[Donation]("DONATION_RELAY")
+  val BID_RELAY = Message.createAction[Bid]("BID_RELAY")
 }
 
 object DonateAction extends PayloadIdentifier[Donation] {

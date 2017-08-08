@@ -6,6 +6,7 @@ import plenty.network.communication.{CommsManager, Message}
 import scala.collection.immutable.Queue
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Try}
 
 /**
   * Created by anton on 8/8/17.
@@ -21,6 +22,12 @@ object Network {
 
   def send(msg: Message[_]): Unit = {
     val msgF = Future(Network.receive(msg))
+    msgF.onComplete {
+      case Failure(e: Throwable) => {
+        Network.throwErrorFromMsg(e)
+      }
+      case _ => null
+    }
     outgoingMessageQueue = outgoingMessageQueue.enqueue(msgF)
     clearQueue
   }
@@ -30,13 +37,14 @@ object Network {
   def messageCountInQueue = outgoingMessageQueue.size
 
   def receive(msg: Message[_]) = synchronized {
-    println("receiving message", msg)
     val agent = CommsManager.receive(msg, toAgent = popAgent(msg.to.id))
+    println("receiving message", agent.id, msg)
     reRegisterAgent(agent)
     println("re-registered agent", agent)
   }
 
   private var agents: Set[Agent] = Set()
+
   def registerAgent(agent: Agent) = {
     agents += agent
   }
@@ -48,7 +56,8 @@ object Network {
   def reRegisterAgent(agent: Agent) = {
     agents += agent
   }
-
   /** for testing purposes fixme */
   def getAgents = agents
+
+  private def throwErrorFromMsg(e: Throwable) = throw e
 }

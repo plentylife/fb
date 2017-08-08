@@ -6,7 +6,7 @@ import java.security.SecureRandom
 import java.util.Date
 
 import plenty.agent.model.Agent
-import plenty.state.model.{Coin, Donation, History, Node, State}
+import plenty.state.model._
 import boopickle.Default._
 
 /**
@@ -24,6 +24,12 @@ object StateManager {
     val now = new Date().getTime
     val id = idGenerator(now, title + by.id)
     Donation(id = id, title = title, description = description, by, now)
+  }
+
+  def createBid(donation: Donation, amount: Int, by: Node): Bid = {
+    val now = new Date().getTime
+    val id = idGenerator(now, amount + by.id)
+    Bid(id = id, donation = donation, amount=amount, by=by, timestamp = now)
   }
 
   def updateHistory(oldState: State, newHistory: History): State = oldState.copy(history = newHistory)
