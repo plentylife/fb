@@ -95,10 +95,11 @@ object NetworkTests extends TestSuite {
   }
 
   def waitClearQueue = {
-    while (Network.totalMessageCountInQueue > 0) {
-//      println(s"messages in queue ${Network.totalMessageCountInQueue}")
-      Network.clearQueue
+    println("waiting on message queue")
+    println(s"non-completes: ${Network.nonCompletes.mkString(" ")}")
+    while (Network.nonCompletes.nonEmpty) {
       Thread.sleep(1000)
+      println(s"non-completes (loop): ${Network.nonCompletes.mkString(" ")}")
     }
   }
 }

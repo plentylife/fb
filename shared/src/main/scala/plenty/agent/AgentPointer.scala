@@ -15,7 +15,7 @@ class AgentPointer(private var agent: Agent) {
 
   def id = agent.id
 
-  def getAgentToModify(promise: Promise[Agent]) = {
+  def getAgentToModify(promise: Promise[Agent]) = synchronized {
     queue = queue.enqueue(promise)
     giveAgent()
   }

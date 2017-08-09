@@ -21,36 +21,30 @@ object Network {
 
   private var agents: Set[AgentPointer] = Set()
   private var agentNodes: Set[Node] = Set()
-  private var outgoingMessageQueue: Queue[Future[_]] = Queue.empty
-  private var incomingMessageQueue: Queue[Future[_]] = Queue.empty
 
   def send(msg: Message[_]): Unit = {
-    val msgF = Future(Network.receive(msg))
+    var rid = -1
+    val msgF = Future {
+      rid = addNonComplete()
+      Network.receive(msg)
+    }
     msgF.onComplete {
       case Failure(e: Throwable) => {
         Network.throwErrorFromMsg(e)
       }
-      case _ => null
+      case _ => removeNonComplete(rid)
     }
-    outgoingMessageQueue = outgoingMessageQueue.enqueue(msgF)
-    clearQueue
-  }
-
-  def clearQueue = {
-    outgoingMessageQueue = outgoingMessageQueue.filterNot(_.isCompleted)
-    incomingMessageQueue = incomingMessageQueue.filterNot(_.isCompleted)
-  }
-
-  def totalMessageCountInQueue = {
-    println(s"messages in queue: in - ${incomingMessageQueue.size} out - ${outgoingMessageQueue.size}")
-    println(s"non-completes: ${nonCompletes.mkString(" ")}")
-    outgoingMessageQueue.size + incomingMessageQueue.size
   }
 
   var i = 0
-  var nonCompletes = Set[String]()
-  private def removeNonComplete(id: String) = synchronized {nonCompletes -= id}
-  private def addNonComplete(id:String) = synchronized {nonCompletes += id}
+  var nonCompletes = Set[Int]()
+  private def removeNonComplete(id: Int) = synchronized {nonCompletes -= id}
+  private def addNonComplete(): Int = synchronized {
+    val id = i
+    nonCompletes += id
+    i += 1
+    return id
+  }
 
   def receive(msg: Message[_]) = {
     val agentPointer = agents.find(_.id == msg.to.id).get
@@ -59,12 +53,10 @@ object Network {
     //    println(s"receive $msg")
     //    println(s"\t ${msg.payload}")
     //    println(s"looking to get ${agentPointer.id}")
-    val rid = Seq(i, msg.from.id, msg.to.id).mkString("-")
-    addNonComplete(rid)
-    i += 1
-    println(s"receive $rid $msg")
 
+    var rid = -1
     val f = p.future.map(agent => {
+      rid = addNonComplete()
       //      println(s"got agent ${agent.id}")
       val agentAfterReception = CommsManager.receive(msg, toAgent = agent)
       agentPointer.set(agentAfterReception)
@@ -77,7 +69,6 @@ object Network {
       case _ =>
         removeNonComplete(rid)
     })
-    incomingMessageQueue.enqueue(f)
   }
 
   def registerAgent(agent: Agent) = {
