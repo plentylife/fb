@@ -42,6 +42,8 @@ object RelayIdentifiers {
 
 object ActionIdentifiers {
   val COINS_MINTED = Message.createAction[Set[Coin]]("COINS_MINTED")
+  val BID_TAKE_ACTION = Message.createAction[Bid]("BID_TAKE_ACTION")
+  val SETTLE_BID_ACTION = Message.createAction[Transaction]("SETTLE_BID_ACTION")
 }
 
 object DonateAction extends PayloadIdentifier[Donation] {
@@ -50,10 +52,6 @@ object DonateAction extends PayloadIdentifier[Donation] {
 
 object BidAction extends PayloadIdentifier[Bid] {
   override val typeOfMsg: String = "BID_ACTION"
-}
-
-object BidAcceptAction extends PayloadIdentifier[Bid] {
-  override val typeOfMsg: String = "BID_ACCEPT_ACTION"
 }
 
 object TransactionAction extends PayloadIdentifier[Transaction] {

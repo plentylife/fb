@@ -35,7 +35,7 @@ trait Scheduler {
       val p = Promise[Agent]()
       ap.getAgentToModify(p)
       p.future.map(agent => {
-        AgentManager.acceptBids(agent)
+        AgentManager.takeBids(agent)
         val a = Accounting.clearDeadCoins(agent)
         ap.set(a)
       })

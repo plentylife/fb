@@ -18,6 +18,12 @@ object CommsManager {
     Receiver.receive(msg)(toAgent)
   }
 
+  def sendTransaction(t: Transaction) = {
+    val msg = Message.createMessage(fromNode = t.from, toNode = t.to,
+      msgPayloadId = ActionIdentifiers.SETTLE_BID_ACTION, msgPayload = t)
+    send(msg)
+  }
+
   def toSelfAndOther[T](payload: T, payloadId: PayloadIdentifier[T], self: Node, other: Node) = {
     val msgSelf = Message.createMessage(fromNode = self, toNode = self, payloadId, payload)
     val msgOther = Message.createMessage(fromNode = self, toNode = other, payloadId, payload)

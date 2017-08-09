@@ -61,8 +61,7 @@ object Network {
   /* utility functions */
   def notifyAll[P](payload: P, payloadId: PayloadIdentifier[P], from: Node) = {
     val unaddressedMsg = (to: Node) => Message.createMessage(fromNode = from, toNode = to, msgPayloadId = payloadId,
-      msgPayload =
-      payload)
+      msgPayload = payload)
     for (ap <- agents) {
       val msg = unaddressedMsg(AgentManager.agentAsNode(ap.getAgentInLastKnownState))
       send(msg)

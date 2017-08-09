@@ -4,7 +4,7 @@ import java.util.Date
 
 import plenty.agent.model.Agent
 import plenty.network.Network
-import plenty.network.communication.{BidAcceptAction, CommsManager, Message, RelayIdentifiers}
+import plenty.network.communication._
 import plenty.state.model.{Bid, Donation, Node, Transaction}
 
 /**
@@ -18,10 +18,10 @@ object ActionLogic {
     * The current criteria for accepting a bid is that no additional bids were placed on the same donation within the
     * last day
     * */
-  def acceptBids(agent: Agent): Unit = {
+  def takeBids(agent: Agent): Unit = {
     println(s"agent ${agent.id} looking to accept bids")
     val now = new Date().getTime
-    val criteria = acceptBidForDonation(now) _
+    val criteria = takeBidForDonation(now) _
     val bidsByDonation = agent.state.bids.groupBy(_.donation.id)
     val accepted = bidsByDonation.flatMap(kv => {
       val (_, bids) = kv
@@ -31,44 +31,32 @@ object ActionLogic {
 //    println(s"agent ${agent.id} has accepted ${accepted}")
     val self = AgentManager.agentAsNode(agent)
     for (acceptedBid <- accepted) {
-      Network.notifyAll(acceptedBid, BidAcceptAction, from = self)
+      Network.notifyAll(acceptedBid, ActionIdentifiers.BID_TAKE_ACTION, from = self)
 //      CommsManager.toSelf(acceptedBid, BidAcceptAction, self = self)
 //      CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = self)
     }
   }
 
-  /**
-    * */
-  def relayDonation(donation: Donation)(implicit agent: Agent) = {
-    if (!agent.state.donations.contains(donation)) {
-//      CommsManager.basicRelay(donation, RelayIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
-    }
-  }
-
-  def relayBid(bid: Bid)(implicit agent: Agent) = {
-    if (!agent.state.bids.contains(bid)) {
-//      CommsManager.basicRelay(bid, RelayIdentifiers.BID_RELAY, AgentManager.agentAsNode(agent))
-    }
-  }
-
-  def transactOnPromisedBids(implicit agent: Agent) = {
+  def transactOnPromisedBids(implicit agent: Agent): Unit = {
     for (bid <- agent.state.nonSettledBids) {
       if (bid.by.id == AgentManager.agentAsNode(agent).id) {
-        transact(bid.donation.by, bid.amount)
+        transact(bid.donation.by, bid.amount, bid)
       }
     }
   }
 
-  def transact(to: Node, amount: Int)(implicit agent: Agent): Option[InsufficientBalance] = {
+  def transact(to: Node, amount: Int, bid: Bid)(implicit agent: Agent): Option[InsufficientBalance] = {
     Accounting.createTransaction(to, amount) match {
       case Left(e) => Option(e)
-      case Right(t: Transaction) =>
-//        CommsManager.transact(t, agent)
+      case Right(_t: Transaction) =>
+        // attaching bid
+        val t = _t.copy(bid = Some(bid))
+        CommsManager.sendTransaction(t)
         None
     }
   }
 
-  private def acceptBidForDonation(now: Long)(bids: Iterable[Bid]): Option[Bid] = {
+  private def takeBidForDonation(now: Long)(bids: Iterable[Bid]): Option[Bid] = {
     if (bids.isEmpty) return None
 
     // has any new bids been submitted in the last day
@@ -82,4 +70,18 @@ object ActionLogic {
       None
     }
   }
+
+
+  def relayDonation(donation: Donation)(implicit agent: Agent) = {
+    if (!agent.state.donations.contains(donation)) {
+      //      CommsManager.basicRelay(donation, RelayIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
+    }
+  }
+
+  def relayBid(bid: Bid)(implicit agent: Agent) = {
+    if (!agent.state.bids.contains(bid)) {
+      //      CommsManager.basicRelay(bid, RelayIdentifiers.BID_RELAY, AgentManager.agentAsNode(agent))
+    }
+  }
+
 }

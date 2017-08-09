@@ -18,18 +18,18 @@ object StateLogic {
     a
   }
 
-  def registerAcceptedBid(bid: Bid)(implicit agent: Agent): Agent = {
-    val history = agent.state.history
-    val historyUpdated = history.copy(
-      donations = history.donations + bid.donation,
-      bids = history.bids + bid
-    )
+  def registerTakenBid(bid: Bid)(implicit agent: Agent): Agent = {
+//    val history = agent.state.history
+//    val historyUpdated = history.copy(
+//      donations = history.donations + bid.donation,
+//      bids = history.bids + bid
+//    )
 
     val stateUpdated = agent.state.copy(
-      donations = agent.state.donations.filterNot(_.id == bid.donation.id),
-      bids = agent.state.bids.filterNot(_.id == bid.id),
-      nonSettledBids = agent.state.nonSettledBids + bid,
-      history = historyUpdated
+//      donations = agent.state.donations.filterNot(_.id == bid.donation.id),
+//      bids = agent.state.bids.filterNot(_.id == bid.id),
+      nonSettledBids = agent.state.nonSettledBids + bid
+//      history = historyUpdated
     )
     val agentUpdated = agent.copy(state = stateUpdated)
 
