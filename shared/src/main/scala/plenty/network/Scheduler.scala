@@ -13,11 +13,21 @@ trait Scheduler {
 
   protected val cycleTime = 12 * 60 * 60 * 1000
 
-  Future {
-    while (true) {
-      Thread.sleep(cycleTime)
-      Future(execute())
+  private var shutdown = false
+
+  def start() = {
+    Future {
+      println("Scheduler started")
+      while (!shutdown) {
+        Thread.sleep(cycleTime)
+        Future(execute())
+      }
     }
+  }
+
+  def stop() = {
+    println("Scheduler stopped")
+    shutdown = true
   }
 
   def execute() = {
@@ -26,6 +36,8 @@ trait Scheduler {
       ap.getAgentToModify(p)
       p.future.map(a => {
         AgentManager.acceptBids(a)
+        // todo doesn't actually do any modification
+        ap.set(a)
       })
     })
   }

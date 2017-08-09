@@ -16,6 +16,7 @@ object ActionLogic {
     * last day
     * */
   def acceptBids(agent: Agent): Unit = {
+    println(s"agent ${agent.id} looking to accept bids")
     val now = new Date().getTime
     val criteria = acceptBidForDonation(now) _
     val bidsByDonation = agent.state.bids.groupBy(_.donation.id)
@@ -24,6 +25,7 @@ object ActionLogic {
       criteria(bids)
     })
 
+//    println(s"agent ${agent.id} has accepted ${accepted}")
     for (acceptedBid <- accepted) {
       CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = AgentManager.agentAsNode(agent))
     }
