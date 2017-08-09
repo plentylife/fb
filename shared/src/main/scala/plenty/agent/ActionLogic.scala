@@ -26,8 +26,10 @@ object ActionLogic {
     })
 
 //    println(s"agent ${agent.id} has accepted ${accepted}")
+    val self = AgentManager.agentAsNode(agent)
     for (acceptedBid <- accepted) {
-      CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = AgentManager.agentAsNode(agent))
+      CommsManager.toSelf(acceptedBid, BidAcceptAction, self = self)
+      CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = self)
     }
   }
 

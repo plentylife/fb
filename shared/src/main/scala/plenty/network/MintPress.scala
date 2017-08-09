@@ -12,7 +12,7 @@ import sun.misc.BASE64Encoder
 /**
   * Class for minting of new coins
   */
-object MintPress {
+trait MintPress {
   /** number of coins per [[plenty.agent.model.Agent]] per [[plenty.network.MintPress.period]] */
   val coinsPerPeriod = 10
   /** how often to distribute the coins and coincidentally how long a freshly minted coin lives. */
@@ -59,6 +59,8 @@ object MintPress {
     generator.nextBytes(rv)
     val idv = rv ++ nonce.toString.map(_.toByte)
     val hash = hasher.digest(idv)
-    Base64.getEncoder.encode(hash)
+    Base64.getEncoder.encodeToString(hash)
   }
 }
+
+object MintPress extends MintPress

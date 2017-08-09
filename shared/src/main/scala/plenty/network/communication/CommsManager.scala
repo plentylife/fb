@@ -64,4 +64,9 @@ object CommsManager {
       override def apply(v1: Node): Message[T] = Message.createMessage(fromNode = from, toNode = v1, payloadId, payload)
     }, from)
   }
+
+  def toSelf[T](payload: T, payloadId: PayloadIdentifier[T], self: Node) = {
+    val m = Message.createMessage(fromNode = self, toNode = self, payloadId, payload)
+    sender(m)
+  }
 }

@@ -1,6 +1,6 @@
 package plenty.network
 
-import plenty.agent.AgentManager
+import plenty.agent.{Accounting, AgentManager}
 import plenty.agent.model.Agent
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,7 +11,7 @@ import scala.concurrent.{Future, Promise}
   */
 trait Scheduler {
 
-  protected val cycleTime = 12 * 60 * 60 * 1000
+  protected val cycleTime = 2 * 60 * 60 * 1000
 
   private var shutdown = false
 
@@ -34,9 +34,9 @@ trait Scheduler {
     Network.getAgents.foreach(ap => {
       val p = Promise[Agent]()
       ap.getAgentToModify(p)
-      p.future.map(a => {
-        AgentManager.acceptBids(a)
-        // todo doesn't actually do any modification
+      p.future.map(agent => {
+        AgentManager.acceptBids(agent)
+        val a = Accounting.clearDeadCoins(agent)
         ap.set(a)
       })
     })

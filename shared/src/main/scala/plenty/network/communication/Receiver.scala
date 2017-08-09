@@ -2,14 +2,14 @@ package plenty.network.communication
 
 import plenty.agent.AgentManager._
 import plenty.agent.model.Agent
-import plenty.state.model.{Bid, Donation}
+import plenty.state.model.{Bid, Coin, Donation}
 
 /**
   * Created by anton on 8/8/17.
   */
 private[communication] object Receiver {
 
-  def receive(msg: Message[_])(implicit toAgent: Agent): Agent = msg match {
+  def receive(incomingMessage: Message[_])(implicit toAgent: Agent): Agent = incomingMessage match {
     case m if (m.payloadId.typeOfMsg == DonateAction.typeOfMsg) ||
       (m.payloadId.typeOfMsg == RelayIdentifiers.DONATION_RELAY.typeOfMsg) =>
       registerDonation(m.asInstanceOf[Message[Donation]].payload, toAgent)
@@ -18,5 +18,7 @@ private[communication] object Receiver {
       registerBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
     case m if m.payloadId.typeOfMsg == BidAcceptAction.typeOfMsg =>
       registerAcceptedBid(m.asInstanceOf[Message[Bid]].payload)
+    case m if m.payloadId == ActionIdentifiers.COINS_MINTED =>
+      registerCoins(m.asInstanceOf[Message[Set[Coin]]].payload, toAgent)
   }
 }

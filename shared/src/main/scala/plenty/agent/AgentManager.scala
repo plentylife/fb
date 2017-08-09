@@ -2,7 +2,7 @@ package plenty.agent
 
 import plenty.agent.model.Agent
 import plenty.network.communication.Message
-import plenty.state.model.{Bid, Donation, Node}
+import plenty.state.model.{Bid, Coin, Donation, Node}
 
 /**
   * The access point to the agent module
@@ -12,6 +12,9 @@ object AgentManager {
     Node(agent.id)
   }
 
+  def registerCoins(coins: Set[Coin], agent: Agent): Agent = {
+    StateLogic.registerCoins(coins, agent)
+  }
 
   def registerDonation(donation: Donation, toAgent: Agent): Agent = {
     implicit var agent = toAgent
