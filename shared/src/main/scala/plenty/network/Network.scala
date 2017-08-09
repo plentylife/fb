@@ -2,7 +2,7 @@ package plenty.network
 
 import plenty.agent.model.Agent
 import plenty.agent.{AgentManager, AgentPointer}
-import plenty.network.communication.{CommsManager, Message}
+import plenty.network.communication.{CommsManager, Message, PayloadIdentifier}
 import plenty.state.model.Node
 
 import scala.collection.immutable.Queue
@@ -18,9 +18,7 @@ object Network {
   CommsManager.sender = send
   CommsManager.getAllAgentsInNetwork = () => agentNodes
 
-
-  private var agents: Set[AgentPointer] = Set()
-  private var agentNodes: Set[Node] = Set()
+  /* basic functions */
 
   def send(msg: Message[_]): Unit = {
     var rid = -1
@@ -34,16 +32,6 @@ object Network {
       }
       case _ => removeNonComplete(rid)
     }
-  }
-
-  var i = 0
-  var nonCompletes = Set[Int]()
-  private def removeNonComplete(id: Int) = synchronized {nonCompletes -= id}
-  private def addNonComplete(): Int = synchronized {
-    val id = i
-    nonCompletes += id
-    i += 1
-    return id
   }
 
   def receive(msg: Message[_]) = {
@@ -71,13 +59,40 @@ object Network {
     })
   }
 
+  /* utility functions */
+  def notifyAll[P](payload: P, payloadId: PayloadIdentifier[P]) = {
+    val unaddressedMsg = (to: Node) => Message.createMessage(fromNode = null, toNode = to, msgPayloadId = payloadId,
+      msgPayload =
+      payload)
+    for (ap <- agents) {
+      val msg = unaddressedMsg(AgentManager.agentAsNode(ap.getAgentInLastKnownState))
+      send(msg)
+    }
+  }
+
+  /* agent registration */
+
+  private var agents: Set[AgentPointer] = Set()
+  private var agentNodes: Set[Node] = Set()
   def registerAgent(agent: Agent) = {
     println(s"registering ${agent.id}")
     agents += new AgentPointer(agent)
     agentNodes += AgentManager.agentAsNode(agent)
   }
-
   def getAgents = agents
+
+  /* message queue tracking */
+
+  private var i = 0
+  private var _nonCompletes = Set[Int]()
+  private def removeNonComplete(id: Int) = synchronized {_nonCompletes -= id}
+  private def addNonComplete(): Int = synchronized {
+    val id = i
+    _nonCompletes += id
+    i += 1
+    return id
+  }
+  def nonCompletes = _nonCompletes
 
   private def throwErrorFromMsg(e: Throwable) = throw e
 }

@@ -20,7 +20,7 @@ class AgentPointer(private var agent: Agent) {
     giveAgent()
   }
 
-  def getLastAgent = agent
+  def getAgentInLastKnownState = agent
 
   def set(a: Agent) = synchronized {
     agentAvailable = true

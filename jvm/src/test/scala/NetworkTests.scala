@@ -91,7 +91,7 @@ object NetworkTests extends TestSuite {
   }
 
   def getAgents: Iterable[Agent] = {
-    Network.getAgents.map(_.getLastAgent)
+    Network.getAgents.map(_.getAgentInLastKnownState)
   }
 
   def waitClearQueue = {

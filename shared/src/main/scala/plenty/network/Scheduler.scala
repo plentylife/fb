@@ -43,4 +43,4 @@ trait Scheduler {
   }
 }
 
-//object Scheduler extends Scheduler
+object Scheduler extends Scheduler

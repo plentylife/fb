@@ -4,7 +4,7 @@ import java.security.SecureRandom
 import java.util.Date
 
 import plenty.agent.model.Agent
-import plenty.state.model.{Bid, Donation, Node, Transaction}
+import plenty.state.model._
 
 /**
   * Various messaging formats
@@ -33,6 +33,10 @@ trait MessagePrototype[P] extends Function1[Node, Message[P]]
 object RelayIdentifiers {
   val DONATION_RELAY = Message.createAction[Donation]("DONATION_RELAY")
   val BID_RELAY = Message.createAction[Bid]("BID_RELAY")
+}
+
+object ActionIdentifiers {
+  val COINS_MINTED = Message.createAction[Set[Coin]]("COINS_MINTED")
 }
 
 object DonateAction extends PayloadIdentifier[Donation] {
