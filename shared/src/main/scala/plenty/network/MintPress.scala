@@ -24,10 +24,10 @@ trait MintPress {
   /** time in unix epoch of the last time */
   private var lastDistributionTime: Long = 0
 
-  def distributeCoins() = {
+  def distributeCoins(to: Set[Agent]) = {
     val now = new Date().getTime
     if(lastDistributionTime + period <= now) {
-      val coins = genCoins(Network.getAgents.map(_.getAgentInLastKnownState))
+      val coins = genCoins(to)
       Network.notifyAll(coins, ActionIdentifiers.COINS_MINTED)
       lastDistributionTime = now
     }

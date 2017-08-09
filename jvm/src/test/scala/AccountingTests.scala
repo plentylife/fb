@@ -23,7 +23,7 @@ object AccountingTests extends TestSuite {
   val tests = this {
     'minting {
       'on_first_run {
-        TestMintPress.distributeCoins()
+        distributeCoins
         waitClearQueue
 
         for (ap <- Network.getAgents; n <- ns) {
@@ -36,11 +36,11 @@ object AccountingTests extends TestSuite {
           ap.getAgentInLastKnownState.state.coins.forall(_.deathTime <= now + TestMintPress.period)
         }
         originalCoins = aps(0).getAgentInLastKnownState.state.coins
-        println(s"setting original coins $originalCoins")
+//        println(s"setting original coins $originalCoins")
       }
 
       'second_immediate_run {
-        TestMintPress.distributeCoins()
+        distributeCoins
         waitClearQueue
 
         for (ap <- Network.getAgents; n <- ns) {
@@ -52,7 +52,7 @@ object AccountingTests extends TestSuite {
 
       'third_later_run {
         Thread.sleep(TestMintPress.period)
-        TestMintPress.distributeCoins()
+        distributeCoins
         waitClearQueue
 
         println(s"original coins $originalCoins")
@@ -68,7 +68,7 @@ object AccountingTests extends TestSuite {
 
     'accounting {
       'expired {
-        TestMintPress.distributeCoins()
+        distributeCoins
         waitClearQueue
 
         for (ap <- Network.getAgents; n <- ns) {
@@ -82,8 +82,14 @@ object AccountingTests extends TestSuite {
           balance ==> 0
         }
 
+        val agentWithClearedCoins = Accounting.clearDeadCoins(aps.head.getAgentInLastKnownState)
+        assert(agentWithClearedCoins.state.coins.isEmpty)
       }
     }
+  }
+
+  def distributeCoins = {
+    TestMintPress.distributeCoins(Network.getAgents.map(_.getAgentInLastKnownState))
   }
 
   def waitClearQueue = {
