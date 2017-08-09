@@ -28,7 +28,8 @@ trait MintPress {
     val now = new Date().getTime
     if(lastDistributionTime + period <= now) {
       val coins = genCoins(to)
-      Network.notifyAll(coins, ActionIdentifiers.COINS_MINTED)
+      /* from=null signifies that it is from the network */
+      Network.notifyAll(coins, ActionIdentifiers.COINS_MINTED, from = null)
       lastDistributionTime = now
     }
   }

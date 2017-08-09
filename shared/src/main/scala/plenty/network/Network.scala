@@ -15,8 +15,7 @@ import scala.util.Failure
   */
 object Network {
   // registering sender method
-  CommsManager.sender = send
-  CommsManager.getAllAgentsInNetwork = () => agentNodes
+  CommsManager.send = send
 
   /* basic functions */
 
@@ -60,8 +59,8 @@ object Network {
   }
 
   /* utility functions */
-  def notifyAll[P](payload: P, payloadId: PayloadIdentifier[P]) = {
-    val unaddressedMsg = (to: Node) => Message.createMessage(fromNode = null, toNode = to, msgPayloadId = payloadId,
+  def notifyAll[P](payload: P, payloadId: PayloadIdentifier[P], from: Node) = {
+    val unaddressedMsg = (to: Node) => Message.createMessage(fromNode = from, toNode = to, msgPayloadId = payloadId,
       msgPayload =
       payload)
     for (ap <- agents) {

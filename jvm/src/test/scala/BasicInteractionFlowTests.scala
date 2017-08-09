@@ -30,8 +30,6 @@ object NetworkTests extends TestSuite {
   println(s"creating bid $bid")
 
   val tests = this {
-
-
     'three_agent_network {
 
       'registering_agents {
@@ -42,10 +40,7 @@ object NetworkTests extends TestSuite {
       }
 
       'donating {
-        val msg = Message.createMessage(fromNode = AgentManager.agentAsNode(a1), toNode = AgentManager.agentAsNode(a2),
-          DonateAction, donation)
-
-        Network.send(msg)
+        Network.notifyAll(donation, DonateAction, from = AgentManager.agentAsNode(a1))
         waitClearQueue
 
         for (a <- getAgents) {
@@ -57,7 +52,6 @@ object NetworkTests extends TestSuite {
       'bidding {
         assert(bid.donation == donation)
         val msg = Message.createMessage(n(1), n(0), BidAction, bid)
-
 
         Network.send(msg)
         waitClearQueue
@@ -82,6 +76,7 @@ object NetworkTests extends TestSuite {
         for (a <- getAgents) {
           assert(!a.state.bids.contains(bid))
           assert(!a.state.donations.contains(donation))
+          assert(!a.state.nonSettledBids.contains(bid))
         }
       }
 

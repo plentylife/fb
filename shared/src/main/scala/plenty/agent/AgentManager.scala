@@ -18,7 +18,8 @@ object AgentManager {
 
   def registerDonation(donation: Donation, toAgent: Agent): Agent = {
     implicit var agent = toAgent
-    ActionLogic.relayDonation(donation)
+    // todo. for now no relaying
+//    ActionLogic.relayDonation(donation)
     agent = StateLogic.donationRegistration(donation)
 
     agent
@@ -27,8 +28,8 @@ object AgentManager {
 
   def registerBid(bid: Bid, toAgent: Agent): Agent = {
     implicit var agent = toAgent
-
-    ActionLogic.relayBid(bid)
+// todo. for now no relaying
+//    ActionLogic.relayBid(bid)
     agent = StateLogic.registerBid(bid)
     agent
   }

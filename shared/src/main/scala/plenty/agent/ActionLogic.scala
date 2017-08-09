@@ -3,6 +3,7 @@ package plenty.agent
 import java.util.Date
 
 import plenty.agent.model.Agent
+import plenty.network.Network
 import plenty.network.communication.{BidAcceptAction, CommsManager, Message, RelayIdentifiers}
 import plenty.state.model.{Bid, Donation, Node, Transaction}
 
@@ -10,6 +11,8 @@ import plenty.state.model.{Bid, Donation, Node, Transaction}
   * Logic of agent's actions such as accepting bids, accepting coins, etc
   */
 object ActionLogic {
+  private val periodBeforeBidAcceptance: Int = 24 * 60 * 60 * 1000
+
   /**
     * Checks all open bids that can be accepted, and makes a decision whether any of them should be.
     * The current criteria for accepting a bid is that no additional bids were placed on the same donation within the
@@ -28,8 +31,9 @@ object ActionLogic {
 //    println(s"agent ${agent.id} has accepted ${accepted}")
     val self = AgentManager.agentAsNode(agent)
     for (acceptedBid <- accepted) {
-      CommsManager.toSelf(acceptedBid, BidAcceptAction, self = self)
-      CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = self)
+      Network.notifyAll(acceptedBid, BidAcceptAction, from = self)
+//      CommsManager.toSelf(acceptedBid, BidAcceptAction, self = self)
+//      CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = self)
     }
   }
 
@@ -37,13 +41,13 @@ object ActionLogic {
     * */
   def relayDonation(donation: Donation)(implicit agent: Agent) = {
     if (!agent.state.donations.contains(donation)) {
-      CommsManager.basicRelay(donation, RelayIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
+//      CommsManager.basicRelay(donation, RelayIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
     }
   }
 
   def relayBid(bid: Bid)(implicit agent: Agent) = {
     if (!agent.state.bids.contains(bid)) {
-      CommsManager.basicRelay(bid, RelayIdentifiers.BID_RELAY, AgentManager.agentAsNode(agent))
+//      CommsManager.basicRelay(bid, RelayIdentifiers.BID_RELAY, AgentManager.agentAsNode(agent))
     }
   }
 
@@ -59,7 +63,7 @@ object ActionLogic {
     Accounting.createTransaction(to, amount) match {
       case Left(e) => Option(e)
       case Right(t: Transaction) =>
-        CommsManager.transact(t, agent)
+//        CommsManager.transact(t, agent)
         None
     }
   }
@@ -68,7 +72,7 @@ object ActionLogic {
     if (bids.isEmpty) return None
 
     // has any new bids been submitted in the last day
-    val isAuctionClosed = bids.forall(_.timestamp < now + 24 * 60 * 60 * 1000)
+    val isAuctionClosed = bids.forall(_.timestamp < now + periodBeforeBidAcceptance)
     if (isAuctionClosed) {
       val maxBid = bids.map(_.amount).max
       val highestBids = bids.filter(_.amount >= maxBid)
