@@ -1,9 +1,10 @@
 package plenty.network
 
 import plenty.agent.AgentManager
+import plenty.agent.model.Agent
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 
 /**
   * Runs CRON type tasks
@@ -21,11 +22,13 @@ trait Scheduler {
 
   def execute() = {
     Network.getAgents.foreach(ap => {
-      ap.executeWhenAvailable(a => {
+      val p = Promise[Agent]()
+      ap.getAgentToModify(p)
+      p.future.map(a => {
         AgentManager.acceptBids(a)
       })
     })
   }
 }
 
-object Scheduler extends Scheduler
+//object Scheduler extends Scheduler

@@ -11,37 +11,29 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Allows safe parallel modification and retrieval of [[plenty.agent.model.Agent]]s
   */
 class AgentPointer(private var agent: Agent) {
-  private var promiseOfAgent: Promise[Agent] = Promise()
+  private var queue: Queue[Promise[Agent]] = Queue.empty
 
-  private var queue: Queue[(Agent) => Any] = Queue.empty
-
-  private var hasExecutedOnce = false
+  private var agentAvailable = true
 
   def id = agent.id
 
-  def executeWhenAvailable(execute: (Agent) => Any) = {
-    queue = queue.enqueue(execute)
-    if (!hasExecutedOnce) {
-      hasExecutedOnce = true
-      set(agent)
-    }
+  def getAgentToModify(promise: Promise[Agent]) = {
+    queue = queue.enqueue(promise)
+    giveAgent()
   }
 
-  def getLast = promiseOfAgent.future
-
-  private def refreshPromise() = {
-    promiseOfAgent = Promise()
-    promiseOfAgent.future.onComplete({
-      case Success(agent) =>
-        val (func, q) = queue.dequeue
-        queue = q
-        func(agent)
-    })
-  }
+  def getLastAgent = agent
 
   def set(a: Agent) = synchronized {
-    promiseOfAgent success a
-    refreshPromise()
+    agentAvailable = true
+    agent = a
+    giveAgent()
+  }
+
+  private def giveAgent() = if (agentAvailable) {
+    agentAvailable = false
+    val (p, q) = queue.dequeue
+    p success agent
   }
 
 }

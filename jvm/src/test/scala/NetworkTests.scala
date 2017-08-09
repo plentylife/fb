@@ -14,6 +14,7 @@ import scala.concurrent.{Await, Future}
   */
 object NetworkTests extends TestSuite {
   val tests = this {
+    
     'three_agent_network {
       val a1 = Agent("a1", state = State())
       val a2 = Agent("a2", state = State())
@@ -27,6 +28,7 @@ object NetworkTests extends TestSuite {
 
       val donation = StateManager.createDonation("d-title", "d-desc", AgentManager.agentAsNode(a1))
       'donating {
+
         val msg = Message.createMessage(fromNode = AgentManager.agentAsNode(a1), toNode = AgentManager.agentAsNode(a2),
           DonateAction, donation)
 
@@ -39,32 +41,33 @@ object NetworkTests extends TestSuite {
         assert(getAgents.size == 3)
       }
 
-      var bid = StateManager.createBid(donation, amount = 1, by = n(1))
-      'bidding {
-        assert(bid.donation == donation)
-        // for testing purposes fudging the bid timestamp
-        bid = bid.copy(timestamp = bid.timestamp - 25 * 60 * 60 * 1000)
-        val msg = Message.createMessage(n(1), n(0), BidAction, bid)
+//      var bid = StateManager.createBid(donation, amount = 1, by = n(1))
+//      // for testing purposes fudging the bid timestamp
+//      bid = bid.copy(timestamp = bid.timestamp - 25 * 60 * 60 * 1000)
+//
+//      'bidding {
+//        assert(bid.donation == donation)
+//        val msg = Message.createMessage(n(1), n(0), BidAction, bid)
+//
+//
+//        Network.send(msg)
+//        waitClearQueue
+//
+//        for (a <- getAgents) {
+//          assert(a.state.bids.contains(bid))
+//          assert(a.state.bids.find(_ == bid).get.donation == donation)
+//        }
+//
+//        assert(Network.getAgents.size == 3)
+//      }
 
-
-        Network.send(msg)
-        waitClearQueue
-
-        for (a <- getAgents) {
-          assert(a.state.bids.contains(bid))
-          assert(a.state.bids.find(_ == bid).get.donation == donation)
-        }
-
-        assert(Network.getAgents.size == 3)
-      }
-
-      'bid_acceptance {
-        Thread.sleep(2000)
-        for (a <- getAgents) {
-          assert(!a.state.bids.contains(bid))
-          assert(!a.state.donations.contains(donation))
-        }
-      }
+//      'bid_acceptance {
+//        Thread.sleep(2000)
+//        for (a <- getAgents) {
+//          assert(!a.state.bids.contains(bid))
+//          assert(!a.state.donations.contains(donation))
+//        }
+//      }
 
     }
 
@@ -72,9 +75,7 @@ object NetworkTests extends TestSuite {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   def getAgents: Iterable[Agent] = {
-    val fs = Network.getAgents.map(_.getLast)
-    val f = Future.sequence(fs)
-    Await.result(f, Duration.Inf)
+    Network.getAgents.map(_.getLastAgent)
   }
 
   def waitClearQueue = {
@@ -87,8 +88,8 @@ object NetworkTests extends TestSuite {
     }
   }
 
-  object FastTestScheduler extends Scheduler {
-    override val cycleTime = 1000
-  }
+//  object FastTestScheduler extends Scheduler {
+//    override val cycleTime = 1000
+//  }
 
 }

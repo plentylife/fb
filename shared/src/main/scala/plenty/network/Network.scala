@@ -6,7 +6,7 @@ import plenty.network.communication.{CommsManager, Message}
 import plenty.state.model.Node
 
 import scala.collection.immutable.Queue
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Try}
 
@@ -41,15 +41,16 @@ object Network {
 
   def receive(msg: Message[_]) = {
     val agentPointer = agents.find(_.id == msg.to.id).get
-    agentPointer.executeWhenAvailable(agent => {
+    val p = Promise[Agent]()
+    agentPointer.getAgentToModify(p)
+    p.future.map(agent => {
       val agentAfterReception = CommsManager.receive(msg, toAgent = agent)
       agentPointer.set(agentAfterReception)
-//      println("receiving message", agent.id, msg)
-//      println("re-registered agent", agent)
     })
   }
 
   def registerAgent(agent: Agent) = {
+    println("reg a", agent.id)
     agents += new AgentPointer(agent)
     agentNodes += AgentManager.agentAsNode(agent)
   }
