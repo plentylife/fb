@@ -18,7 +18,7 @@ object StateLogic {
     a
   }
 
-  def registerTakenBid(bid: Bid)(implicit agent: Agent): Agent = {
+  def registerTakenBid(bid: Bid, agent: Agent): Agent = {
 //    val history = agent.state.history
 //    val historyUpdated = history.copy(
 //      donations = history.donations + bid.donation,

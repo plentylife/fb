@@ -32,8 +32,8 @@ object AgentManager {
     agent
   }
 
-  def registerTakenBid(bid: Bid, toAgent: Agent): Agent = {
-    var a = StateLogic.registerTakenBid(bid)
+  def registerTakenBid(bid: Bid, agent: Agent): Agent = {
+    var a = StateLogic.registerTakenBid(bid, agent)
     ActionLogic.transactOnPromisedBids(a)
     a
   }

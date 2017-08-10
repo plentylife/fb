@@ -25,6 +25,6 @@ private[communication] object Receiver {
       registerCoins(m.asInstanceOf[Message[Set[Coin]]].payload, toAgent)
 
     case m if m.payloadId == ActionIdentifiers.SETTLE_BID_ACTION =>
-
+      null
   }
 }
