@@ -2,6 +2,7 @@ package plenty.agent
 
 import java.util.Date
 
+import plenty.agent.AgentManager.agentAsNode
 import plenty.agent.model.Agent
 import plenty.network.Network
 import plenty.network.communication._
@@ -56,6 +57,22 @@ object ActionLogic {
     }
   }
 
+  def bidSettling(t: Transaction, agent: Agent): Unit = {
+    if (t.to == agentAsNode(agent) && validateBidSettle(t, agent)) {
+      Network.notifyAll(t, ActionIdentifiers.APPROVE_SETTLE_BID_ACTION, AgentManager.agentAsNode(agent))
+    } else {
+      Network.notifyAll(t, ActionIdentifiers.DENY_SETTLE_BID_ACTION, AgentManager.agentAsNode(agent))
+    }
+  }
+
+  private def validateBidSettle(t: Transaction, a: Agent): Boolean = {
+    val bid = a.state.nonSettledBids.find(_ == t.bid)
+    if (bid.isEmpty) return false
+    val coins = a.state.coins.intersect(t.coins)
+    if (coins.size < bid.get.amount) return false
+    return true
+  }
+
   private def takeBidForDonation(now: Long)(bids: Iterable[Bid]): Option[Bid] = {
     if (bids.isEmpty) return None
 
@@ -70,7 +87,6 @@ object ActionLogic {
       None
     }
   }
-
 
   def relayDonation(donation: Donation)(implicit agent: Agent) = {
     if (!agent.state.donations.contains(donation)) {

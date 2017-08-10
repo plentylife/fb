@@ -3,7 +3,7 @@ package plenty.agent
 import plenty.agent.model._
 import plenty.network.communication._
 import plenty.state.StateManager
-import plenty.state.model.{Bid, Coin, Donation, State}
+import plenty.state.model._
 
 /**
   * Facilitates interaction between two [[plenty.agent.model.Agent]]
@@ -46,6 +46,15 @@ object StateLogic {
     StateManager.save(agentUpd)
 
     agentUpd
+  }
+
+  def registerApprovedBidSettle(t: Transaction, agent: Agent): Agent = {
+    var s = agent.state
+    ???
+  }
+
+  def registerDeniedBidSettle(t: Transaction, agent: Agent): Agent = {
+    ???
   }
 
   def donationRegistration(donation: Donation)(implicit agent: Agent): Agent = {

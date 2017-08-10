@@ -1,8 +1,7 @@
 package plenty.agent
 
 import plenty.agent.model.Agent
-import plenty.network.communication.Message
-import plenty.state.model.{Bid, Coin, Donation, Node}
+import plenty.state.model._
 
 /**
   * The access point to the agent module
@@ -19,20 +18,20 @@ object AgentManager {
   def registerDonation(donation: Donation, toAgent: Agent): Agent = {
     implicit var agent = toAgent
     // todo. for now no relaying
-//    ActionLogic.relayDonation(donation)
+    //    ActionLogic.relayDonation(donation)
     agent = StateLogic.donationRegistration(donation)
 
     agent
   }
 
-
   def registerBid(bid: Bid, toAgent: Agent): Agent = {
     implicit var agent = toAgent
-// todo. for now no relaying
-//    ActionLogic.relayBid(bid)
+    // todo. for now no relaying
+    //    ActionLogic.relayBid(bid)
     agent = StateLogic.registerBid(bid)
     agent
   }
+
   def registerTakenBid(bid: Bid, toAgent: Agent): Agent = {
     var a = StateLogic.registerTakenBid(bid)
     ActionLogic.transactOnPromisedBids(a)
@@ -40,4 +39,6 @@ object AgentManager {
   }
 
   def takeBids(agent: Agent) = ActionLogic.takeBids(agent)
+
+  def registerBidSettlingTransaction(t: Transaction, agent: Agent) = ActionLogic.bidSettling(t, agent)
 }

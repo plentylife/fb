@@ -44,6 +44,8 @@ object ActionIdentifiers {
   val COINS_MINTED = Message.createAction[Set[Coin]]("COINS_MINTED")
   val BID_TAKE_ACTION = Message.createAction[Bid]("BID_TAKE_ACTION")
   val SETTLE_BID_ACTION = Message.createAction[Transaction]("SETTLE_BID_ACTION")
+  val DENY_SETTLE_BID_ACTION = Message.createAction[Transaction]("DENY_SETTLE_BID_ACTION")
+  val APPROVE_SETTLE_BID_ACTION = Message.createAction[Transaction]("APPROVE_SETTLE_BID_ACTION")
 }
 
 object DonateAction extends PayloadIdentifier[Donation] {

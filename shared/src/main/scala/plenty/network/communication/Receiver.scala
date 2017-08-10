@@ -19,9 +19,12 @@ private[communication] object Receiver {
       registerBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
 
     case m if m.payloadId.typeOfMsg == ActionIdentifiers.BID_TAKE_ACTION =>
-      registerTakenBid(m.asInstanceOf[Message[Bid]].payload)
+      registerTakenBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
 
     case m if m.payloadId == ActionIdentifiers.COINS_MINTED =>
       registerCoins(m.asInstanceOf[Message[Set[Coin]]].payload, toAgent)
+
+    case m if m.payloadId == ActionIdentifiers.SETTLE_BID_ACTION =>
+
   }
 }
