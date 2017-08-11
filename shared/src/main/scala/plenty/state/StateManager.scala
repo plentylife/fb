@@ -42,7 +42,7 @@ object StateManager {
     val current = new BufferedOutputStream(new FileOutputStream(currentFilename))
 
 
-    val pickle = Pickle.intoBytes(agent.state)
+    val pickle = Pickle.intoBytes(agent)
 
     while (pickle.remaining() > 0) {
       val next = pickle.get()
@@ -56,15 +56,27 @@ object StateManager {
 
   def load(agentId: String): Agent = {
     val filename = s"./data-stores/current/${agentId}.plenty"
+    loadFromFile(filename)
+  }
+
+  private def loadFromFile(filename: String): Agent = {
     val reader = new BufferedInputStream(new FileInputStream(filename))
 
     var bytes = Stream[Byte]()
     while (reader.available() > 0) {
       bytes = bytes :+ reader.read().toByte
     }
-    val unpickledState = Unpickle[State].fromBytes(ByteBuffer.wrap(bytes.toArray))
+    Unpickle[Agent].fromBytes(ByteBuffer.wrap(bytes.toArray))
+  }
 
-    Agent(id = agentId, state = unpickledState)
+  def loadAll(): Set[Agent] = {
+    val currentDir = new File("./data-stores/current/")
+    val allAgentFiles = currentDir.listFiles()
+    val agents = allAgentFiles map {f => loadFromFile(f.getAbsolutePath)}
+    val agentSet = agents.toSet
+    // making sure there isn't something wrong with saving
+    require(agentSet.size == agents.size, "Duplicate agent files in current directory")
+    agentSet
   }
 }
 

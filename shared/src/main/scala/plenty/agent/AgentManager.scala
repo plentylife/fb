@@ -1,12 +1,19 @@
 package plenty.agent
 
 import plenty.agent.model.Agent
+import plenty.network.MintPress
 import plenty.state.model._
 
 /**
   * The access point to the agent module
   */
 object AgentManager {
+  def createAgent(id: String): Agent = {
+    val a = Agent(id, state = State())
+    MintPress.distributeCoinsToNewAgent(a)
+    a
+  }
+
   def agentAsNode(agent: Agent): Node = {
     Node(agent.id)
   }

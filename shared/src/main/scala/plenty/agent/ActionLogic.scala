@@ -66,11 +66,15 @@ object ActionLogic {
   }
 
   private def validateBidSettle(t: Transaction, a: Agent): Boolean = {
-    val bid = a.state.nonSettledBids.find(_ == t.bid)
-    if (bid.isEmpty) return false
-    val coins = a.state.coins.intersect(t.coins)
-    if (coins.size < bid.get.amount) return false
-    return true
+    t.bid match {
+      case Some(tbid) =>
+        val bid = a.state.nonSettledBids.find(_ == tbid)
+        if (bid.isEmpty) return false
+        val coins = a.state.coins.intersect(t.coins)
+        if (coins.size < bid.get.amount) return false
+        return true
+      case _ => false
+    }
   }
 
   private def takeBidForDonation(now: Long)(bids: Iterable[Bid]): Option[Bid] = {

@@ -72,10 +72,12 @@ object Network {
 
   private var agents: Set[AgentPointer] = Set()
   private var agentNodes: Set[Node] = Set()
-  def registerAgent(agent: Agent) = {
+  def registerAgent(agent: Agent): AgentPointer = {
     println(s"registering ${agent.id}")
-    agents += new AgentPointer(agent)
+    val pointer = new AgentPointer(agent)
+    agents += pointer
     agentNodes += AgentManager.agentAsNode(agent)
+    pointer
   }
   def getAgents = agents
 
