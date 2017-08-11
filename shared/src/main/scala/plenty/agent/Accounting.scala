@@ -14,6 +14,8 @@ object Accounting {
     agent.state.coins.count(c => c.belongsTo.id == node.id && c.deathTime > now)
   }
 
+  def getSelfBalance(agent: Agent) = getBalance(AgentManager.agentAsNode(agent))(agent)
+
   def clearDeadCoins(implicit agent: Agent): Agent = {
     val now = new Date().getTime
     var s = agent.state

@@ -12,9 +12,8 @@ object FbMain {
   def main(args: Array[String]): Unit = {
 
     // loading network
-    FbAgent.load()
     val agents = StateManager.loadAll() foreach Network.registerAgent
-
+    FbAgent.load()
     FbServer.start()
   }
 }

@@ -1,5 +1,7 @@
 package fb
 
+import java.util.Date
+
 import com.restfb.Parameter
 import com.restfb.types.User
 
@@ -14,7 +16,10 @@ object UserInfo {
   }
 
   def get(id: String): UserInfo = store.get(id) match {
-    case Some(ui) => ui
+    case Some(ui) =>
+      // updating last access
+      add(ui.copy(lastAccess = new Date().getTime))
+      ui
     case _ => retrieveUserInfo(id)
   }
 
@@ -26,4 +31,4 @@ object UserInfo {
   }
 }
 
-case class UserInfo(id: String, name: String)
+case class UserInfo(id: String, name: String, lastAccess: Long = new Date().getTime)

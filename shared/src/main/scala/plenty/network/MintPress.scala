@@ -34,9 +34,10 @@ trait MintPress {
     }
   }
 
-  def distributeCoinsToNewAgent(to: Agent) = {
+  def distributeCoinsToNewAgent(to: Agent): Set[Coin] = {
     val coins = genCoins(Set(to))
     Network.notifyAll(coins, ActionIdentifiers.COINS_MINTED, from = null)
+    coins
   }
 
   /** Creates the coin models in quantities enough for all participants in the network */

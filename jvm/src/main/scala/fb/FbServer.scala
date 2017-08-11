@@ -13,6 +13,7 @@ import akka.stream.ActorMaterializer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.{Source, StdIn}
+import scala.util.Failure
 
 object FbServer {
   def start() {
@@ -35,7 +36,10 @@ object FbServer {
         } ~
           post {
             entity(as[String]) {webhookMsg =>
-              Future(ReceiverFlow.receive(webhookMsg))
+              Future(ReceiverFlow.receive(webhookMsg)).onComplete({
+                case Failure(e) => println(s"ERROR in webhook ${e.getMessage}\n${e.getStackTrace.mkString("\n")}")
+                case _ => null
+              })
               complete(StatusCodes.OK)
             }
           }

@@ -9,8 +9,9 @@ import plenty.state.model._
   */
 object AgentManager {
   def createAgent(id: String): Agent = {
-    val a = Agent(id, state = State())
-    MintPress.distributeCoinsToNewAgent(a)
+    var a = Agent(id, state = State())
+    val coins = MintPress.distributeCoinsToNewAgent(a)
+    a = StateLogic.registerCoins(coins, a)
     a
   }
 

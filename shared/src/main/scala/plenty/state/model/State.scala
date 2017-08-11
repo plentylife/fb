@@ -7,6 +7,7 @@ import plenty.network.communication.Message
   */
 case class State(
                   val nodes: Set[Node] = Set[Node](),
+                  // must remain a set!
                   val coins: Set[Coin] = Set[Coin](),
                   val donations: Set[Donation] = Set[Donation](),
                   val bids: Set[Bid] = Set(),
