@@ -2,7 +2,7 @@ package plenty.network.communication
 
 import plenty.agent.AgentManager._
 import plenty.agent.model.Agent
-import plenty.state.model.{Bid, Coin, Donation}
+import plenty.state.model.{Bid, Coin, Donation, Node}
 
 /**
   * Created by anton on 8/8/17.
@@ -26,5 +26,8 @@ private[communication] object Receiver {
 
     case m if m.payloadId == ActionIdentifiers.SETTLE_BID_ACTION =>
       null
+
+    case m if m.payloadId == ActionIdentifiers.REGISTER_NODE =>
+      registerNode(m.payload.asInstanceOf[Node], toAgent)
   }
 }

@@ -32,7 +32,7 @@ object ActionLogic {
 //    println(s"agent ${agent.id} has accepted ${accepted}")
     val self = AgentManager.agentAsNode(agent)
     for (acceptedBid <- accepted) {
-      Network.notifyAll(acceptedBid, ActionIdentifiers.BID_TAKE_ACTION, from = self)
+      Network.notifyAllAgents(acceptedBid, ActionIdentifiers.BID_TAKE_ACTION, from = self)
 //      CommsManager.toSelf(acceptedBid, BidAcceptAction, self = self)
 //      CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = self)
     }
@@ -59,9 +59,9 @@ object ActionLogic {
 
   def bidSettling(t: Transaction, agent: Agent): Unit = {
     if (t.to == agentAsNode(agent) && validateBidSettle(t, agent)) {
-      Network.notifyAll(t, ActionIdentifiers.APPROVE_SETTLE_BID_ACTION, AgentManager.agentAsNode(agent))
+      Network.notifyAllAgents(t, ActionIdentifiers.APPROVE_SETTLE_BID_ACTION, AgentManager.agentAsNode(agent))
     } else {
-      Network.notifyAll(t, ActionIdentifiers.DENY_SETTLE_BID_ACTION, AgentManager.agentAsNode(agent))
+      Network.notifyAllAgents(t, ActionIdentifiers.DENY_SETTLE_BID_ACTION, AgentManager.agentAsNode(agent))
     }
   }
 

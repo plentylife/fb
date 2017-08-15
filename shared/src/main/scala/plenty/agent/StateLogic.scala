@@ -10,6 +10,14 @@ import plenty.state.model._
   */
 object StateLogic {
 
+  def registerNode(node: Node, agent: Agent): Agent = {
+    var s = agent.state
+    s = s.copy(nodes = s.nodes + node)
+    val a = agent.copy(state = s)
+    StateManager.save(a)
+    a
+  }
+
   def registerCoins(coins: Set[Coin], agent: Agent): Agent = {
     var s = agent.state
     s = s.copy(coins = s.coins ++ coins)

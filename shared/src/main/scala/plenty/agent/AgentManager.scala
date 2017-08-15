@@ -8,6 +8,8 @@ import plenty.state.model._
   * The access point to the agent module
   */
 object AgentManager {
+  var callbacks: CallbacksTrait = new CallbacksTrait {}
+
   def createAgent(id: String): Agent = {
     var a = Agent(id, state = State())
     val coins = MintPress.distributeCoinsToNewAgent(a)
@@ -19,6 +21,10 @@ object AgentManager {
     Node(agent.id)
   }
 
+  def registerNode(node: Node, agent: Agent): Agent = {
+    StateLogic.registerNode(node, agent)
+  }
+
   def registerCoins(coins: Set[Coin], agent: Agent): Agent = {
     StateLogic.registerCoins(coins, agent)
   }
@@ -28,7 +34,6 @@ object AgentManager {
     // todo. for now no relaying
     //    ActionLogic.relayDonation(donation)
     agent = StateLogic.donationRegistration(donation)
-
     agent
   }
 

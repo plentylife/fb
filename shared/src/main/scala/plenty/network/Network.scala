@@ -59,7 +59,7 @@ object Network {
   }
 
   /* utility functions */
-  def notifyAll[P](payload: P, payloadId: PayloadIdentifier[P], from: Node) = {
+  def notifyAllAgents[P](payload: P, payloadId: PayloadIdentifier[P], from: Node) = {
     val unaddressedMsg = (to: Node) => Message.createMessage(fromNode = from, toNode = to, msgPayloadId = payloadId,
       msgPayload = payload)
     for (ap <- agents) {
@@ -76,7 +76,8 @@ object Network {
     println(s"registering ${agent.id}")
     val pointer = new AgentPointer(agent)
     agents += pointer
-    agentNodes += AgentManager.agentAsNode(agent)
+    val n = AgentManager.agentAsNode(agent)
+    agentNodes += n
     pointer
   }
   def getAgents = agents

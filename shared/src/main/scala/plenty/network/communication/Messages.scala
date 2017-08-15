@@ -46,6 +46,7 @@ object ActionIdentifiers {
   val SETTLE_BID_ACTION = Message.createAction[Transaction]("SETTLE_BID_ACTION")
   val DENY_SETTLE_BID_ACTION = Message.createAction[Transaction]("DENY_SETTLE_BID_ACTION")
   val APPROVE_SETTLE_BID_ACTION = Message.createAction[Transaction]("APPROVE_SETTLE_BID_ACTION")
+  val REGISTER_NODE = Message.createAction[Node]("REGISTER_NODE")
 }
 
 object DonateAction extends PayloadIdentifier[Donation] {

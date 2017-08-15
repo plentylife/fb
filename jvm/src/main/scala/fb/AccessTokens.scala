@@ -7,5 +7,6 @@ import scala.io.Source
   */
 object AccessTokens {
   val pageToken = Source.fromFile("./private/page-token.txt").mkString.trim
+  val pageId = Source.fromFile("./private/page-id.txt").mkString.trim
   val webhookVerification = Source.fromFile("./private/webhook-verification.txt").mkString.trim
 }

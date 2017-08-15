@@ -25,7 +25,7 @@ object Responses {
     val recipient = new IdMessageRecipient(id)
     val senderActionParam = Parameter.`with`("sender_action", SenderActionEnum.typing_on)
     val recipientParam = Parameter.`with`("recipient", recipient)
-    val resp = fbClient.publish("me/messages", classOf[SendResponse], senderActionParam, // the sender action
+    val resp = fbMsgClient.publish("me/messages", classOf[SendResponse], senderActionParam, // the sender action
       recipientParam) // the recipient
 
   }
@@ -48,10 +48,22 @@ object Responses {
     sendSimpleMessage(agent.id, msg)
   }
 
+  def donationInstruction(agent: AgentPointer) = {
+    val userInfo = UserInfo.get(agent.id)
+    sendSimpleMessage(userInfo.id, s"${userInfo.name}, you have time, skills, and items to donate. In your next " +
+      s"message describe those: for example, 'Math tutoring for one hour' or 'Ice cream maker' with pictures attached")
+  }
+
   def firstContact(agent: AgentPointer) = {
     val userInfo = UserInfo.get(agent.id)
     sendSimpleMessage(userInfo.id, s"Hey ${userInfo.name}!")
     accountStatus(agent)
+  }
+
+  def error(a: AgentPointer) = {
+    val ui = UserInfo.get(a.id)
+    val msg = {s"${ui.name}, sorry some unknown error has occurred. We will do our best to fix it."}
+    sendSimpleMessage(ui.id, msg)
   }
 
   def unrecognized(a: AgentPointer) = {
@@ -62,7 +74,7 @@ object Responses {
 
   private def sendSimpleMessage(id: String, msg: String) = {
     val recipient = new IdMessageRecipient(id)
-    fbClient.publish("me/messages", classOf[SendResponse],
+    fbMsgClient.publish("me/messages", classOf[SendResponse],
       Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", new Message(msg)))
   }

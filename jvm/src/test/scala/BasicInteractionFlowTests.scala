@@ -40,7 +40,7 @@ object NetworkTests extends TestSuite {
       }
 
       'donating {
-        Network.notifyAll(donation, DonateAction, from = AgentManager.agentAsNode(a1))
+        Network.notifyAllAgents(donation, DonateAction, from = AgentManager.agentAsNode(a1))
         waitClearQueue
 
         for (a <- getAgents) {

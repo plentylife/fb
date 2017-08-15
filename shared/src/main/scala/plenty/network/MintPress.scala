@@ -29,14 +29,14 @@ trait MintPress {
     if(lastDistributionTime + period <= now) {
       val coins = genCoins(to)
       /* from=null signifies that it is from the network */
-      Network.notifyAll(coins, ActionIdentifiers.COINS_MINTED, from = null)
+      Network.notifyAllAgents(coins, ActionIdentifiers.COINS_MINTED, from = null)
       lastDistributionTime = now
     }
   }
 
   def distributeCoinsToNewAgent(to: Agent): Set[Coin] = {
     val coins = genCoins(Set(to))
-    Network.notifyAll(coins, ActionIdentifiers.COINS_MINTED, from = null)
+    Network.notifyAllAgents(coins, ActionIdentifiers.COINS_MINTED, from = null)
     coins
   }
 
