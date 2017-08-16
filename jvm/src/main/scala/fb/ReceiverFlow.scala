@@ -4,7 +4,7 @@ import java.util.Date
 
 import com.restfb.types.send.{IdMessageRecipient, Message, SendResponse}
 import com.restfb.types.webhook.messaging.MessagingItem
-import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
+import com.restfb.types.webhook.{Change, FeedCommentValue, WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
 import plenty.agent.{AgentManager, AgentPointer}
 import plenty.network.Network
@@ -19,16 +19,30 @@ object ReceiverFlow {
     val mapper = new DefaultJsonMapper
     val webhookObject = mapper.toJavaObject(payload, classOf[WebhookObject])
     val iter = webhookObject.getEntryList.listIterator()
-    println(s"webhook object $webhookObject")
+//    println(s"webhook object $webhookObject")
     while (iter.hasNext) {
       process(iter.next())
     }
   }
 
   private def process(entry: WebhookEntry) = {
-    val iter = entry.getMessaging.iterator()
-    while (iter.hasNext) {
-      processMessagingItem(iter.next())
+    val msgIter = entry.getMessaging.iterator()
+    val feedIter = entry.getChanges.iterator()
+    while (msgIter.hasNext) {
+      processMessagingItem(msgIter.next())
+    }
+    while (feedIter.hasNext) processFeedItem(feedIter.next())
+  }
+
+  private def processFeedItem(item: Change) = {
+    val value = item.getValue
+    value match {
+      case comment: FeedCommentValue if comment.getSenderId != Access.pageId =>
+        val senderId = comment.getSenderId
+        println(s"comment $comment")
+        val a = getAgent(senderId) getOrElse createAgent(senderId)
+        Utility.processCommentAsBid(comment, a)
+      case _ =>
     }
   }
 

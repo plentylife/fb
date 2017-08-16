@@ -8,7 +8,7 @@ import plenty.state.model.{Donation, Node}
   * Created by anton on 8/11/17.
   */
 package object fb {
-  val fbMsgClient = new DefaultFacebookClient(AccessTokens.pageToken, Version.VERSION_2_9)
-  val fbPageClient = new DefaultFacebookClient(AccessTokens.pageToken, Version.VERSION_2_9)
+  val fbMsgClient = new DefaultFacebookClient(Access.pageToken, Version.VERSION_2_9)
+  val fbPageClient = new DefaultFacebookClient(Access.pageToken, Version.VERSION_2_9)
 
 }

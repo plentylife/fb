@@ -26,6 +26,7 @@ object FbServer {
     val route =
       pathEndOrSingleSlash {
         // for verification
+        println("REQUEST")
         get {
           parameterMap { params =>
             // fixme implement this properly
@@ -65,6 +66,7 @@ object FbServer {
 
 
     val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080, connectionContext = https)
+//    val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080)
 
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return

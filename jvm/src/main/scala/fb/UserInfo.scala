@@ -24,11 +24,11 @@ object UserInfo {
   }
 
   def retrieveUserInfo(id: String): UserInfo = {
-    val fbUser = fbMsgClient.fetchObject(id, classOf[User], Parameter.`with`("fields", "first_name"))
-    val ui = UserInfo(id, name = fbUser.getFirstName)
+    val fbUser = fbMsgClient.fetchObject(id, classOf[User], Parameter.`with`("fields", "first_name, last_name"))
+    val ui = UserInfo(id, name = fbUser.getFirstName, lastName = fbUser.getLastName)
     add(ui)
     ui
   }
 }
 
-case class UserInfo(id: String, name: String, lastAccess: Long = new Date().getTime)
+case class UserInfo(id: String, name: String, lastName: String, lastAccess: Long = new Date().getTime)

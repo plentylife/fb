@@ -10,7 +10,9 @@ import com.restfb.types.send._
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.agent.model.Agent
 import com.restfb.Parameter
-import plenty.state.model.Donation
+import com.restfb.types.Comment
+import com.restfb.types.webhook.FeedCommentValue
+import plenty.state.model.{Bid, Donation}
 
 /**
   * Created by anton on 8/11/17.
@@ -89,8 +91,20 @@ object Responses {
         Parameter.`with`("message", new Message(new TemplateAttachment(payload))))
     } catch {
       case e: Throwable =>
-        throw e
         Responses.errorPersonal(ui)
+        throw e
+    }
+  }
+
+  def bidEntered(bid: Bid, replyToComment: FeedCommentValue, a: AgentPointer) = {
+    try {
+      val replyToId = replyToComment.getCommentId
+      fbMsgClient.publish(s"$replyToId/comments", classOf[SendResponse],
+        Parameter.`with`("message", s"Your bid of ${bid.amount}$thanksSymbol has been entered"))
+    } catch {
+      case e:Throwable =>
+        errorPersonal(a)
+        throw e
     }
   }
 

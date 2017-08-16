@@ -5,6 +5,7 @@ import java.util
 import com.restfb.{BinaryAttachment, Parameter}
 import com.restfb.types.{GraphResponse, Photo, Post}
 import com.restfb.types.send.{MediaAttachment, Message}
+import com.restfb.types.webhook.FeedCommentValue
 import com.restfb.types.webhook.messaging.{MessagingAttachment, MessagingItem}
 import plenty.agent.{AgentManager, AgentPointer}
 import plenty.agent.model.Agent
@@ -51,24 +52,23 @@ object Utility {
   /** @return post id*/
   def publishDonation(a: AgentPointer): Option[(Donation, String)] = FbState.finishDonation(a.node) match {
     case Some(donation: Donation) =>
-      Network.notifyAllAgents(donation, DonateAction, FbAgent.node)
-
       val attachments = new util.ArrayList[String]()
       donation.attachments map {url =>
-        val id = fbMsgClient.publish(s"${AccessTokens.pageId}/photos",
+        val id = fbMsgClient.publish(s"${Access.pageId}/photos",
           classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
         ).getId
         s"{'media_fbid':'${id}'}"
       } foreach {attachments.add}
-
-
       try {
-        val publishMessageResponse = fbMsgClient.publish(s"${AccessTokens.pageId}/feed",
+        val publishMessageResponse = fbMsgClient.publish(s"${Access.pageId}/feed",
           classOf[Post],
           Parameter.`with`("message", donation.description),
           Parameter.`with`("attached_media", attachments)
         )
-        Some(donation -> publishMessageResponse.getId)
+        // modifying donation to have id same as post id
+        val dWithPostId = donation.copy(id = publishMessageResponse.getId)
+        Network.notifyAllAgents(dWithPostId, DonateAction, FbAgent.node)
+        Some(dWithPostId -> publishMessageResponse.getId)
       } catch {
         case e: Throwable =>
           Responses.errorPersonal(a)
@@ -81,4 +81,22 @@ object Utility {
 
   def cancelDonation(a: AgentPointer) = FbState.finishDonation(a.node)
 
+  private val bidRegex = "bid ([0-9]+)".r
+  def processCommentAsBid(comment: FeedCommentValue, a: AgentPointer) = {
+    val txt = comment.getMessage.trim.toLowerCase
+    bidRegex.findFirstMatchIn(txt) match {
+      case Some(rm) =>
+        val amount = rm.group(1).toInt
+        val postId = comment.getPostId
+        a.getAgentInLastKnownState.state.donations.find(_.id == postId) match {
+          case Some(d) =>
+            val bid = StateManager.createBid(d, amount, a.node)
+            println(s"bid ${bid}")
+            Responses.bidEntered(bid, comment, a)
+          case _ => Responses.errorPersonal(a)
+        }
+      case _ =>
+    }
+
+  }
 }
