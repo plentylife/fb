@@ -98,7 +98,7 @@ object ReceiverFlow {
         } else {
           val recipient = new IdMessageRecipient(ui.id)
           val msg = new Message(s"We were just talking!")
-          fbMsgClient.publish("me/messages", classOf[SendResponse],
+          fbClient.publish("me/messages", classOf[SendResponse],
             Parameter.`with`("recipient", recipient),
             Parameter.`with`("message", msg))
         }
@@ -129,7 +129,7 @@ object ReceiverFlow {
   private def donationTree(a: AgentPointer, msgItem: MessagingItem): Boolean = {
     if (FbState.donationExists(a.node)) {
 
-      Utility.getNodeFromNetwork(msgItem) match {
+      Utility.getNodeFromFbAgent(msgItem) match {
         case Some(node) =>
           Utility.updateDonation(msgItem, node)
           Responses.donationContinue(a)
@@ -152,7 +152,7 @@ object ReceiverFlow {
     val a = AgentManager.createAgent(id)
     val n = AgentManager.agentAsNode(a)
     FbAgent.registerNode(n)
-    Network.registerAgent(a)
+    Network.registerAgent(a, FbSendInterface)
   }
 
 }

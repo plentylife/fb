@@ -1,7 +1,7 @@
 package fb
 
 import plenty.state.StateManager
-import plenty.state.model.{Donation, Node}
+import plenty.state.model.{Bid, Donation, Node}
 
 /**
   * Created by anton on 8/15/17.
@@ -10,6 +10,9 @@ object FbState {
 
   /** fb user id -> donation */
   private var donationsInProgress = Map[Node, Donation]()
+
+  /** bid -> comment id*/
+  private var bidsInProgress = Map[Bid, String]()
 
   def getOrCreateDonation(node: Node): Donation = {
     donationsInProgress.get(node) match {
@@ -31,4 +34,13 @@ object FbState {
     donationsInProgress += (donation.by -> donation)
   }
 
+  def trackBid(bid: Bid, commentId: String) = synchronized {
+    bidsInProgress += bid -> commentId
+  }
+
+  def popBid(bid: Bid): String = synchronized {
+    val cId = bidsInProgress(bid)
+    bidsInProgress -= bid
+    cId
+  }
 }

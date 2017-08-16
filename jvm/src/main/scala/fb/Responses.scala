@@ -10,7 +10,7 @@ import com.restfb.types.send._
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.agent.model.Agent
 import com.restfb.Parameter
-import com.restfb.types.Comment
+import com.restfb.types.{Comment, GraphResponse}
 import com.restfb.types.webhook.FeedCommentValue
 import plenty.state.model.{Bid, Donation}
 
@@ -27,7 +27,7 @@ object Responses {
     val recipient = new IdMessageRecipient(id)
     val senderActionParam = Parameter.`with`("sender_action", SenderActionEnum.typing_on)
     val recipientParam = Parameter.`with`("recipient", recipient)
-    val resp = fbMsgClient.publish("me/messages", classOf[SendResponse], senderActionParam, // the sender action
+    val resp = fbClient.publish("me/messages", classOf[SendResponse], senderActionParam, // the sender action
       recipientParam) // the recipient
 
   }
@@ -66,7 +66,7 @@ object Responses {
     val msg = new Message(txt)
     msg.addQuickReply(done)
     msg.addQuickReply(cancel)
-    fbMsgClient.publish("me/messages", classOf[SendResponse],
+    fbClient.publish("me/messages", classOf[SendResponse],
       Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", msg))
   }
@@ -86,7 +86,7 @@ object Responses {
 
     val recipient = new IdMessageRecipient(ui.id)
     try {
-      fbMsgClient.publish("me/messages", classOf[SendResponse],
+      fbClient.publish("me/messages", classOf[SendResponse],
         Parameter.`with`("recipient", recipient),
         Parameter.`with`("message", new Message(new TemplateAttachment(payload))))
     } catch {
@@ -96,23 +96,25 @@ object Responses {
     }
   }
 
-  def bidEntered(bid: Bid, replyToComment: FeedCommentValue, a: AgentPointer) = {
+  def bidEntered(bid: Bid, replyToCommentId: String, userInfo: UserInfo) = {
     try {
-      val replyToId = replyToComment.getCommentId
-      fbMsgClient.publish(s"$replyToId/comments", classOf[SendResponse],
+      fbClient.publish(s"$replyToCommentId/comments", classOf[GraphResponse],
         Parameter.`with`("message", s"Your bid of ${bid.amount}$thanksSymbol has been entered"))
     } catch {
       case e:Throwable =>
-        errorPersonal(a)
+        errorPersonal(userInfo)
         throw e
     }
   }
+
+//  def bidRejected(bid: )
 
   def firstContact(agent: AgentPointer) = {
     val userInfo = UserInfo.get(agent.id)
     sendSimpleMessage(userInfo.id, s"Hey ${userInfo.name}!")
     accountStatus(agent)
   }
+
 
   def errorPersonal(a: AgentPointer): Unit = {
     val ui = UserInfo.get(a.id)
@@ -131,9 +133,20 @@ object Responses {
 
   private def sendSimpleMessage(id: String, msg: String) = {
     val recipient = new IdMessageRecipient(id)
-    fbMsgClient.publish("me/messages", classOf[SendResponse],
+    fbClient.publish("me/messages", classOf[SendResponse],
       Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", new Message(msg)))
+  }
+
+  /** simple publish action with error catching (as user feedback) */
+  private def fbClientPublish(ui: UserInfo, endpoint: String, parameters:Parameter*): GraphResponse = {
+    try {
+      fbClient.publish(endpoint, classOf[GraphResponse], parameters:_*)
+    } catch {
+      case e:Throwable =>
+        errorPersonal(ui)
+        throw e
+    }
   }
 
 }

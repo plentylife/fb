@@ -1,7 +1,7 @@
 import plenty.agent.AgentManager
 import plenty.agent.model.Agent
-import plenty.network.communication.{BidAction, DonateAction, Message}
-import plenty.network.{Network, Scheduler}
+import plenty.network.BidAction
+import plenty.network._
 import plenty.state.StateManager
 import plenty.state.model.State
 import utest._
@@ -33,9 +33,9 @@ object NetworkTests extends TestSuite {
     'three_agent_network {
 
       'registering_agents {
-        Network.registerAgent(a1)
-        Network.registerAgent(a2)
-        Network.registerAgent(a3)
+        Network.registerAgent(a1, MockSendInterface)
+        Network.registerAgent(a2, MockSendInterface)
+        Network.registerAgent(a3, MockSendInterface)
         assert(getAgents.size == 3)
       }
 

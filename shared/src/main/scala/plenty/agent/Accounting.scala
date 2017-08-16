@@ -27,7 +27,11 @@ object Accounting {
   def createTransaction(to: Node, amount: Int)(implicit agent: Agent): Either[InsufficientBalance, Transaction] = ???
 
   private def canTransactAmount(amount: Int)(implicit agent: Agent): Boolean = {
-    Accounting.getBalance(AgentManager.agentAsNode(agent))(agent) >= amount
+    canTransactAmount(AgentManager.agentAsNode(agent), agent, amount)
+  }
+
+  def canTransactAmount(node: Node, agent: Agent, amount: Int): Boolean = {
+    Accounting.getBalance(node)(agent) >= amount
   }
 
 }

@@ -1,7 +1,7 @@
 package plenty.agent
 
 import plenty.agent.model.Agent
-import plenty.network.MintPress
+import plenty.network.{Message, MintPress}
 import plenty.state.model._
 
 /**
@@ -15,7 +15,7 @@ object AgentManager {
     a
   }
 
-  def agentAsNode(agent: Agent): Node = {
+  implicit def agentAsNode(agent: Agent): Node = {
     Node(agent.id)
   }
 
@@ -27,20 +27,23 @@ object AgentManager {
     StateLogic.registerCoins(coins, agent)
   }
 
-  def registerDonation(donation: Donation, toAgent: Agent): Agent = {
+  def registerDonation(msg: Message[Donation], toAgent: Agent): Agent = {
     implicit var agent = toAgent
+    val donation = msg.payload
+    agent = StateLogic.donationRegistration(donation)
     // todo. for now no relaying
     //    ActionLogic.relayDonation(donation)
-    agent = StateLogic.donationRegistration(donation)
     agent
   }
 
-  def registerBid(bid: Bid, toAgent: Agent): Agent = {
+  def verifyBid(msg: Message[Bid], toAgent: Agent): Agent = {
     implicit var agent = toAgent
+    val bid = msg.payload
+
+    ActionLogic.acceptRejectBid(bid, msg.from, agent)
+    agent
     // todo. for now no relaying
     //    ActionLogic.relayBid(bid)
-    agent = StateLogic.registerBid(bid)
-    agent
   }
 
   def registerTakenBid(bid: Bid, agent: Agent): Agent = {

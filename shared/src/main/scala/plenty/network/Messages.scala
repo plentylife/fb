@@ -1,9 +1,8 @@
-package plenty.network.communication
+package plenty.network
 
 import java.security.SecureRandom
 import java.util.Date
 
-import plenty.agent.model.Agent
 import plenty.state.model._
 
 /**
@@ -46,6 +45,10 @@ object ActionIdentifiers {
   val SETTLE_BID_ACTION = Message.createAction[Transaction]("SETTLE_BID_ACTION")
   val DENY_SETTLE_BID_ACTION = Message.createAction[Transaction]("DENY_SETTLE_BID_ACTION")
   val APPROVE_SETTLE_BID_ACTION = Message.createAction[Transaction]("APPROVE_SETTLE_BID_ACTION")
+  /** a message back signifying that a bid has been accepted for consideration */
+  val ACCEPT_BID_ACTION = Message.createAction[Bid]("ACCEPT_BID_ACTION")
+  /** the bid has NOT been accepted for consideration for some reason such as low balance */
+  val REJECT_BID_ACTION = Message.createAction[Bid]("REJECT_BID_ACTION")
   val REGISTER_NODE = Message.createAction[Node]("REGISTER_NODE")
 }
 

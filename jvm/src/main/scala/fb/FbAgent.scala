@@ -2,8 +2,8 @@ package fb
 
 import plenty.agent.{AgentManager, AgentPointer}
 import plenty.agent.model.Agent
-import plenty.network.Network
-import plenty.network.communication.{ActionIdentifiers, Message}
+import plenty.network.{ActionIdentifiers, Message, Network}
+import plenty.network.ActionIdentifiers
 import plenty.state.model.{Node, State}
 
 /**
@@ -26,7 +26,7 @@ object FbAgent {
   private def create: AgentPointer = {
     // manual creation as to not create coins
     val a = Agent(id, state = State())
-    Network.registerAgent(a)
+    Network.registerAgent(a, FbSendInterface)
   }
 
   def registerNode(toRegister: Node) = {

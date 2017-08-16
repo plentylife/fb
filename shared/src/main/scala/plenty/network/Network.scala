@@ -2,7 +2,6 @@ package plenty.network
 
 import plenty.agent.model.Agent
 import plenty.agent.{AgentManager, AgentPointer}
-import plenty.network.communication.{CommsManager, Message, PayloadIdentifier}
 import plenty.state.model.Node
 
 import scala.collection.immutable.Queue
@@ -14,16 +13,14 @@ import scala.util.Failure
   * Created by anton on 8/8/17.
   */
 object Network {
-  // registering sender method
-  CommsManager.send = send
-
   /* basic functions */
-
   def send(msg: Message[_]): Unit = {
     var rid = -1
     val msgF = Future {
       rid = addNonComplete()
-      Network.receive(msg)
+//      Network.receive(msg)
+      val ap = nodeToAgent(msg.to)
+      agents(ap).send(msg)
     }
     msgF.onComplete {
       case Failure(e: Throwable) => {
@@ -34,7 +31,7 @@ object Network {
   }
 
   def receive(msg: Message[_]) = {
-    val agentPointer = agents.find(_.id == msg.to.id).get
+    val agentPointer = getAgents.find(_.id == msg.to.id).get
     val p = Promise[Agent]()
     agentPointer.getAgentToModify(p)
     //    println(s"receive $msg")
@@ -45,12 +42,13 @@ object Network {
     val f = p.future.map(agent => {
       rid = addNonComplete()
       //      println(s"got agent ${agent.id}")
-      val agentAfterReception = CommsManager.receive(msg, toAgent = agent)
+      val agentAfterReception = Receiver.receive(msg)(agent)
       agentPointer.set(agentAfterReception)
       //      println(s"set agent ${agent.id}")
     })
     f.onComplete({
       case Failure(e: Throwable) => {
+        removeNonComplete(rid)
         Network.throwErrorFromMsg(e)
       }
       case _ =>
@@ -62,7 +60,7 @@ object Network {
   def notifyAllAgents[P](payload: P, payloadId: PayloadIdentifier[P], from: Node) = {
     val unaddressedMsg = (to: Node) => Message.createMessage(fromNode = from, toNode = to, msgPayloadId = payloadId,
       msgPayload = payload)
-    for (ap <- agents) {
+    for (ap <- getAgents) {
       val msg = unaddressedMsg(AgentManager.agentAsNode(ap.getAgentInLastKnownState))
       send(msg)
     }
@@ -70,17 +68,16 @@ object Network {
 
   /* agent registration */
 
-  private var agents: Set[AgentPointer] = Set()
-  private var agentNodes: Set[Node] = Set()
-  def registerAgent(agent: Agent): AgentPointer = {
+  private var agents: Map[AgentPointer, SendInterface] = Map()
+  private var nodeToAgent: Map[Node, AgentPointer] = Map()
+  def registerAgent(agent: Agent, interface: SendInterface): AgentPointer = {
     println(s"registering ${agent.id}")
     val pointer = new AgentPointer(agent)
-    agents += pointer
-    val n = AgentManager.agentAsNode(agent)
-    agentNodes += n
+    agents += pointer -> interface
+    nodeToAgent += pointer.node -> pointer
     pointer
   }
-  def getAgents = agents
+  def getAgents: Set[AgentPointer] = agents.keySet
 
   /* message queue tracking */
 

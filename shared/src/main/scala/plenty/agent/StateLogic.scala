@@ -1,7 +1,7 @@
 package plenty.agent
 
 import plenty.agent.model._
-import plenty.network.communication._
+import plenty.network._
 import plenty.state.StateManager
 import plenty.state.model._
 

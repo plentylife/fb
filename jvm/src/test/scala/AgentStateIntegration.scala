@@ -1,6 +1,5 @@
 import plenty.agent.AgentManager
 import plenty.agent.model.Agent
-import plenty.network.communication.{Message}
 import plenty.state.StateManager
 import plenty.state.model.{Donation, Node, State}
 import utest._

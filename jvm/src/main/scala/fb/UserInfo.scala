@@ -24,7 +24,7 @@ object UserInfo {
   }
 
   def retrieveUserInfo(id: String): UserInfo = {
-    val fbUser = fbMsgClient.fetchObject(id, classOf[User], Parameter.`with`("fields", "first_name, last_name"))
+    val fbUser = fbClient.fetchObject(id, classOf[User], Parameter.`with`("fields", "first_name, last_name"))
     val ui = UserInfo(id, name = fbUser.getFirstName, lastName = fbUser.getLastName)
     add(ui)
     ui

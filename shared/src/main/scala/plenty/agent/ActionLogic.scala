@@ -4,8 +4,7 @@ import java.util.Date
 
 import plenty.agent.AgentManager.agentAsNode
 import plenty.agent.model.Agent
-import plenty.network.Network
-import plenty.network.communication._
+import plenty.network.{ActionIdentifiers, Message, Network}
 import plenty.state.model.{Bid, Donation, Node, Transaction}
 
 /**
@@ -52,8 +51,22 @@ object ActionLogic {
       case Right(_t: Transaction) =>
         // attaching bid
         val t = _t.copy(bid = Some(bid))
-        CommsManager.sendTransaction(t)
+//        CommsManager.sendTransaction(t)
         None
+    }
+  }
+
+  /* Bidding */
+
+  /** is the bid valid, does the bidder have enough coins?
+    * @return true if accepted */
+  def acceptRejectBid(bid: Bid, from: Node, a: Agent) = {
+    val accept = Accounting.canTransactAmount(bid.by, a, bid.amount)
+    var msg: Message[_] = null
+    if (accept) {
+      Network.notifyAllAgents(bid, ActionIdentifiers.ACCEPT_BID_ACTION, a)
+    } else {
+      Network.notifyAllAgents(bid, ActionIdentifiers.REJECT_BID_ACTION, a)
     }
   }
 
@@ -91,6 +104,8 @@ object ActionLogic {
       None
     }
   }
+
+  /* Relays */
 
   def relayDonation(donation: Donation)(implicit agent: Agent) = {
     if (!agent.state.donations.contains(donation)) {

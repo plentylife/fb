@@ -2,19 +2,16 @@ package fb
 
 import java.util
 
-import com.restfb.{BinaryAttachment, Parameter}
-import com.restfb.types.{GraphResponse, Photo, Post}
-import com.restfb.types.send.{MediaAttachment, Message}
+import com.restfb.Parameter
 import com.restfb.types.webhook.FeedCommentValue
-import com.restfb.types.webhook.messaging.{MessagingAttachment, MessagingItem}
+import com.restfb.types.webhook.messaging.MessagingItem
+import com.restfb.types.{Photo, Post}
 import plenty.agent.{AgentManager, AgentPointer}
-import plenty.agent.model.Agent
-import plenty.network.Network
-import plenty.network.communication.DonateAction
+import plenty.network.{BidAction, DonateAction, Network, Message => NetMessage}
 import plenty.state.StateManager
 import plenty.state.model.{Donation, Node}
 
-import scala.collection.{JavaConversions, JavaConverters}
+import scala.collection.JavaConverters
 import scala.language.postfixOps
 
 /**
@@ -26,7 +23,8 @@ object Utility {
     FbState.getOrCreateDonation(AgentManager.agentAsNode(a.getAgentInLastKnownState))
   }
 
-  def getNodeFromNetwork(msg: MessagingItem): Option[Node] = {
+  /** gets a node from FB agent state */
+  def getNodeFromFbAgent(msg: MessagingItem): Option[Node] = {
     val byId = msg.getSender.getId
     FbAgent.pointer.getAgentInLastKnownState.state.nodes.find(_.id == byId)
   }
@@ -35,7 +33,7 @@ object Utility {
     var d: Donation = FbState.getOrCreateDonation(node)
 
     val attachments = JavaConverters.asScalaBuffer(msg.getMessage.getAttachments)
-    val pictures = attachments filter(_.getType == "image") map(_.getPayload.getUrl)
+    val pictures = attachments filter (_.getType == "image") map (_.getPayload.getUrl)
     val description = msg.getMessage.getText
 
     d = d.copy(attachments = d.attachments ++ pictures)
@@ -49,18 +47,20 @@ object Utility {
     FbState.update(d)
   }
 
-  /** @return post id*/
+  /** @return post id */
   def publishDonation(a: AgentPointer): Option[(Donation, String)] = FbState.finishDonation(a.node) match {
     case Some(donation: Donation) =>
       val attachments = new util.ArrayList[String]()
-      donation.attachments map {url =>
-        val id = fbMsgClient.publish(s"${Access.pageId}/photos",
+      donation.attachments map { url =>
+        val id = fbClient.publish(s"${Access.pageId}/photos",
           classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
         ).getId
         s"{'media_fbid':'${id}'}"
-      } foreach {attachments.add}
+      } foreach {
+        attachments.add
+      }
       try {
-        val publishMessageResponse = fbMsgClient.publish(s"${Access.pageId}/feed",
+        val publishMessageResponse = fbClient.publish(s"${Access.pageId}/feed",
           classOf[Post],
           Parameter.`with`("message", donation.description),
           Parameter.`with`("attached_media", attachments)
@@ -82,6 +82,7 @@ object Utility {
   def cancelDonation(a: AgentPointer) = FbState.finishDonation(a.node)
 
   private val bidRegex = "bid ([0-9]+)".r
+
   def processCommentAsBid(comment: FeedCommentValue, a: AgentPointer) = {
     val txt = comment.getMessage.trim.toLowerCase
     bidRegex.findFirstMatchIn(txt) match {
@@ -92,7 +93,9 @@ object Utility {
           case Some(d) =>
             val bid = StateManager.createBid(d, amount, a.node)
             println(s"bid ${bid}")
-            Responses.bidEntered(bid, comment, a)
+            NetMessage.createMessage(fromNode = a.node, toNode = FbAgent.node, msgPayloadId = BidAction,
+              msgPayload = bid)
+            FbState.trackBid(bid, comment.getCommentId)
           case _ => Responses.errorPersonal(a)
         }
       case _ =>

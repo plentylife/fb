@@ -5,7 +5,6 @@ import java.util.{Base64, Date}
 
 import plenty.agent.AgentManager
 import plenty.agent.model.Agent
-import plenty.network.communication.ActionIdentifiers
 import plenty.state.model.Coin
 import sun.misc.BASE64Encoder
 

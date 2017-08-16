@@ -1,6 +1,6 @@
 package plenty.state.model
 
-import plenty.network.communication.Message
+import plenty.network.Message
 
 /**
   * Created by anton on 8/4/17.

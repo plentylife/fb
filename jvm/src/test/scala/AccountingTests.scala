@@ -15,7 +15,7 @@ object AccountingTests extends TestSuite {
 
   val as = (0 until 4).map(i => Agent(s"a$i", State()))
   val ns = as map AgentManager.agentAsNode
-  for (a <- as) Network.registerAgent(a)
+  for (a <- as) Network.registerAgent(a, MockSendInterface)
   val aps = Network.getAgents.toSeq
 
   var originalCoins = Set[Coin]()
