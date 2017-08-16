@@ -1,16 +1,16 @@
 package fb
 
+import com.restfb.types.send.GenericTemplatePayload
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Date
 
-import com.restfb.types.send.Message
-import com.restfb.types.send.IdMessageRecipient
+import com.restfb.types.send._
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.agent.model.Agent
 import com.restfb.Parameter
-import com.restfb.types.send.SendResponse
+import plenty.state.model.Donation
 
 /**
   * Created by anton on 8/11/17.
@@ -50,8 +50,48 @@ object Responses {
 
   def donationInstruction(agent: AgentPointer) = {
     val userInfo = UserInfo.get(agent.id)
-    sendSimpleMessage(userInfo.id, s"${userInfo.name}, you have time, skills, and items to donate. In your next " +
+    sendSimpleMessage(userInfo.id, s"${userInfo.name}, you have time, skills, or items to donate. In your next " +
       s"message describe those: for example, 'Math tutoring for one hour' or 'Ice cream maker' with pictures attached")
+  }
+
+  def donationContinue(agentPointer: AgentPointer) = {
+    val txt = "You can add more information by sending text or images to Plenty, press `Done` to post, or `Cancel` to" +
+      " discard."
+    val recipient = new IdMessageRecipient(agentPointer.id)
+
+    val done = new QuickReply("Done", "DONATE_DONE_POSTBACK")
+    val cancel = new QuickReply("Cancel", "DONATE_CANCEL_POSTBACK")
+    val msg = new Message(txt)
+    msg.addQuickReply(done)
+    msg.addQuickReply(cancel)
+    fbMsgClient.publish("me/messages", classOf[SendResponse],
+      Parameter.`with`("recipient", recipient),
+      Parameter.`with`("message", msg))
+  }
+
+  def donationCancelled(ui: UserInfo) = sendSimpleMessage(ui.id, "The donation was discarded")
+
+  def donationDone(ui: UserInfo, donation: Donation, postId: String) = {
+    val url = s"https://www.facebook.com/$postId"
+    val payload = new GenericTemplatePayload
+    val bubble = new Bubble(s"${ui.name} wants you to share and bid on")
+    val urlButton = new WebButton("View & Bid", url)
+    val shareButton = new ShareButton()
+    bubble.addButton(urlButton)
+    bubble.addButton(shareButton)
+    bubble.setSubtitle(donation.description)
+    payload.addBubble(bubble)
+
+    val recipient = new IdMessageRecipient(ui.id)
+    try {
+      fbMsgClient.publish("me/messages", classOf[SendResponse],
+        Parameter.`with`("recipient", recipient),
+        Parameter.`with`("message", new Message(new TemplateAttachment(payload))))
+    } catch {
+      case e: Throwable =>
+        throw e
+        Responses.errorPersonal(ui)
+    }
   }
 
   def firstContact(agent: AgentPointer) = {
@@ -60,8 +100,11 @@ object Responses {
     accountStatus(agent)
   }
 
-  def error(a: AgentPointer) = {
+  def errorPersonal(a: AgentPointer): Unit = {
     val ui = UserInfo.get(a.id)
+    errorPersonal(ui)
+  }
+  def errorPersonal(ui: UserInfo): Unit = {
     val msg = {s"${ui.name}, sorry some unknown error has occurred. We will do our best to fix it."}
     sendSimpleMessage(ui.id, msg)
   }

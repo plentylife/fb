@@ -20,10 +20,10 @@ object StateManager {
     Seq(random.nextInt(Int.MaxValue), time).mkString("-")
   }
 
-  def createDonation(title: String, description: String, by: Node) = {
+  def createDonation(title: String, description: String, attachments: Seq[String], by: Node) = {
     val now = new Date().getTime
     val id = idGenerator(now, title + by.id)
-    Donation(id = id, title = title, description = description, by, now)
+    Donation(id = id, title = title, description = description, attachments=attachments, by, now)
   }
 
   def createBid(donation: Donation, amount: Int, by: Node): Bid = {
@@ -62,7 +62,7 @@ object StateManager {
   private def loadFromFile(filename: String): Agent = {
     val reader = new BufferedInputStream(new FileInputStream(filename))
 
-    var bytes = Stream[Byte]()
+    var bytes = Seq[Byte]()
     while (reader.available() > 0) {
       bytes = bytes :+ reader.read().toByte
     }

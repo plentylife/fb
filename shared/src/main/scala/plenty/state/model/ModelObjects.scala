@@ -22,7 +22,7 @@ case class Coin(id: String, belongsTo: Node, mintTime: Long,
   * Represents a donation made by a node
   * Currently has no privacy constraints
   * */
-case class Donation(id: String, title: String, description: String, by: Node, timestamp: Long)
+case class Donation(id: String, title: String, description: String, attachments: Seq[String], by: Node, timestamp: Long)
 
 /**
   * Represents a bid for a donation

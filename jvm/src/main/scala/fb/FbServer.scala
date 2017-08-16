@@ -28,7 +28,6 @@ object FbServer {
         // for verification
         get {
           parameterMap { params =>
-            println(s"parameter map $params")
             // fixme implement this properly
             val challenge: String = params.getOrElse("hub.challenge", "no-challenge")
             complete(challenge)
@@ -37,7 +36,8 @@ object FbServer {
           post {
             entity(as[String]) {webhookMsg =>
               Future(ReceiverFlow.receive(webhookMsg)).onComplete({
-                case Failure(e) => println(s"ERROR in webhook ${e.getMessage}\n${e.getStackTrace.mkString("\n")}")
+                case Failure(e) =>
+                  println(s"ERROR in webhook ${e.getMessage}\n${e.getStackTrace.mkString("\n")}")
                 case _ => null
               })
               complete(StatusCodes.OK)

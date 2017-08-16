@@ -11,13 +11,4 @@ package object fb {
   val fbMsgClient = new DefaultFacebookClient(AccessTokens.pageToken, Version.VERSION_2_9)
   val fbPageClient = new DefaultFacebookClient(AccessTokens.pageToken, Version.VERSION_2_9)
 
-  def messageToDonation(msg: MessagingItem, agent: Agent): Option[Donation] = {
-    val title = ""
-    val description = msg.getMessage.getText
-    val toId = msg.getSender.getId
-
-    FbAgent.pointer.getAgentInLastKnownState.state.nodes.find(_.id == toId) map {by =>
-      StateManager.createDonation(title, description, by)
-    }
-  }
 }

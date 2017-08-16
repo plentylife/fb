@@ -8,8 +8,6 @@ import plenty.state.model._
   * The access point to the agent module
   */
 object AgentManager {
-  var callbacks: CallbacksTrait = new CallbacksTrait {}
-
   def createAgent(id: String): Agent = {
     var a = Agent(id, state = State())
     val coins = MintPress.distributeCoinsToNewAgent(a)

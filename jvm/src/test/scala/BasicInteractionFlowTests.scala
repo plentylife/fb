@@ -21,7 +21,7 @@ object NetworkTests extends TestSuite {
   val a3 = Agent("a3", state = State())
   val n = Array(AgentManager.agentAsNode(a1), AgentManager.agentAsNode(a2), AgentManager.agentAsNode(a3))
 
-  val donation = StateManager.createDonation("d-title", "d-desc", AgentManager.agentAsNode(a1))
+  val donation = StateManager.createDonation("d-title", "d-desc", Seq(), AgentManager.agentAsNode(a1))
   var bid = StateManager.createBid(donation, amount = 1, by = n(1))
   // for testing purposes fudging the bid timestamp
   bid = bid.copy(timestamp = bid.timestamp - 25 * 60 * 60 * 1000)

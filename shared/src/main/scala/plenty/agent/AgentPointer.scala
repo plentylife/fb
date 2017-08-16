@@ -14,6 +14,7 @@ class AgentPointer(private var agent: Agent) {
   private var agentAvailable = true
 
   def id = agent.id
+  val node = AgentManager.agentAsNode(agent)
 
   def getAgentToModify(promise: Promise[Agent]) = synchronized {
     queue = queue.enqueue(promise)
@@ -37,5 +38,4 @@ class AgentPointer(private var agent: Agent) {
 //      println(s"giving agent ${agent}")
       p success agent
     }
-
 }
