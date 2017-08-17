@@ -44,12 +44,6 @@ object FbServer {
               complete(StatusCodes.OK)
             }
           }
-      } ~ get {
-        (path("welcome" / RemainingPath) & parameterMap) { (id, params) =>
-          val redirect = params("redirect_uri") + "&authorization_code=testcode"
-          val html = s"<a href='$redirect'>Register</a>"
-          complete(html)
-        }
       }
 
     val password = Source.fromFile("private/pass.txt").mkString.trim.toCharArray

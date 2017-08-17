@@ -28,6 +28,8 @@ abstract class Message[P] {
 trait PayloadIdentifier[P] {
   val typeOfMsg: String
 
+  override def toString: String = typeOfMsg
+
   override def equals(o: scala.Any): Boolean = o match {
     case pid: PayloadIdentifier[_] => pid.typeOfMsg == this.typeOfMsg
     case _ => false

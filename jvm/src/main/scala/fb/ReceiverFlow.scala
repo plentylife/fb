@@ -3,7 +3,7 @@ package fb
 import java.util.Date
 
 import com.restfb.types.send.{IdMessageRecipient, Message, SendResponse}
-import com.restfb.types.webhook.messaging.MessagingItem
+import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem}
 import com.restfb.types.webhook.{Change, FeedCommentValue, WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
 import plenty.agent.{AgentManager, AgentPointer}
@@ -15,7 +15,7 @@ import plenty.network.Network
 object ReceiverFlow {
 
   def receive(payload: String): Unit = {
-    println(s"payload $payload")
+//    println(s"payload $payload")
     val mapper = new DefaultJsonMapper
     val webhookObject = mapper.toJavaObject(payload, classOf[WebhookObject])
     val iter = webhookObject.getEntryList.listIterator()
@@ -31,27 +31,12 @@ object ReceiverFlow {
     while (msgIter.hasNext) {
       processMessagingItem(msgIter.next())
     }
-    while (feedIter.hasNext) processFeedItem(feedIter.next())
-  }
-
-  private def processFeedItem(item: Change) = {
-    val value = item.getValue
-    value match {
-      case comment: FeedCommentValue if comment.getSenderId != Access.pageId =>
-        val senderId = comment.getSenderId
-//        println(s"comment $comment")
-        val a = getAgent(senderId) getOrElse createAgent(senderId)
-        Utility.processCommentAsBid(comment, a)
-      case _ =>
-    }
   }
 
   private def processMessagingItem(item: MessagingItem) = {
     val senderId = item.getSender.getId
-    println(s"Messaging item $item")
-
+//    println(s"Messaging item $item")
     Responses.displayTyping(senderId)
-    Responses.loginButton(senderId)
 
     var a: AgentPointer = null
     getAgent(senderId) match {
@@ -64,6 +49,21 @@ object ReceiverFlow {
         Responses.firstContact(a)
     }
     postbackTree(a, item)
+    msgReferralTree(a, item)
+  }
+
+  private def msgReferralTree(a: AgentPointer, item: MessagingItem) = {
+    if (item.getReferral != null) {
+      val ref = item.getReferral.getRef
+      if (ref.startsWith("BID_")) {
+        val donationId = ref.replace("BID_", "")
+        val ui = UserInfo.get(a.id)
+        FbAgent.lastState.donations.find(_.id == donationId) match {
+          case Some(donation) => Responses.donationShow(ui, donation, None)
+          case _ => Responses.errorPersonal(a)
+        }
+      }
+    }
   }
 
   private def postbackTree(a: AgentPointer, item: MessagingItem) = {
@@ -73,18 +73,26 @@ object ReceiverFlow {
     if (pb != null) {
       val ui = UserInfo.get(a.id)
       pb.getPayload match {
+          // fixme get started for bids
         case "ACCOUNT_STATUS_POSTBACK" => Responses.accountStatus(a)
         case "DONATE_START_POSTBACK" =>
-          Utility.startDonationProcess(a)
-          Responses.donationInstruction(a)
+          donateStart(a)
+        case p: String if p.startsWith("BID_POSTBACK_") =>
+          Utility.startBidding(p,a)
+          Responses.bidStart(a)
         case _ => Responses.unrecognized(a)
       }
     }
   }
 
-  private def messageTree(a: AgentPointer, msgItem: MessagingItem) = {
+  private def donateStart(a: AgentPointer) = {
+    Utility.startDonationProcess(a)
+    Responses.donationInstruction(a)
+  }
+
+  private def messageTree(a: AgentPointer, msgItem: MessagingItem): Unit = {
     val msg = msgItem.getMessage
-//        println(s"message is $msg")
+        println(s"message is $msg")
     if (msg != null) {
       val ui = UserInfo.get(a.id)
 
@@ -93,10 +101,13 @@ object ReceiverFlow {
       if (!isQuickReply) {
         isDonating = donationTree(a, msgItem)
       }
+      val isBidding = bidTree(a, msg)
 
-      if (!isDonating && !isQuickReply) {
-        // hasn't accessed in a day
-        if (ui.lastAccess < new Date().getTime - 24 * 60 * 60 * 1000) {
+      if (!isDonating && !isQuickReply && !isBidding) {
+        if (msg.getText.trim.toLowerCase() == "donate") {
+          donateStart(a)
+        } else if (ui.lastAccess < new Date().getTime - 24 * 60 * 60 * 1000) {
+          // hasn't accessed in a day
           Responses.accountStatus(a)
         } else {
           val recipient = new IdMessageRecipient(ui.id)
@@ -110,6 +121,15 @@ object ReceiverFlow {
     }
   }
 
+  private def bidTree(a: AgentPointer, msg: MessageItem): Boolean = {
+    FbState.popBid(a) match {
+      case Some(d) =>
+        Utility.processTextAsBid(msg.getText, d, a)
+        true
+      case _ => false
+    }
+  }
+
   /** @return true if the tree is executed */
   private def quickReplyTree(msgItem: MessagingItem, ui: UserInfo, a: AgentPointer): Boolean = {
     val qr = msgItem.getMessage.getQuickReply
@@ -120,7 +140,7 @@ object ReceiverFlow {
           Responses.donationCancelled(ui)
         case "DONATE_DONE_POSTBACK" =>
           Utility.publishDonation(a) match {
-            case Some((donation, postId)) => Responses.donationDone(ui, donation, postId)
+            case Some((donation, postId)) => Responses.donationShow(ui, donation, Option(postId))
             case _ => Responses.errorPersonal(a)
           }
       }
@@ -128,17 +148,16 @@ object ReceiverFlow {
     } else false
   }
 
-  /** @return true if the tree is executed */
+  /** Executes if there is a donation in progress (FbState has a reference)
+    * @return true if the tree is executed */
   private def donationTree(a: AgentPointer, msgItem: MessagingItem): Boolean = {
     if (FbState.donationExists(a.node)) {
-
       Utility.getNodeFromFbAgent(msgItem) match {
         case Some(node) =>
-          Utility.updateDonation(msgItem, node)
-          Responses.donationContinue(a)
+          val d = Utility.updateDonation(msgItem, node)
+          Responses.donationContinue(d, a)
         case _ => Responses.errorPersonal(a)
       }
-
       true
     } else false
   }

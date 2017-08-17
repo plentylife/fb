@@ -23,33 +23,38 @@ object Utility {
     FbState.getOrCreateDonation(AgentManager.agentAsNode(a.getAgentInLastKnownState))
   }
 
-  /** gets a node from FB agent state */
+  /** gets the node of the sender from FB agent [[plenty.state.model.State]] */
   def getNodeFromFbAgent(msg: MessagingItem): Option[Node] = {
     val byId = msg.getSender.getId
     FbAgent.pointer.getAgentInLastKnownState.state.nodes.find(_.id == byId)
   }
 
-  def updateDonation(msg: MessagingItem, node: Node): Unit = {
+  def updateDonation(msg: MessagingItem, node: Node): Donation = {
     var d: Donation = FbState.getOrCreateDonation(node)
 
     val attachments = JavaConverters.asScalaBuffer(msg.getMessage.getAttachments)
     val pictures = attachments filter (_.getType == "image") map (_.getPayload.getUrl)
-    val description = msg.getMessage.getText
-
     d = d.copy(attachments = d.attachments ++ pictures)
-    if (description != null) {
-      val sep = if (d.description.isEmpty) "" else "\n"
-      d = d.copy(description = d.description + s"$sep$description")
+
+    val text = msg.getMessage.getText
+    if (text != null) {
+      if (d.title.isEmpty) {
+        val ui = UserInfo.get(node.id)
+        d = d.copy(title = text + s" donated by ${ui.name}")
+      } else {
+        val sep = if (d.description.isEmpty) "" else "\n"
+        d = d.copy(description = d.description + s"$sep$text")
+      }
     }
 
-    println(s"description ${d.description}")
-
     FbState.update(d)
+    d
   }
 
   /** @return post id */
   def publishDonation(a: AgentPointer): Option[(Donation, String)] = FbState.finishDonation(a.node) match {
     case Some(donation: Donation) =>
+      // fixme don't allow of posting of empty title/description
       val attachments = new util.ArrayList[String]()
       donation.attachments map { url =>
         val id = fbClient.publish(s"${Access.pageId}/photos",
@@ -60,15 +65,16 @@ object Utility {
         attachments.add
       }
       try {
+        val msg = s"${donation.title} \n---\n ${donation.description} " +
+          s"\n===\n if you want this offer, enter your bid at m.me/${Access
+          .pageId}?ref=BID_${donation.id}\nthe link opens messenger and allows you to talk to Plenty bot"
         val publishMessageResponse = fbClient.publish(s"${Access.pageId}/feed",
           classOf[Post],
-          Parameter.`with`("message", donation.description),
+          Parameter.`with`("message", msg),
           Parameter.`with`("attached_media", attachments)
         )
-        // modifying donation to have id same as post id
-        val dWithPostId = donation.copy(id = publishMessageResponse.getId)
-        Network.notifyAllAgents(dWithPostId, DonateAction, FbAgent.node)
-        Some(dWithPostId -> publishMessageResponse.getId)
+        Network.notifyAllAgents(donation, DonateAction, FbAgent.node)
+        Some(donation -> publishMessageResponse.getId)
       } catch {
         case e: Throwable =>
           Responses.errorPersonal(a)
@@ -81,24 +87,24 @@ object Utility {
 
   def cancelDonation(a: AgentPointer) = FbState.finishDonation(a.node)
 
-  private val bidRegex = "bid ([0-9]+)".r
+  def startBidding(donationRef: String, a: AgentPointer) = {
+    val donationId = donationRef.replace("BID_POSTBACK_", "")
+    FbAgent.lastState.donations.find(_.id == donationId) match {
+      case Some(donation) => FbState.trackBid(a, donation)
+      case _ => Responses.errorWithReason(a.id, "Could not find the donation")
+    }
+  }
 
-  def processCommentAsBid(comment: FeedCommentValue, a: AgentPointer) = {
-    val txt = comment.getMessage.trim.toLowerCase
+  private val bidRegex = "[0-9]+".r
+
+  def processTextAsBid(txt: String, donation: Donation, a: AgentPointer) = {
     bidRegex.findFirstMatchIn(txt) match {
       case Some(rm) =>
-        val amount = rm.group(1).toInt
-        val postId = comment.getPostId
-        a.getAgentInLastKnownState.state.donations.find(_.id == postId) match {
-          case Some(d) =>
-            val bid = StateManager.createBid(d, amount, a.node)
-            println(s"bid ${bid}")
-            Network.notifyAllAgents(bid, BidAction, from=a.node)
-            FbState.trackBid(bid, comment.getCommentId)
-          case _ => Responses.errorPersonal(a)
-        }
-      case _ =>
+        val amount = rm.group(0).toInt
+        val bid = StateManager.createBid(donation, amount, a.node)
+        println(s"bid ${bid}")
+        Network.notifyAllAgents(bid, BidAction, from=a.node)
+      case _ => Responses.errorPersonal(a)
     }
-
   }
 }

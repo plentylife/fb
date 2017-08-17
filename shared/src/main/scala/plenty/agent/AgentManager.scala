@@ -3,6 +3,7 @@ package plenty.agent
 import plenty.agent.model.Agent
 import plenty.network.{Message, MintPress}
 import plenty.state.model._
+import scala.language.implicitConversions
 
 /**
   * The access point to the agent module

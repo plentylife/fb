@@ -7,7 +7,7 @@ import utest._
 /**
   * Saving state, modifying state by agents
   */
-object AgentStateIntegration extends TestSuite {
+class AgentStateIntegration extends TestSuite {
   val tests = this {
     'agent_play {
       val a1 = Agent("a1", state = State())

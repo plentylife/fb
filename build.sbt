@@ -6,7 +6,8 @@ lazy val root = project.
   aggregate(coreJS, coreJVM).
   settings(
     publish := {},
-    publishLocal := {}
+    publishLocal := {},
+    scalacOptions += "-feature"
   )
 
 lazy val core = crossProject.in(file(".")).
@@ -18,18 +19,22 @@ lazy val core = crossProject.in(file(".")).
       "io.suzaku" %%% "boopickle" % "1.2.6",
       "com.lihaoyi" %%% "utest" % "0.4.8" % "test"
     ),
-    testFrameworks += new TestFramework("utest.runner.Framework")
+    testFrameworks += new TestFramework("utest.runner.Framework"),
+    scalacOptions += "-feature"
   ).
   jvmSettings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % "10.0.9",
       "com.restfb" % "restfb" % "1.43.0"
-    )
+    ),
+    scalacOptions += "-feature"
   ).
   jsSettings(
-    libraryDependencies ++= Seq(
-    )
+    libraryDependencies ++= Seq(),
+    scalacOptions += "-feature"
   )
 
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
+
+scalacOptions ++= Seq("-deprecation", "-feature")

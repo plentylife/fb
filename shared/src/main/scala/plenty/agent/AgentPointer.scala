@@ -1,6 +1,7 @@
 package plenty.agent
 
 import plenty.agent.model.Agent
+import plenty.network.PayloadIdentifier
 
 import scala.collection.immutable.Queue
 import scala.concurrent.Promise
@@ -38,4 +39,9 @@ class AgentPointer(private var agent: Agent) {
 //      println(s"giving agent ${agent}")
       p success agent
     }
+
+  override def equals(o: scala.Any): Boolean = o match {
+    case p: AgentPointer => p.agent == this.agent
+    case _ => false
+  }
 }

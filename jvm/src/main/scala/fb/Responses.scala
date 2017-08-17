@@ -29,7 +29,6 @@ object Responses {
     val recipientParam = Parameter.`with`("recipient", recipient)
     val resp = fbClient.publish("me/messages", classOf[SendResponse], senderActionParam, // the sender action
       recipientParam) // the recipient
-
   }
 
   private val dateFormatter = new SimpleDateFormat("dd MMM")
@@ -63,19 +62,27 @@ object Responses {
 
   def donationInstruction(agent: AgentPointer) = {
     val userInfo = UserInfo.get(agent.id)
-    sendSimpleMessage(userInfo.id, s"${userInfo.name}, you have time, skills, or items to donate. In your next " +
-      s"message describe those: for example, 'Math tutoring for one hour' or 'Ice cream maker' with pictures attached")
+    sendSimpleMessage(userInfo.id, s"${userInfo.name}, you have time, skills, or items to donate. The next few " +
+      s"messages will be used to create the post. The first message will act as the title, and the rest as the body " +
+      s"with text and pictures.")
+    sendSimpleMessage(userInfo.id, "Please enter the title:")
   }
 
-  def donationContinue(agentPointer: AgentPointer) = {
-    val txt = "You can add more information by sending text or images to Plenty, press `Done` to post, or `Cancel` to" +
-      " discard."
+  def donationContinue(donation: Donation, agentPointer: AgentPointer) = {
     val recipient = new IdMessageRecipient(agentPointer.id)
+    val hasTitle = donation.title.nonEmpty
+
+    var txt = "You can add more information by sending text or images to Plenty, press `Done` to post, or `Cancel` to" +
+      " discard."
+    if (!hasTitle) {
+      txt = "Please enter title, or press `Cancel` to discard"
+    }
 
     val done = new QuickReply("Done", "DONATE_DONE_POSTBACK")
     val cancel = new QuickReply("Cancel", "DONATE_CANCEL_POSTBACK")
     val msg = new Message(txt)
-    msg.addQuickReply(done)
+
+    if (hasTitle) msg.addQuickReply(done)
     msg.addQuickReply(cancel)
     fbClient.publish("me/messages", classOf[SendResponse],
       Parameter.`with`("recipient", recipient),
@@ -84,13 +91,19 @@ object Responses {
 
   def donationCancelled(ui: UserInfo) = sendSimpleMessage(ui.id, "The donation was discarded")
 
-  def donationDone(ui: UserInfo, donation: Donation, postId: String) = {
-    val url = s"https://www.facebook.com/$postId"
+  def donationShow(ui: UserInfo, donation: Donation, postId: Option[String]) = {
     val payload = new GenericTemplatePayload
-    val bubble = new Bubble(s"${ui.name} wants you to share and bid on")
-    val urlButton = new WebButton("View & Bid", url)
+    val bubble = new Bubble(s"Bid and Share: ${donation.title}")
+    val bidButton = createBidButton(donation)
     val shareButton = new ShareButton()
-    bubble.addButton(urlButton)
+
+    postId map {pid =>
+      val url = s"https://www.facebook.com/$pid"
+      val urlButton = new WebButton("View", url)
+      bubble.addButton(urlButton)
+    }
+
+    bubble.addButton(bidButton)
     bubble.addButton(shareButton)
     bubble.setSubtitle(donation.description)
     payload.addBubble(bubble)
@@ -106,22 +119,36 @@ object Responses {
         throw e
     }
   }
+  private def createBidButton(donation: Donation) = new PostbackButton("Bid", s"BID_POSTBACK_${donation.id}")
 
-  def bidEntered(bid: Bid, replyToCommentId: String, userInfo: UserInfo) = {
-    try {
-      fbClient.publish(s"$replyToCommentId/comments", classOf[GraphResponse],
-        Parameter.`with`("message", s"Your bid of ${bid.amount}$thanksSymbol has been entered"))
-    } catch {
-      case e:Throwable =>
-        errorPersonal(userInfo)
-        throw e
+  def bidStart(a: AgentPointer) = {
+    accountStatus(a)
+    sendSimpleMessage(a.id, s"How many ${thanksSymbol}hanks would you like to bid?")
+  }
+
+  def bidEntered(bid: Bid) = {
+    val relatedBids = FbAgent.lastState.bids.filter(_.donation == bid.donation)
+    val nodesToNotify = relatedBids map {_.by}
+    nodesToNotify foreach {n =>
+      // if the one who made the bid
+      if (n == bid.by) {
+        sendSimpleMessage(n.id, "Your bid has been entered. You'll be notified when the auction closes.")
+      } else {
+        // notify all other interested nodes
+      val ui = UserInfo.get(n.id)
+      val recipient = new IdMessageRecipient(n.id)
+      val template = new ButtonTemplatePayload(s"A new bid of ${bid.amount}$thanksSymbol has been entered " +
+        s"for ${bid.donation.title}")
+      val button = createBidButton(bid.donation)
+      template.addButton(button)
+      fbClientPublish(ui, "me/messages", Parameter.`with`("recipient", recipient),
+        Parameter.`with`("message", new Message(new TemplateAttachment(template))))
+      }
     }
   }
 
-  def bidRejected(rejection: RejectedBid, replyToCommentId: String, ui: UserInfo) = {
-    val msg = s"${ui.name}, your bid of ${rejection.bid.amount}$thanksSymbol has been rejected because you are " +
-      s"${rejection.reason}"
-    fbClientPublish(ui, s"$replyToCommentId/comments", Parameter.`with`("message", msg))
+  def bidRejected(rejection: RejectedBid, ui: UserInfo) = {
+    sendSimpleMessage(rejection.bid.by.id, s"Your bid was rejected. Reason: ${rejection.reason}")
   }
 
   def firstContact(agent: AgentPointer) = {
@@ -139,6 +166,12 @@ object Responses {
     val msg = {s"${ui.name}, sorry some unknown error has occurred. We will do our best to fix it."}
     sendSimpleMessage(ui.id, msg)
   }
+  def errorWithReason(userId: String, reason: String) = {
+    val msg = s"Sorry an error has occurred: $reason"
+    sendSimpleMessage(userId, msg)
+  }
+
+
 
   def unrecognized(a: AgentPointer) = {
     val ui = UserInfo.get(a.id)

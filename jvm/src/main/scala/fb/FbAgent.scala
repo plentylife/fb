@@ -17,6 +17,8 @@ object FbAgent {
   def pointer = _pointer
   def node = _node
 
+  def lastState = pointer.getAgentInLastKnownState.state
+
   /** gets or creates a fb agent */
   def load() = {
     _pointer = Network.getAgents.find(_.id == id).getOrElse(create)
