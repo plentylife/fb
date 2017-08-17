@@ -8,6 +8,8 @@ import plenty.state.model.{Bid, Donation, Node}
   */
 object FbState {
 
+  private var accountLinking = Map[String, String]()
+
   /** fb user id -> donation */
   private var donationsInProgress = Map[Node, Donation]()
 

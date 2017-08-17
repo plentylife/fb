@@ -15,11 +15,11 @@ import plenty.network.Network
 object ReceiverFlow {
 
   def receive(payload: String): Unit = {
-//    println(s"payload $payload")
+    println(s"payload $payload")
     val mapper = new DefaultJsonMapper
     val webhookObject = mapper.toJavaObject(payload, classOf[WebhookObject])
     val iter = webhookObject.getEntryList.listIterator()
-    println(s"webhook object $webhookObject")
+//    println(s"webhook object $webhookObject")
     while (iter.hasNext) {
       process(iter.next())
     }
@@ -47,9 +47,12 @@ object ReceiverFlow {
   }
 
   private def processMessagingItem(item: MessagingItem) = {
-    println(s"Messaging item $item")
     val senderId = item.getSender.getId
+    println(s"Messaging item $item")
+
     Responses.displayTyping(senderId)
+    Responses.loginButton(senderId)
+
     var a: AgentPointer = null
     getAgent(senderId) match {
       case Some(_a) =>

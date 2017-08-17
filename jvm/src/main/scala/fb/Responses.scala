@@ -34,6 +34,17 @@ object Responses {
 
   private val dateFormatter = new SimpleDateFormat("dd MMM")
   private val thanksSymbol: Char = '\u20B8'
+
+  def loginButton(senderId: String) = {
+    val recipient = new IdMessageRecipient(senderId)
+    val template = new ButtonTemplatePayload("to use Plenty bot, you must first link your FB account")
+    val button = new AccountLinkButton(s"${Access.uri}/welcome/$senderId")
+    template.addButton(button)
+    fbClient.publish("me/messages", classOf[SendResponse], Parameter.`with`("recipient", recipient),
+      Parameter.`with`("message", new Message(new TemplateAttachment(template)))
+    )
+  }
+
   def accountStatus(agent: AgentPointer) = {
     val coins = agent.getAgentInLastKnownState.state.coins
     val coinsWithDeathDate = coins.toSeq sortBy (_.deathTime) map {c =>

@@ -6,12 +6,12 @@ import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.{path, _}
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.{Source, StdIn}
 import scala.util.Failure
 
@@ -23,10 +23,10 @@ object FbServer {
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    val route =
+    val route: Route =
       pathEndOrSingleSlash {
         // for verification
-//        println("REQUEST")
+        //        println("REQUEST")
         get {
           parameterMap { params =>
             // fixme implement this properly
@@ -35,7 +35,7 @@ object FbServer {
           }
         } ~
           post {
-            entity(as[String]) {webhookMsg =>
+            entity(as[String]) { webhookMsg =>
               Future(ReceiverFlow.receive(webhookMsg)).onComplete({
                 case Failure(e) =>
                   println(s"ERROR in webhook ${e.getMessage}\n${e.getStackTrace.mkString("\n")}")
@@ -44,7 +44,12 @@ object FbServer {
               complete(StatusCodes.OK)
             }
           }
-
+      } ~ get {
+        (path("welcome" / RemainingPath) & parameterMap) { (id, params) =>
+          val redirect = params("redirect_uri") + "&authorization_code=testcode"
+          val html = s"<a href='$redirect'>Register</a>"
+          complete(html)
+        }
       }
 
     val password = Source.fromFile("private/pass.txt").mkString.trim.toCharArray
@@ -66,7 +71,7 @@ object FbServer {
 
 
     val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080, connectionContext = https)
-//    val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080)
+    //    val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080)
 
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return
