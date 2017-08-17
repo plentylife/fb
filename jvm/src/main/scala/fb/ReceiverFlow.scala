@@ -15,11 +15,11 @@ import plenty.network.Network
 object ReceiverFlow {
 
   def receive(payload: String): Unit = {
-    //    println(s"payload $payload")
+//    println(s"payload $payload")
     val mapper = new DefaultJsonMapper
     val webhookObject = mapper.toJavaObject(payload, classOf[WebhookObject])
     val iter = webhookObject.getEntryList.listIterator()
-//    println(s"webhook object $webhookObject")
+    println(s"webhook object $webhookObject")
     while (iter.hasNext) {
       process(iter.next())
     }
@@ -39,7 +39,7 @@ object ReceiverFlow {
     value match {
       case comment: FeedCommentValue if comment.getSenderId != Access.pageId =>
         val senderId = comment.getSenderId
-        println(s"comment $comment")
+//        println(s"comment $comment")
         val a = getAgent(senderId) getOrElse createAgent(senderId)
         Utility.processCommentAsBid(comment, a)
       case _ =>
@@ -47,7 +47,7 @@ object ReceiverFlow {
   }
 
   private def processMessagingItem(item: MessagingItem) = {
-//    println(s"Messaging item $item")
+    println(s"Messaging item $item")
     val senderId = item.getSender.getId
     Responses.displayTyping(senderId)
     var a: AgentPointer = null
@@ -81,7 +81,7 @@ object ReceiverFlow {
 
   private def messageTree(a: AgentPointer, msgItem: MessagingItem) = {
     val msg = msgItem.getMessage
-    //    println(s"message is $msg")
+//        println(s"message is $msg")
     if (msg != null) {
       val ui = UserInfo.get(a.id)
 

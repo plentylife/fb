@@ -40,7 +40,7 @@ object AgentManager {
     implicit var agent = toAgent
     val bid = msg.payload
 
-    ActionLogic.acceptRejectBid(bid, msg.from, agent)
+    ActionLogic.verifyBid(bid, msg.from, agent)
     agent
     // todo. for now no relaying
     //    ActionLogic.relayBid(bid)

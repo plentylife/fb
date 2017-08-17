@@ -34,3 +34,7 @@ case class Bid(id: String, donation: Donation, amount: Int, by: Node, timestamp:
   * Represents a transaction of [[plenty.state.model.Coin]] between two [[plenty.state.model.Node]]s
   * */
 case class Transaction(id: String, timestamp: Long, coins: Set[Coin], from: Node, to: Node, bid: Option[Bid] = None)
+
+// Supplementary
+
+case class RejectedBid(reason: String, bid: Bid)

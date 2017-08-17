@@ -5,7 +5,7 @@ import java.util.Date
 import plenty.agent.AgentManager.agentAsNode
 import plenty.agent.model.Agent
 import plenty.network.{ActionIdentifiers, Message, Network}
-import plenty.state.model.{Bid, Donation, Node, Transaction}
+import plenty.state.model._
 
 /**
   * Logic of agent's actions such as accepting bids, accepting coins, etc
@@ -60,13 +60,13 @@ object ActionLogic {
 
   /** is the bid valid, does the bidder have enough coins?
     * @return true if accepted */
-  def acceptRejectBid(bid: Bid, from: Node, a: Agent) = {
+  def verifyBid(bid: Bid, from: Node, a: Agent) = {
     val accept = Accounting.canTransactAmount(bid.by, a, bid.amount)
-    var msg: Message[_] = null
     if (accept) {
       Network.notifyAllAgents(bid, ActionIdentifiers.ACCEPT_BID_ACTION, a)
     } else {
-      Network.notifyAllAgents(bid, ActionIdentifiers.REJECT_BID_ACTION, a)
+      val rejection = RejectedBid("low on funds", bid)
+      Network.notifyAllAgents(rejection, ActionIdentifiers.REJECT_BID_ACTION, a)
     }
   }
 

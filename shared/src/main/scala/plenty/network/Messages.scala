@@ -19,7 +19,10 @@ abstract class Message[P] {
   /** [[plenty.state.model.Node]] that have relayed on this message */
   val relayNodes: List[Node] = List()
 
-  override def toString: String = from.id + " - " + to.id + "  " + payloadId.typeOfMsg + " @ " + timestamp
+  override def toString: String = {
+    val fromStr = if (from != null) from.id else "???"
+    fromStr + " -> " + to.id + "  " + payloadId.typeOfMsg + " @ " + timestamp
+  }
 }
 
 trait PayloadIdentifier[P] {
@@ -48,7 +51,7 @@ object ActionIdentifiers {
   /** a message back signifying that a bid has been accepted for consideration */
   val ACCEPT_BID_ACTION = Message.createAction[Bid]("ACCEPT_BID_ACTION")
   /** the bid has NOT been accepted for consideration for some reason such as low balance */
-  val REJECT_BID_ACTION = Message.createAction[Bid]("REJECT_BID_ACTION")
+  val REJECT_BID_ACTION = Message.createAction[RejectedBid]("REJECT_BID_ACTION")
   val REGISTER_NODE = Message.createAction[Node]("REGISTER_NODE")
 }
 

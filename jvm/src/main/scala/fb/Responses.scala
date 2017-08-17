@@ -12,7 +12,7 @@ import plenty.agent.model.Agent
 import com.restfb.Parameter
 import com.restfb.types.{Comment, GraphResponse}
 import com.restfb.types.webhook.FeedCommentValue
-import plenty.state.model.{Bid, Donation}
+import plenty.state.model.{Bid, Donation, RejectedBid}
 
 /**
   * Created by anton on 8/11/17.
@@ -107,7 +107,11 @@ object Responses {
     }
   }
 
-//  def bidRejected(bid: )
+  def bidRejected(rejection: RejectedBid, replyToCommentId: String, ui: UserInfo) = {
+    val msg = s"${ui.name}, your bid of ${rejection.bid.amount}$thanksSymbol has been rejected because you are " +
+      s"${rejection.reason}"
+    fbClientPublish(ui, s"$replyToCommentId/comments", Parameter.`with`("message", msg))
+  }
 
   def firstContact(agent: AgentPointer) = {
     val userInfo = UserInfo.get(agent.id)

@@ -26,7 +26,7 @@ object FbServer {
     val route =
       pathEndOrSingleSlash {
         // for verification
-        println("REQUEST")
+//        println("REQUEST")
         get {
           parameterMap { params =>
             // fixme implement this properly

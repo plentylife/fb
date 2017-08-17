@@ -93,8 +93,7 @@ object Utility {
           case Some(d) =>
             val bid = StateManager.createBid(d, amount, a.node)
             println(s"bid ${bid}")
-            NetMessage.createMessage(fromNode = a.node, toNode = FbAgent.node, msgPayloadId = BidAction,
-              msgPayload = bid)
+            Network.notifyAllAgents(bid, BidAction, from=a.node)
             FbState.trackBid(bid, comment.getCommentId)
           case _ => Responses.errorPersonal(a)
         }
