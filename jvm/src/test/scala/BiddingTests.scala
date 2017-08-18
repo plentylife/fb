@@ -19,6 +19,7 @@ object BiddingTests extends TestSuite {
   var bidFirst = StateManager.createBid(donation, amount = 2, by = n(1))
   var bidUnder = StateManager.createBid(donation, amount = 1, by = n(2))
   var bidOver = StateManager.createBid(donation, amount = 3, by = n(3))
+  var bidOverWallet = StateManager.createBid(donation, amount = 30, by = n(3))
   var bidSelf = StateManager.createBid(donation, amount = 1, by = n(0))
 
 
@@ -62,6 +63,27 @@ object BiddingTests extends TestSuite {
         val payloads = InternalSendInterface.log map { m => m.payload }
         val rejected = payloads collect {
           case rej: RejectedBid => rej.bid == bidUnder
+        }
+        assert(rejected contains true)
+      }
+
+      'bidding_over_wallet_size {
+        println("=== bidding over wallet size")
+        val msg = Message.createMessage(bidOverWallet.by, donation.by, BidAction, bidOverWallet)
+
+        Network.send(msg)
+        waitClearQueue
+
+        for (a <- getAgents) {
+          val bids = a.state.bids
+          assert(a.state.donations.contains(donation))
+          assert(bids.contains(bidFirst))
+          assert(!bids.contains(bidOverWallet))
+        }
+
+        val payloads = InternalSendInterface.log map { m => m.payload }
+        val rejected = payloads collect {
+          case rej: RejectedBid => rej.bid == bidOverWallet
         }
         assert(rejected contains true)
       }
