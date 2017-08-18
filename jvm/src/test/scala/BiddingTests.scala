@@ -3,7 +3,7 @@ import plenty.agent.model.Agent
 import plenty.agent.{Accounting, AgentManager, AgentPointer}
 import plenty.network.{BidAction, _}
 import plenty.state.StateManager
-import plenty.state.model.{RejectedBid, State}
+import plenty.state.model.{Bid, RejectedBid, State}
 import utest._
 
 /**
@@ -18,7 +18,7 @@ object BiddingTests extends TestSuite {
   val donation = StateManager.createDonation("d-title", "d-desc", Seq(), AgentManager.agentAsNode(a(0)))
   var bidFirst = StateManager.createBid(donation, amount = 2, by = n(1))
   var bidUnder = StateManager.createBid(donation, amount = 1, by = n(2))
-  var bidOver = StateManager.createBid(donation, amount = 3, by = n(3))
+  var bidProper = StateManager.createBid(donation, amount = 3, by = n(3))
   var bidOverWallet = StateManager.createBid(donation, amount = 30, by = n(3))
   var bidSelf = StateManager.createBid(donation, amount = 3, by = n(0))
 
@@ -104,6 +104,27 @@ object BiddingTests extends TestSuite {
         val payloads = InternalSendInterface.log map { m => m.payload }
         val rejected = payloads collect {
           case rej: RejectedBid => rej.bid == bidOverWallet
+        }
+        assert(rejected contains true)
+      }
+
+      'bidding_proper {
+        val msg = Message.createMessage(bidProper.by, donation.by, BidAction, bidProper)
+
+        Network.send(msg)
+        waitClearQueue
+
+        for (a <- getAgents) {
+          val bids = a.state.bids
+          assert(a.state.donations.contains(donation))
+          assert(bids.contains(bidFirst))
+          assert(bids.contains(bidProper))
+        }
+
+        val payloads = InternalSendInterface.log map { m => m -> m.payload }
+        val rejected = payloads collect {
+          case (m: Message[_], b: Bid) => b == bidProper && m.payloadId == ActionIdentifiers.ACCEPT_BID_ACTION && m
+            .to == bidProper.by
         }
         assert(rejected contains true)
       }
