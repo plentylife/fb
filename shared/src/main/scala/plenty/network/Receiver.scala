@@ -26,11 +26,11 @@ object Receiver {
 
     case m if m.payloadId == ActionIdentifiers.APPROVE_SETTLE_BID_ACTION =>
       val t = m.payload.asInstanceOf[Transaction]
-      onApproveSettleBid(t, toAgent)
+      onApproveSettleBid(t, toAgent, m)
 
     case m if m.payloadId == ActionIdentifiers.DENY_SETTLE_BID_ACTION =>
       val t = m.payload.asInstanceOf[RejectedTransaction].transaction
-      onDenySettleBid(t, toAgent)
+      onDenySettleBid(t, toAgent, m)
 
     /* Bids */
 

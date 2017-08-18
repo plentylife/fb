@@ -26,7 +26,7 @@ object AccountingTests extends TestSuite {
         println("\nfirst run")
         Thread.sleep(TestMintPress.period + 1)
         distributeCoins
-        waitClearQueue
+        waitClearQueue()
 
         for (ap <- Network.getAgents; n <- ns) {
           println(s"coins of ${ap.id}: ${ap.getAgentInLastKnownState.state.coins.size}")
@@ -45,7 +45,7 @@ object AccountingTests extends TestSuite {
       'second_immediate_run {
         println("\nsecond run")
         distributeCoins
-        waitClearQueue
+        waitClearQueue()
 
         for (ap <- Network.getAgents; n <- ns) {
           val balance = Accounting.getBalance(n)(ap.getAgentInLastKnownState)
@@ -58,7 +58,7 @@ object AccountingTests extends TestSuite {
         println("\nthird run")
         Thread.sleep(TestMintPress.period)
         distributeCoins
-        waitClearQueue
+        waitClearQueue()
 
         println(s"original coins $originalCoins")
         println(s"third run coins ${as(1).state.coins}")
@@ -75,7 +75,7 @@ object AccountingTests extends TestSuite {
       'expired {
         Thread.sleep(TestMintPress.period + 1)
         distributeCoins
-        waitClearQueue
+        waitClearQueue()
 
         for (ap <- Network.getAgents; n <- ns) {
           val balance = Accounting.getBalance(n)(ap.getAgentInLastKnownState)
@@ -94,7 +94,7 @@ object AccountingTests extends TestSuite {
       }
     }
 
-    
+
     'minting_for_new {
       val a = Agent("new", State())
       val coins = MintPress.distributeCoinsToNewAgent(a)
@@ -111,7 +111,7 @@ object AccountingTests extends TestSuite {
     TestMintPress.distributeCoins(Network.getAgents.map(_.getAgentInLastKnownState))
   }
 
-  def waitClearQueue = {
+  def waitClearQueue() = {
     println("waiting on message queue")
     println(s"non-completes: ${Network.nonCompletes.mkString(" ")}")
     while (Network.nonCompletes.nonEmpty) {

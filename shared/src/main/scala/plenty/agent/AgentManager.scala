@@ -3,6 +3,8 @@ package plenty.agent
 import plenty.agent.model.Agent
 import plenty.network.{Message, MintPress}
 import plenty.state.model._
+import sun.management.resources.agent
+
 import scala.language.implicitConversions
 
 /**
@@ -32,19 +34,33 @@ object AgentManager {
 
   def takeBids(agent: Agent): Unit = ActionLogic.takeBids(agent)
 
-  def onApproveSettleBid(t: Transaction, a: Agent): Agent = {
+  /** both onApproveSettleBid and onDenySettleBid are only enacted iff they originate from the donor -- other
+    * messages are just suggestions */
+  def onApproveSettleBid(t: Transaction, a: Agent, msg: Message[_]): Agent = {
     // has this been already settled?
     // fixme. t.bid.get is unsafe
-    if (a.state.nonSettledBids contains t.bid.get) {
+    val bid = t.bid.get
+    if (bid.donation.by != msg.from) {
+      return a
+    }
+
+    if (a.state.nonSettledBids contains bid) {
       val newA = StateLogic.registerApprovedBidSettle(t, a)
       ActionLogic.finishTransaction(t, a)
       newA
     } else a
   }
 
-  def onDenySettleBid(t: Transaction, agent: Agent): Agent = {
+
+  /** both onApproveSettleBid and onDenySettleBid are only enacted iff they originate from the donor -- other
+    * messages are just suggestions */
+  def onDenySettleBid(t: Transaction, agent: Agent, msg: Message[_]): Agent = {
     // fixme needs to be verified
     val bid = t.bid.get
+    if (bid.donation.by != msg.from) {
+      return agent
+    }
+
     val a = StateLogic.removeBid(bid, agent)
     // fixme needs to be verified that the transaction and bid match
     if (t.to == agentAsNode(a)) {

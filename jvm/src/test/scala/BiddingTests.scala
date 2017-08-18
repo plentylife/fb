@@ -31,7 +31,7 @@ object BiddingTests extends TestSuite {
       'setting_up {
         ap = a map { _a => Network.registerAgent(_a, InternalSendInterface) }
         a foreach MintPress.distributeCoinsToNewAgent
-        waitClearQueue
+        waitClearQueue()
         balances = ap map {
           _.getAgentInLastKnownState
         } map {
@@ -43,7 +43,7 @@ object BiddingTests extends TestSuite {
         val msg = Message.createMessage(bidProper.by, donation.by, BidAction, bidProper)
 
         Network.send(msg)
-        waitClearQueue
+        waitClearQueue()
 
         for (a <- getAgents) {
           val bids = a.state.bids
@@ -61,18 +61,18 @@ object BiddingTests extends TestSuite {
 
       'setting_up_donation_and_bid {
         Network.notifyAllAgents(donation, DonateAction, from = AgentManager.agentAsNode(a(0)))
-        waitClearQueue
+        waitClearQueue()
 
         val msg = Message.createMessage(bidFirst.by, donation.by, BidAction, bidFirst)
         Network.send(msg)
-        waitClearQueue
+        waitClearQueue()
       }
 
       'bidding_on_own_donation {
         val msg = Message.createMessage(bidSelf.by, donation.by, BidAction, bidSelf)
 
         Network.send(msg)
-        waitClearQueue
+        waitClearQueue()
 
         for (a <- getAgents) {
           val bids = a.state.bids
@@ -93,7 +93,7 @@ object BiddingTests extends TestSuite {
         val msg = Message.createMessage(bidUnder.by, donation.by, BidAction, bidUnder)
 
         Network.send(msg)
-        waitClearQueue
+        waitClearQueue()
 
         for (a <- getAgents) {
           val bids = a.state.bids
@@ -114,7 +114,7 @@ object BiddingTests extends TestSuite {
         val msg = Message.createMessage(bidOverWallet.by, donation.by, BidAction, bidOverWallet)
 
         Network.send(msg)
-        waitClearQueue
+        waitClearQueue()
 
         for (a <- getAgents) {
           val bids = a.state.bids
@@ -134,7 +134,7 @@ object BiddingTests extends TestSuite {
         val msg = Message.createMessage(bidProper.by, donation.by, BidAction, bidProper)
 
         Network.send(msg)
-        waitClearQueue
+        waitClearQueue()
 
         for (a <- getAgents) {
           val bids = a.state.bids

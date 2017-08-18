@@ -37,14 +37,14 @@ object BasicInteractionFlowTests extends TestSuite {
         a foreach MintPress.distributeCoinsToNewAgent
         assert(getAgents.size == 3)
 
-        waitClearQueue
+        waitClearQueue()
         balances = ap map {_.getAgentInLastKnownState} map {Accounting.getSelfBalance}
         println(s"balances ${balances}")
       }
 
       'donating {
         Network.notifyAllAgents(donation, DonateAction, from = AgentManager.agentAsNode(a(0)))
-        waitClearQueue
+        waitClearQueue()
 
         for (a <- getAgents) {
           assert(a.state.donations.contains(donation))
@@ -58,7 +58,7 @@ object BasicInteractionFlowTests extends TestSuite {
         val msg = Message.createMessage(n(1), n(0), BidAction, bid)
 
         Network.send(msg)
-        waitClearQueue
+        waitClearQueue()
 
         for (a <- getAgents) {
           val bids = a.state.bids
@@ -78,7 +78,7 @@ object BasicInteractionFlowTests extends TestSuite {
           assert(a.state.donations.contains(donation))
         }
         Thread.sleep(6000)
-        waitClearQueue
+        waitClearQueue()
         for (a <- getAgents) {
           assert(!a.state.bids.contains(bid))
           assert(!a.state.donations.contains(donation))
@@ -103,7 +103,7 @@ object BasicInteractionFlowTests extends TestSuite {
     Network.getAgents.map(_.getAgentInLastKnownState)
   }
 
-  def waitClearQueue = {
+  def waitClearQueue() = {
     println("waiting on message queue")
     println(s"non-completes: ${Network.nonCompletes.mkString(" ")}")
     while (Network.nonCompletes.nonEmpty) {

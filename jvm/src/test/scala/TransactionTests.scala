@@ -21,7 +21,7 @@ object TransactionTests extends TestSuite {
 
           val msg1 = Message.createMessage(S.bidFirst.by, S.donation.by, BidAction, S.bidFirst)
           Network.send(msg1)
-          waitClearQueue
+          waitClearQueue()
         }
 
         'taking_bids {
@@ -34,7 +34,7 @@ object TransactionTests extends TestSuite {
           // the receiving end believes that the sending end does not have enough coins
           ActionLogic.takeBids(ap(0).getAgentInLastKnownState)
 
-          waitClearQueue
+          waitClearQueue()
 
           val assertTransactionValid = InternalSendInterface.log map {_.payload} collect {
             case r: RejectedTransaction ⇒
@@ -71,7 +71,7 @@ object TransactionTests extends TestSuite {
 
           val msg1 = Message.createMessage(bidFirst.by, donation.by, BidAction, S.bidFirst)
           Network.send(msg1)
-          waitClearQueue
+          waitClearQueue()
 
           for (a <- getAgents) {
             val bids = a.state.bids
@@ -90,7 +90,7 @@ object TransactionTests extends TestSuite {
           // the sender realizes that they don't have enough coins, but not the receiver
           ActionLogic.takeBids(ap(0).getAgentInLastKnownState)
 
-          waitClearQueue
+          waitClearQueue()
 
           val assertNoSettles = InternalSendInterface.log map {_.payloadId} collect {
             case pid if pid == ActionIdentifiers.SETTLE_BID_ACTION ⇒ true
@@ -121,7 +121,7 @@ object TransactionTests extends TestSuite {
           val msg1 = Message.createMessage(S.bidFirst.by, S.donation.by, BidAction, S.bidFirst)
           Network.send(msg1)
           Network.send(Message.createMessage(S.bidFirst.by, S.donation.by, BidAction, S.bidSecond))
-          waitClearQueue
+          waitClearQueue()
         }
 
         'taking_bids {
@@ -135,23 +135,32 @@ object TransactionTests extends TestSuite {
           // the receiving end believes that the sending end does not have enough coins
           ActionLogic.takeBids(ap(0).getAgentInLastKnownState)
 
-          waitClearQueue
+          waitClearQueue(true)
 
-          val assertTransactionValid = InternalSendInterface.log map {m ⇒ (m.payload, m.payloadId)} collect {
-            case (t: Transaction, pid) if pid == ActionIdentifiers.APPROVE_SETTLE_BID_ACTION ⇒
-              val liveCoins = Accounting.filterDeadCoins(t.coins)
-              // all coins belong to the bidder and the amount matches the amount agreed upon
-              (liveCoins map {_.belongsTo == n(2)} forall { v ⇒ v }) && (liveCoins.size == bidSecond.amount)
-          }
-          val assertCoinsMinted = InternalSendInterface.log map {m ⇒
-            if (m.payloadId == ActionIdentifiers.COINS_MINTED) {
+//          val assertTransactionValid = InternalSendInterface.log map {m ⇒ (m.payload, m.payloadId)} collect {
+//            case (t: Transaction, pid) if pid == ActionIdentifiers.APPROVE_SETTLE_BID_ACTION ⇒
+//              val liveCoins = Accounting.filterDeadCoins(t.coins)
+//              // all coins belong to the bidder and the amount matches the amount agreed upon
+//              val byCond = t.from == bidSecond.by
+//              val belongToCond = liveCoins map {_.belongsTo == n(2)} forall { v ⇒ v }
+//              val amountCond = liveCoins.size == bidSecond.amount
+//              val cond = belongToCond && amountCond && byCond
+//              println(s"t from node ${t.from.id} belong $belongToCond amount $amountCond bycond ${byCond}")
+//              cond
+//          }
+          val assertCoinsMinted = InternalSendInterface.log collect {
+            case m: Message[_] if m.payloadId == ActionIdentifiers.COINS_MINTED ⇒
               val coins = m.payload.asInstanceOf[Set[Coin]]
-              coins forall(_.belongsTo == donation.by)
-            } else false
+              val newOwnerCond = coins forall(_.belongsTo == donation.by)
+              val oldOwnerCond = coins forall(_.wrapsAround.get.belongsTo == n(2))
+              val liveCoins = Accounting.filterDeadCoins(coins)
+              val amountCond = liveCoins.size == bidSecond.amount
+              println(s"newOwner $newOwnerCond oldOwner $oldOwnerCond amount $amountCond")
+              oldOwnerCond && newOwnerCond && amountCond
           }
 
-          assert(assertTransactionValid.nonEmpty && assertTransactionValid.forall { v ⇒ v })
-          assert(assertCoinsMinted.contains(true))
+//          assert(assertTransactionValid.nonEmpty && assertTransactionValid.forall { v ⇒ v })
+          assert(assertCoinsMinted.nonEmpty && assertCoinsMinted.forall(_ == true))
           for (a <- getAgents) {
             val bids = a.state.bids
             assert(!a.state.donations.contains(donation))
@@ -167,7 +176,7 @@ object TransactionTests extends TestSuite {
           val msg1 = Message.createMessage(bidFirst.by, donation.by, BidAction, S.bidFirst)
           Network.send(msg1)
           Network.send(Message.createMessage(S.bidFirst.by, S.donation.by, BidAction, S.bidSecond))
-          waitClearQueue
+          waitClearQueue()
         }
 
         'taking_bids {
@@ -180,7 +189,7 @@ object TransactionTests extends TestSuite {
           // the sender realizes that they don't have enough coins, but not the receiver
           ActionLogic.takeBids(ap(0).getAgentInLastKnownState)
 
-          waitClearQueue
+          waitClearQueue()
 
           val assertRetractions = InternalSendInterface.log map {_.payloadId} collect {
             case pid if pid == ActionIdentifiers.RETRACT_BID_ACTION ⇒ true
@@ -191,15 +200,19 @@ object TransactionTests extends TestSuite {
               // all coins belong to the bidder and the amount matches the amount agreed upon
               (liveCoins map {_.belongsTo == n(2)} forall { v ⇒ v }) && (liveCoins.size == bidSecond.amount)
           }
-          val assertCoinsMinted = InternalSendInterface.log map {m ⇒
-            if (m.payloadId == ActionIdentifiers.COINS_MINTED) {
+          val assertCoinsMinted = InternalSendInterface.log collect {
+            case m: Message[_] if m.payloadId == ActionIdentifiers.COINS_MINTED ⇒
               val coins = m.payload.asInstanceOf[Set[Coin]]
-              coins forall(_.belongsTo == donation.by)
-            } else false
+              val newOwnerCond = coins forall(_.belongsTo == donation.by)
+              val oldOwnerCond = coins forall(_.wrapsAround.get.belongsTo == n(2))
+              val liveCoins = Accounting.filterDeadCoins(coins)
+              val amountCond = liveCoins.size == bidSecond.amount
+              println(s"newOwner $newOwnerCond oldOwner $oldOwnerCond amount $amountCond")
+              oldOwnerCond && newOwnerCond && amountCond
           }
 
           assert(assertTransactionValid.nonEmpty && assertTransactionValid.forall { v ⇒ v })
-          assert(assertCoinsMinted.contains(true))
+          assert(assertCoinsMinted.nonEmpty && assertCoinsMinted.forall(_ == true))
           assert(assertRetractions.nonEmpty)
           for (a <- getAgents) {
             val bids = a.state.bids
@@ -236,10 +249,10 @@ private object S {
     assert(ap.forall(_.getAgentInLastKnownState.state.coins.isEmpty))
 
     a foreach MintPress.distributeCoinsToNewAgent
-    waitClearQueue
+    waitClearQueue()
 
     Network.notifyAllAgents(donation, DonateAction, n(0))
-    waitClearQueue
+    waitClearQueue()
   }
 }
 

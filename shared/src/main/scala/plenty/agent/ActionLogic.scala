@@ -49,7 +49,7 @@ object ActionLogic {
     * the only agent allowed to approve or deny a bid is the one accepting it
     * */
   def verifyTransactionForBid(t: Transaction, agent: Agent) = {
-    if (t.to == agentAsNode(agent)) {
+//    if (t.to == agentAsNode(agent)) {
       t.bid match {
         case Some(bid) =>
           agent.state.nonSettledBids.find(_ == bid) match {
@@ -65,7 +65,7 @@ object ActionLogic {
         case _ => Network.notifyAllAgents(RejectedTransaction("improper formatting", t), ActionIdentifiers
           .DENY_SETTLE_BID_ACTION, agent)
       }
-    }
+//    }
   }
 
   /** manages the minting of new coins

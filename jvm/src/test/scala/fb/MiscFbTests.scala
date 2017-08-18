@@ -22,12 +22,12 @@ object MiscFbTests extends TestSuite {
       FbAgent.load()
       val a = AgentManager.createAgent(id)
 
-      waitClearQueue
+      waitClearQueue()
       FbAgent.lastState.coins.count(_.belongsTo.id == a.id) ==> 10
     }
   }
 
-  def waitClearQueue = {
+  def waitClearQueue() = {
     println("waiting on message queue")
     println(s"non-completes: ${Network.nonCompletes.mkString(" ")}")
     while (Network.nonCompletes.nonEmpty) {

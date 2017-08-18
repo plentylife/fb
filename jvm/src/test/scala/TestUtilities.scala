@@ -6,12 +6,15 @@ object TestUtilities {
     Network.getAgents.map(_.getAgentInLastKnownState)
   }
 
-  def waitClearQueue = {
+  def waitClearQueue(printMsg: Boolean = false) = {
     println("waiting on message queue")
-    println(s"non-completes: ${Network.nonCompletes.mkString(" ")}")
+    println(s"non-completes: ${Network.nonCompletes.keySet.mkString(" ")}")
     while (Network.nonCompletes.nonEmpty) {
       Thread.sleep(1000)
-      println(s"non-completes (loop): ${Network.nonCompletes.mkString(" ")}")
+      if (!printMsg)
+        println(s"non-completes (loop): ${Network.nonCompletes.keySet.mkString(" ")}")
+      else
+        println(s"non-completes (loop): ${Network.nonCompletes.mkString("\n")}")
     }
   }
 }
