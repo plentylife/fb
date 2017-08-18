@@ -9,16 +9,7 @@ import scala.language.implicitConversions
   * The access point to the agent module
   */
 object AgentManager {
-  def createAgent(id: String): Agent = {
-    var a = Agent(id, state = State())
-    val coins = MintPress.distributeCoinsToNewAgent(a)
-    a = StateLogic.registerCoins(coins, a)
-    a
-  }
-
-  implicit def agentAsNode(agent: Agent): Node = {
-    Node(agent.id)
-  }
+  /* Misc registrations */
 
   def registerNode(node: Node, agent: Agent): Agent = {
     StateLogic.registerNode(node, agent)
@@ -37,6 +28,33 @@ object AgentManager {
     agent
   }
 
+  /* Transactions */
+
+  def takeBids(agent: Agent): Unit = ActionLogic.takeBids(agent)
+
+  def onApproveSettleBid(t: Transaction, a: Agent): Agent = {
+    // has this been already settled?
+    // fixme. t.bid.get is unsafe
+    if (a.state.nonSettledBids contains t.bid.get) {
+      val newA = StateLogic.registerApprovedBidSettle(t, a)
+      ActionLogic.finishTransaction(t, a)
+      newA
+    } else a
+  }
+
+  def onDenySettleBid(t: Transaction, agent: Agent): Agent = {
+    // fixme needs to be verified
+    val bid = t.bid.get
+    val a = StateLogic.removeBid(bid, agent)
+    // fixme needs to be verified that the transaction and bid match
+    if (t.to == agentAsNode(a)) {
+      AgentManager.takeBids(a)
+    }
+    a
+  }
+
+  /* Bids */
+
   def verifyBid(msg: Message[Bid], agent: Agent): Agent = {
     val bid = msg.payload
 
@@ -52,15 +70,27 @@ object AgentManager {
     a
   }
 
-  def takeBids(agent: Agent): Unit = ActionLogic.takeBids(agent)
+  def retractBid(bid: Bid, agent: Agent): Agent = {
+    val isBidBeingSettled = agent.state.nonSettledBids contains bid
+    val a = StateLogic.removeBid(bid, agent)
 
-  def onApproveSettleBid(t: Transaction, a: Agent): Agent = {
-    // has this been already settled?
-    // fixme. t.bid.get is unsafe
-    if (a.state.nonSettledBids contains t.bid.get) {
-      val newA = StateLogic.registerApprovedBidSettle(t, a)
-      ActionLogic.finishTransaction(t, a)
-      newA
-    } else a
+    if (isBidBeingSettled && bid.donation.by == agentAsNode(a)) {
+      takeBids(a)
+    }
+    a
   }
+
+  /* Utils */
+
+  def createAgent(id: String): Agent = {
+    var a = Agent(id, state = State())
+    val coins = MintPress.distributeCoinsToNewAgent(a)
+    a = StateLogic.registerCoins(coins, a)
+    a
+  }
+
+  implicit def agentAsNode(agent: Agent): Node = {
+    Node(agent.id)
+  }
+
 }

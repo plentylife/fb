@@ -30,12 +30,7 @@ object Receiver {
 
     case m if m.payloadId == ActionIdentifiers.DENY_SETTLE_BID_ACTION =>
       val t = m.payload.asInstanceOf[RejectedTransaction].transaction
-      val a = StateLogic.registerDeniedBidSettle(t, toAgent)
-      // fixme needs to be verified that the transaction and bid match
-      if (t.to == agentAsNode(toAgent)) {
-        AgentManager.takeBids(a)
-      }
-      a
+      onDenySettleBid(t, toAgent)
 
     /* Bids */
 
@@ -44,6 +39,7 @@ object Receiver {
     verifyBid(m.asInstanceOf[Message[Bid]], toAgent)
 
     case m if m.payloadId == ActionIdentifiers.ACCEPT_BID_ACTION =>
+//      println(s"agent ${toAgent.id} accepting bid ${m.payload}")
       StateLogic.registerBid(m.payload.asInstanceOf[Bid])
 
     case m if m.payloadId == ActionIdentifiers.REJECT_BID_ACTION =>
@@ -52,6 +48,9 @@ object Receiver {
 
     case m if m.payloadId == ActionIdentifiers.BID_TAKE_ACTION =>
       registerTakenBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
+
+    case m if m.payloadId == ActionIdentifiers.RETRACT_BID_ACTION =>
+      retractBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
 
       /* Donations */
 

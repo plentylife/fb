@@ -26,15 +26,6 @@ object StateLogic {
     stateCoins = stateCoins diff oldCoins
     s = s.copy(coins = stateCoins)
     val a = agent.copy(state = s)
-
-
-//    println(s"Old coins (a ${agent.id}): ${oldCoins}")
-//    println(s"self balance ${Accounting.getSelfBalance(a)}")
-//    if (oldCoins.nonEmpty) {
-//      println(s"New coins (a ${agent.id}): ${coins}")
-//      println(s"matching old coins by id: ${stateCoins filter(c => oldCoins.map(_.id) contains c.id)}")
-//      println(s"grouped coins sizes ${stateCoins.groupBy(_.belongsTo).mapValues(_.size)}")
-//    }
     StateManager.save(a)
     a
   }
@@ -75,12 +66,11 @@ object StateLogic {
     agent.copy(state = s)
   }
 
-  def registerDeniedBidSettle(t: Transaction, agent: Agent): Agent = {
+  def removeBid(bid: Bid, agent: Agent): Agent = {
     var s = agent.state
-    val bid = t.bid.get
-    // fixme this should be double checked
+    val bids = s.bids filterNot(_ == bid)
     val nonSettledBids = s.nonSettledBids filterNot(_ == bid)
-    s = s.copy(nonSettledBids = nonSettledBids)
+    s = s.copy(nonSettledBids = nonSettledBids, bids = bids)
     agent.copy(state = s)
   }
 

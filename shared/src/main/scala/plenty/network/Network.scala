@@ -79,6 +79,12 @@ object Network {
 
   def getAgents: Set[AgentPointer] = agents.keySet
 
+  @deprecated
+  def clear = {
+    agents = Map()
+    nodeToAgent = Map()
+  }
+
   /* message queue tracking */
 
   private var msgCounter: Long = 0
