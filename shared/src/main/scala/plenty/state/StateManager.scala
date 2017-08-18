@@ -2,8 +2,8 @@ package plenty.state
 
 import java.io._
 import java.nio.ByteBuffer
-import java.security.SecureRandom
-import java.util.Date
+import java.security.{MessageDigest, SecureRandom}
+import java.util.{Base64, Date}
 
 import plenty.agent.model.Agent
 import plenty.state.model._
@@ -16,8 +16,12 @@ import boopickle.Default._
 object StateManager {
   private val random = new SecureRandom()
 
+  private val hasher = MessageDigest.getInstance("SHA-512")
   private def idGenerator(time: Long, additionalPiece: String = ""): String = {
-    Seq(random.nextInt(Int.MaxValue), time).mkString("-")
+    val idStr = Seq(random.nextInt(Int.MaxValue), time).mkString("-") + additionalPiece
+    val idBytes = idStr.toCharArray map {_.toByte}
+    val hash = hasher.digest(idBytes)
+    Base64.getEncoder.encodeToString(hash)
   }
 
   def createDonation(title: String, description: String, attachments: Seq[String], by: Node) = {
@@ -30,6 +34,12 @@ object StateManager {
     val now = new Date().getTime
     val id = idGenerator(now, amount + by.id)
     Bid(id = id, donation = donation, amount=amount, by=by, timestamp = now)
+  }
+
+  def createTransaction(coins: Set[Coin], from: Node, to: Node) = {
+    val now = new Date().getTime
+    val id = idGenerator(now, s"transaction$from$to")
+    Transaction(id, now, coins, from, to)
   }
 
   def updateHistory(oldState: State, newHistory: History): State = oldState.copy(history = newHistory)

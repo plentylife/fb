@@ -1,6 +1,7 @@
 package plenty.agent.model
 
-import plenty.state.model.{State}
+import plenty.agent.AgentManager
+import plenty.state.model.State
 
 /**
   * The model of an acting participant in the market

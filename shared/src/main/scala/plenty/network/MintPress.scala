@@ -5,7 +5,7 @@ import java.util.{Base64, Date}
 
 import plenty.agent.AgentManager
 import plenty.agent.model.Agent
-import plenty.state.model.Coin
+import plenty.state.model.{Coin, Node}
 import sun.misc.BASE64Encoder
 
 /**
@@ -49,21 +49,35 @@ trait MintPress {
 
   /** Generates a single coin */
   private def genCoin(belongsTo: Agent, timestamp: Long): Coin = {
-    coinCounter += 1
-    val id = genCoinId(timestamp + coinCounter)
+    val id = genCoinId(timestamp)
     val belongsToNode = AgentManager.agentAsNode(belongsTo)
     Coin(id=id, belongsTo = belongsToNode, mintTime = timestamp, deathTime = getDeathTime(timestamp),
       wrapsAround = None, approvedBy = Set())
   }
+
+  /** Generates a new coins from existing coins
+    * A new coin has the lifespan twice as long as the previous coin */
+  def genCoins(coins: Set[Coin], belongsTo: Node): Set[Coin] = {
+    val timestamp = new Date().getTime
+    coins map {old =>
+      val id = genCoinId(timestamp)
+      val lifespan = (old.deathTime - old.mintTime) * 2
+      val deathTime = timestamp + lifespan
+      Coin(id, belongsTo=belongsTo, mintTime = timestamp, deathTime = deathTime, wrapsAround = Option(old),
+        approvedBy = Set())
+    }
+  }
+
 
   private def getDeathTime(from: Long) = from + period
 
   private val generator = new SecureRandom()
   private val hasher = MessageDigest.getInstance("SHA-512")
   private def genCoinId(nonce: Long): String = {
+    coinCounter += 1
     val rv = new Array[Byte](512)
     generator.nextBytes(rv)
-    val idv = rv ++ nonce.toString.map(_.toByte)
+    val idv = rv ++ (nonce + coinCounter).toString.map(_.toByte)
     val hash = hasher.digest(idv)
     Base64.getEncoder.encodeToString(hash)
   }

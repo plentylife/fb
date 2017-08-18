@@ -55,5 +55,13 @@ object AgentManager {
 
   def takeBids(agent: Agent) = ActionLogic.takeBids(agent)
 
-  def registerBidSettlingTransaction(t: Transaction, agent: Agent) = ActionLogic.bidSettling(t, agent)
+  def onApproveSettleBid(t: Transaction, a: Agent): Agent = {
+    // has this been already settled?
+    // fixme. t.bid.get is unsafe
+    if (a.state.nonSettledBids contains t.bid.get) {
+      val newA = StateLogic.registerApprovedBidSettle(t, a)
+      ActionLogic.finishTransaction(t, a)
+      newA
+    } else a
+  }
 }

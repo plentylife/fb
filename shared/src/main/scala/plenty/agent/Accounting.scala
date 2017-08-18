@@ -3,8 +3,10 @@ package plenty.agent
 import java.util.Date
 
 import plenty.agent.model.Agent
-import plenty.state.model.{Node, Transaction}
-
+import plenty.state.StateManager
+import plenty.state.model.{Coin, Node, Transaction}
+import AgentManager.agentAsNode
+import plenty.network.MintPress
 /**
   * Functions related to accounting, such as getting a coin balance for a node, or minting coins
   */
@@ -17,14 +19,45 @@ object Accounting {
   def getSelfBalance(agent: Agent) = getBalance(AgentManager.agentAsNode(agent))(agent)
 
   def clearDeadCoins(implicit agent: Agent): Agent = {
-    val now = new Date().getTime
     var s = agent.state
-    val coins = s.coins.filter(_.deathTime > now)
+    val coins = filterDeadCoins(s.coins)
     s = s.copy(coins = coins)
     agent.copy(state = s)
   }
 
-  def createTransaction(to: Node, amount: Int)(implicit agent: Agent): Either[InsufficientBalance, Transaction] = ???
+  def filterDeadCoins(coins: Set[Coin]) = {
+    val now = new Date().getTime
+    coins.filter(_.deathTime > now)
+  }
+
+  def getOwnValidCoins(agent: Agent) = getValidCoinsOf(agent, agent)
+
+  def getValidCoinsOf(whom: Node, agent: Agent) = filterDeadCoins {agent.state.coins filter {_.belongsTo == whom}}
+
+  /* Transactions */
+
+  def createTransaction(to: Node, amount: Int)(implicit agent: Agent): Either[InsufficientBalance, Transaction] = {
+    val validSelfCoins = getOwnValidCoins(agent)
+    if (validSelfCoins.size < amount) return Left(new InsufficientBalance)
+    val transCoins = validSelfCoins.toSeq.sortBy(_.deathTime).take(amount)
+    val t = StateManager.createTransaction(transCoins.toSet, from=agent, to=to)
+    Right(t)
+  }
+
+  def verifyTransaction(transaction: Transaction, forAmount: Int, agent: Agent): Option[InsufficientBalance] = {
+    val validFromCoins = getValidCoinsOf(transaction.from, agent)
+    val validCoins = transaction.coins intersect validFromCoins
+    if (validCoins.size < forAmount) {
+      Option(new InsufficientBalance)
+    } else None
+  }
+
+  def transferCoins(transaction: Transaction): Set[Coin] = {
+    val old = transaction.coins
+    MintPress.genCoins(old, transaction.to)
+  }
+
+  /* Utility */
 
   private def canTransactAmount(amount: Int)(implicit agent: Agent): Boolean = {
     canTransactAmount(AgentManager.agentAsNode(agent), agent, amount)
@@ -33,7 +66,6 @@ object Accounting {
   def canTransactAmount(node: Node, agent: Agent, amount: Int): Boolean = {
     Accounting.getBalance(node)(agent) >= amount
   }
-
 }
 
 class InsufficientBalance extends Exception("Insufficient balance")

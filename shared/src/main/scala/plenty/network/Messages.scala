@@ -45,16 +45,24 @@ object RelayIdentifiers {
 }
 
 object ActionIdentifiers {
+  val REGISTER_NODE = Message.createAction[Node]("REGISTER_NODE")
+
+  /* coin management */
   val COINS_MINTED = Message.createAction[Set[Coin]]("COINS_MINTED")
+
+  /* bid to transfer */
   val BID_TAKE_ACTION = Message.createAction[Bid]("BID_TAKE_ACTION")
   val SETTLE_BID_ACTION = Message.createAction[Transaction]("SETTLE_BID_ACTION")
-  val DENY_SETTLE_BID_ACTION = Message.createAction[Transaction]("DENY_SETTLE_BID_ACTION")
+  val DENY_SETTLE_BID_ACTION = Message.createAction[RejectedTransaction]("DENY_SETTLE_BID_ACTION")
   val APPROVE_SETTLE_BID_ACTION = Message.createAction[Transaction]("APPROVE_SETTLE_BID_ACTION")
+
+  /* bidding */
   /** a message back signifying that a bid has been accepted for consideration */
   val ACCEPT_BID_ACTION = Message.createAction[Bid]("ACCEPT_BID_ACTION")
   /** the bid has NOT been accepted for consideration for some reason such as low balance */
   val REJECT_BID_ACTION = Message.createAction[RejectedBid]("REJECT_BID_ACTION")
-  val REGISTER_NODE = Message.createAction[Node]("REGISTER_NODE")
+  /** retracting a bid */
+  val RETRACT_BID_ACTION = Message.createAction[Bid]("RETRACT_BID_ACTION")
 }
 
 object DonateAction extends PayloadIdentifier[Donation] {

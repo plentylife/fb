@@ -37,4 +37,10 @@ case class Transaction(id: String, timestamp: Long, coins: Set[Coin], from: Node
 
 // Supplementary
 
+trait Rejection {
+  val reason: String
+}
+
 case class RejectedBid(reason: String, bid: Bid)
+
+case class RejectedTransaction(reason: String, transaction: Transaction) extends Rejection

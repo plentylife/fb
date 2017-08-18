@@ -20,8 +20,21 @@ object StateLogic {
 
   def registerCoins(coins: Set[Coin], agent: Agent): Agent = {
     var s = agent.state
-    s = s.copy(coins = s.coins ++ coins)
+    var stateCoins = s.coins ++ coins
+    val oldCoins = coins map {_.wrapsAround} collect {case Some(c) => c}
+    // removing coins that the new one's are wrapping
+    stateCoins = stateCoins diff oldCoins
+    s = s.copy(coins = stateCoins)
     val a = agent.copy(state = s)
+
+
+//    println(s"Old coins (a ${agent.id}): ${oldCoins}")
+//    println(s"self balance ${Accounting.getSelfBalance(a)}")
+//    if (oldCoins.nonEmpty) {
+//      println(s"New coins (a ${agent.id}): ${coins}")
+//      println(s"matching old coins by id: ${stateCoins filter(c => oldCoins.map(_.id) contains c.id)}")
+//      println(s"grouped coins sizes ${stateCoins.groupBy(_.belongsTo).mapValues(_.size)}")
+//    }
     StateManager.save(a)
     a
   }
@@ -56,9 +69,18 @@ object StateLogic {
     agentUpd
   }
 
+  /* Transactions */
+
   def registerApprovedBidSettle(t: Transaction, agent: Agent): Agent = {
     var s = agent.state
-    ???
+    // fixme this should be double checked
+    val bid = t.bid.get
+    val bids = s.bids filterNot {_.donation == bid.donation}
+    val nonSettledBids = s.nonSettledBids filterNot(_ == bid)
+    val donations = s.donations filterNot(_ == bid.donation)
+
+    s = s.copy(bids=bids, nonSettledBids=nonSettledBids, donations=donations)
+    agent.copy(state = s)
   }
 
   def registerDeniedBidSettle(t: Transaction, agent: Agent): Agent = {
