@@ -37,8 +37,7 @@ object AgentManager {
     agent
   }
 
-  def verifyBid(msg: Message[Bid], toAgent: Agent): Agent = {
-    implicit var agent = toAgent
+  def verifyBid(msg: Message[Bid], agent: Agent): Agent = {
     val bid = msg.payload
 
     ActionLogic.verifyBid(bid, msg.from, agent)
@@ -53,7 +52,7 @@ object AgentManager {
     a
   }
 
-  def takeBids(agent: Agent) = ActionLogic.takeBids(agent)
+  def takeBids(agent: Agent): Unit = ActionLogic.takeBids(agent)
 
   def onApproveSettleBid(t: Transaction, a: Agent): Agent = {
     // has this been already settled?

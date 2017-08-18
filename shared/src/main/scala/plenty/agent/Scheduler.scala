@@ -1,7 +1,7 @@
-package plenty.network
+package plenty.agent
 
-import plenty.agent.{Accounting, AgentManager}
 import plenty.agent.model.Agent
+import plenty.network.Network
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}

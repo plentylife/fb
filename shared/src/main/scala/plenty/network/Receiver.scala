@@ -38,10 +38,12 @@ object Receiver {
     verifyBid(m.asInstanceOf[Message[Bid]], toAgent)
 
     case m if m.payloadId == ActionIdentifiers.ACCEPT_BID_ACTION =>
-//      println(ActionIdentifiers.ACCEPT_BID_ACTION.toString + s" : ${m.payload}")
       StateLogic.registerBid(m.payload.asInstanceOf[Bid])
 
-    case m if m.payloadId == ActionIdentifiers.REJECT_BID_ACTION => null
+    case m if m.payloadId == ActionIdentifiers.REJECT_BID_ACTION =>
+      /* nothing happens */
+      toAgent
+
     case m if m.payloadId == ActionIdentifiers.BID_TAKE_ACTION =>
       registerTakenBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
 

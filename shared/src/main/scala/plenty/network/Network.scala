@@ -14,8 +14,7 @@ import scala.util.Failure
 object Network {
   /* basic functions */
   def send(msg: Message[_]): Unit = {
-    var rid = -1
-    rid = addNonComplete()
+    val rid = addNonComplete()
     val msgF = Future {
       //      Network.receive(msg)
       val ap = nodeToAgent(msg.to)
@@ -37,9 +36,8 @@ object Network {
     //        println(s"\t ${msg.payload}")
     //    println(s"looking to get ${agentPointer.id}")
 
-    var rid = -1
+    val rid = addNonComplete()
     val f = p.future.map(agent => {
-      rid = addNonComplete()
       //      println(s"got agent ${agent.id}")
       val agentAfterReception = Receiver.receive(msg)(agent)
       agentPointer.set(agentAfterReception)
@@ -83,18 +81,30 @@ object Network {
 
   /* message queue tracking */
 
-  private var i = 0
-  private var _nonCompletes = Set[Int]()
+  private var msgCounter: Long = 0
+  private val resetCounterAt = Long.MaxValue - 2
+  private var _nonCompletes = Set[Long]()
 
-  private def removeNonComplete(id: Int) = synchronized {
+  /** after returning, increments value by 1 and makes sure that it is not beyond bounds of Long
+    * @return the current value of the counter */
+  private def touchCounter: Long = synchronized {
+    val current = msgCounter
+    if (current >= resetCounterAt) {
+      msgCounter = 0
+    } else {
+      msgCounter += 1
+    }
+    return current
+  }
+
+  private def removeNonComplete(id: Long) = synchronized {
     _nonCompletes -= id
   }
 
-  private def addNonComplete(): Int = synchronized {
-    val id = i
+  private def addNonComplete(): Long = {
+    val id = touchCounter
     _nonCompletes += id
-    i += 1
-    return id
+    id
   }
 
   def nonCompletes = _nonCompletes

@@ -1,4 +1,4 @@
-import plenty.agent.{Accounting, AgentManager, AgentPointer}
+import plenty.agent.{Accounting, AgentManager, AgentPointer, Scheduler}
 import plenty.agent.model.Agent
 import plenty.network.BidAction
 import plenty.network._
@@ -88,6 +88,7 @@ object BasicInteractionFlowTests extends TestSuite {
         val newBalances = ap map {_.getAgentInLastKnownState} map Accounting.getSelfBalance
         newBalances(0) - balances(0) ==> 1
         newBalances(1) - balances(1) ==> -1
+        ap(0).getAgentInLastKnownState.state.coins exists {_.wrapsAround.nonEmpty}
       }
 
     }

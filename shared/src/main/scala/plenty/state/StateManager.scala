@@ -15,8 +15,10 @@ import boopickle.Default._
   */
 object StateManager {
   private val random = new SecureRandom()
-
   private val hasher = MessageDigest.getInstance("SHA-512")
+
+  /* Creating objects */
+
   private def idGenerator(time: Long, additionalPiece: String = ""): String = {
     val idStr = Seq(random.nextInt(Int.MaxValue), time).mkString("-") + additionalPiece
     val idBytes = idStr.toCharArray map {_.toByte}
@@ -42,7 +44,14 @@ object StateManager {
     Transaction(id, now, coins, from, to)
   }
 
+  /* Selecting objects */
+
+  /** @return bids that have the donation (of the given bid) in common */
+  def getRelatedBids(state: State, bid: Bid): Set[Bid] = state.bids filter {_.donation == bid.donation}
+
   def updateHistory(oldState: State, newHistory: History): State = oldState.copy(history = newHistory)
+
+  /* disk IO */
 
   def save(agent: Agent) = {
     val archiveFilename = s"./data-stores/archive/${agent.id}-${new Date().getTime}.plenty"
