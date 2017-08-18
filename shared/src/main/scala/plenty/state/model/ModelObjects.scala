@@ -41,6 +41,6 @@ trait Rejection {
   val reason: String
 }
 
-case class RejectedBid(reason: String, bid: Bid)
+case class RejectedBid(reason: String, bid: Bid) extends Rejection
 
 case class RejectedTransaction(reason: String, transaction: Transaction) extends Rejection

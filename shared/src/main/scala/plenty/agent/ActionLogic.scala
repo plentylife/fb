@@ -45,21 +45,26 @@ object ActionLogic {
     }
   }
 
+  /**
+    * the only agent allowed to approve or deny a bid is the one accepting it
+    * */
   def verifyTransactionForBid(t: Transaction, agent: Agent) = {
-    t.bid match {
-      case Some(bid) =>
-        agent.state.bids.find(_ == bid) match {
-          case Some(trustedBid) => Accounting.verifyTransaction(t, trustedBid.amount, agent) match {
-            case None => Network.notifyAllAgents(t, ActionIdentifiers.APPROVE_SETTLE_BID_ACTION, agent)
+    if (t.to == agentAsNode(agent)) {
+      t.bid match {
+        case Some(bid) =>
+          agent.state.nonSettledBids.find(_ == bid) match {
+            case Some(trustedBid) => Accounting.verifyTransaction(t, trustedBid.amount, agent) match {
+              case None => Network.notifyAllAgents(t, ActionIdentifiers.APPROVE_SETTLE_BID_ACTION, agent)
 
-            case Some(e: InsufficientBalance) => Network.notifyAllAgents(lowOnFundsRejection(t),
-              ActionIdentifiers.DENY_SETTLE_BID_ACTION, agent)
+              case Some(e: InsufficientBalance) => Network.notifyAllAgents(lowOnFundsRejection(t),
+                ActionIdentifiers.DENY_SETTLE_BID_ACTION, agent)
+            }
+            case _ => Network.notifyAllAgents(RejectedTransaction("could not find the bid", t), ActionIdentifiers
+              .DENY_SETTLE_BID_ACTION, agent)
           }
-          case _ => Network.notifyAllAgents(RejectedTransaction("could not find the bid", t), ActionIdentifiers
-            .DENY_SETTLE_BID_ACTION, agent)
-        }
-      case _ => Network.notifyAllAgents(RejectedTransaction("improper formatting", t), ActionIdentifiers
-        .DENY_SETTLE_BID_ACTION, agent)
+        case _ => Network.notifyAllAgents(RejectedTransaction("improper formatting", t), ActionIdentifiers
+          .DENY_SETTLE_BID_ACTION, agent)
+      }
     }
   }
 
@@ -86,7 +91,7 @@ object ActionLogic {
     * last day
     **/
   def takeBids(agent: Agent): Unit = {
-    println(s"agent ${agent.id} looking to accept bids")
+    println(s"agent ${agent.id} looking to accept bids from ${agent.state.bids}")
     val now = new Date().getTime
     val criteria = takeBidForDonation(now) _
     // bids on donations by the agent
@@ -103,8 +108,6 @@ object ActionLogic {
     val self = AgentManager.agentAsNode(agent)
     for (acceptedBid <- accepted) {
       Network.notifyAllAgents(acceptedBid, ActionIdentifiers.BID_TAKE_ACTION, from = self)
-      //      CommsManager.toSelf(acceptedBid, BidAcceptAction, self = self)
-      //      CommsManager.basicRelay(acceptedBid, BidAcceptAction, from = self)
     }
   }
 

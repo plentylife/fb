@@ -40,17 +40,9 @@ object StateLogic {
   }
 
   def registerTakenBid(bid: Bid, agent: Agent): Agent = {
-//    val history = agent.state.history
-//    val historyUpdated = history.copy(
-//      donations = history.donations + bid.donation,
-//      bids = history.bids + bid
-//    )
-
     val stateUpdated = agent.state.copy(
-//      donations = agent.state.donations.filterNot(_.id == bid.donation.id),
-//      bids = agent.state.bids.filterNot(_.id == bid.id),
+      bids = agent.state.bids.filterNot(_.id == bid.id),
       nonSettledBids = agent.state.nonSettledBids + bid
-//      history = historyUpdated
     )
     val agentUpdated = agent.copy(state = stateUpdated)
 
@@ -84,7 +76,12 @@ object StateLogic {
   }
 
   def registerDeniedBidSettle(t: Transaction, agent: Agent): Agent = {
-    ???
+    var s = agent.state
+    val bid = t.bid.get
+    // fixme this should be double checked
+    val nonSettledBids = s.nonSettledBids filterNot(_ == bid)
+    s = s.copy(nonSettledBids = nonSettledBids)
+    agent.copy(state = s)
   }
 
   def donationRegistration(donation: Donation)(implicit agent: Agent): Agent = {

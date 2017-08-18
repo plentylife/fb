@@ -1,7 +1,7 @@
 package plenty.network
 
 import plenty.agent.AgentManager._
-import plenty.agent.{ActionLogic, StateLogic}
+import plenty.agent.{ActionLogic, AgentManager, StateLogic}
 import plenty.agent.model.Agent
 import plenty.state.model._
 
@@ -29,7 +29,13 @@ object Receiver {
       onApproveSettleBid(t, toAgent)
 
     case m if m.payloadId == ActionIdentifiers.DENY_SETTLE_BID_ACTION =>
-      StateLogic.registerDeniedBidSettle(m.payload.asInstanceOf[RejectedTransaction].transaction, toAgent)
+      val t = m.payload.asInstanceOf[RejectedTransaction].transaction
+      val a = StateLogic.registerDeniedBidSettle(t, toAgent)
+      // fixme needs to be verified that the transaction and bid match
+      if (t.to == agentAsNode(toAgent)) {
+        AgentManager.takeBids(a)
+      }
+      a
 
     /* Bids */
 
