@@ -20,7 +20,7 @@ object BiddingTests extends TestSuite {
   var bidUnder = StateManager.createBid(donation, amount = 1, by = n(2))
   var bidOver = StateManager.createBid(donation, amount = 3, by = n(3))
   var bidOverWallet = StateManager.createBid(donation, amount = 30, by = n(3))
-  var bidSelf = StateManager.createBid(donation, amount = 1, by = n(0))
+  var bidSelf = StateManager.createBid(donation, amount = 3, by = n(0))
 
 
   var balances = Seq[Int]()
@@ -44,6 +44,26 @@ object BiddingTests extends TestSuite {
         val msg = Message.createMessage(bidFirst.by, donation.by, BidAction, bidFirst)
         Network.send(msg)
         waitClearQueue
+      }
+
+      'bidding_on_own_donation {
+        val msg = Message.createMessage(bidSelf.by, donation.by, BidAction, bidSelf)
+
+        Network.send(msg)
+        waitClearQueue
+
+        for (a <- getAgents) {
+          val bids = a.state.bids
+          assert(a.state.donations.contains(donation))
+          assert(bids.contains(bidFirst))
+          assert(!bids.contains(bidSelf))
+        }
+
+        val payloads = InternalSendInterface.log map { m => m.payload }
+        val rejected = payloads collect {
+          case rej: RejectedBid => rej.bid == bidSelf
+        }
+        assert(rejected contains true)
       }
 
       'bidding_under {

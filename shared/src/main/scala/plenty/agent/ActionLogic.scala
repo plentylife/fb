@@ -111,17 +111,19 @@ object ActionLogic {
   /** is the bid valid, does the bidder have enough coins?
     *
     * @return true if accepted */
-  def verifyBid(bid: Bid, from: Node, a: Agent): Unit = {
+  def verifyBid(bid: Bid, a: Agent): Unit = {
     val hasFunds = Accounting.canTransactAmount(bid.by, a, bid.amount)
     val bidAmounts = StateManager getRelatedBids(a.state, bid) map {_.amount}
     val highestBid = (bidAmounts + 0) max
     val isHighestBid = bid.amount > highestBid
+    val isSelf = bid.by != agentAsNode(a)
 
-    if (hasFunds && isHighestBid) {
+    if (hasFunds && isHighestBid && isSelf) {
       Network.notifyAllAgents(bid, ActionIdentifiers.ACCEPT_BID_ACTION, a)
     } else {
       val reason = if (!hasFunds) "low on funds"
-      else if (isHighestBid) s"bid is below highest bid of $highestBid"
+      else if (!isHighestBid) s"bid is below highest bid of $highestBid"
+      else if (!isSelf) "can't bid on your own donation"
       else "unknown reason"
 
       val rejection = RejectedBid(reason, bid)

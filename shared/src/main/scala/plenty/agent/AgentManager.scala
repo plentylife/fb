@@ -40,7 +40,7 @@ object AgentManager {
   def verifyBid(msg: Message[Bid], agent: Agent): Agent = {
     val bid = msg.payload
 
-    ActionLogic verifyBid(bid, msg.from, agent)
+    ActionLogic verifyBid(bid, agent)
     agent
     // todo. for now no relaying
     //    ActionLogic.relayBid(bid)
