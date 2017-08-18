@@ -21,15 +21,17 @@ trait MintPress {
   private var coinCounter: Long = 0
 
   /** time in unix epoch of the last time */
-  private var lastDistributionTime: Long = 0
+  private var lastDistributionTime: Long = new Date().getTime
+
+  def nextDistributionTime: Long = lastDistributionTime + period
 
   def distributeCoins(to: Set[Agent]) = {
     val now = new Date().getTime
     if(lastDistributionTime + period <= now) {
+      lastDistributionTime = now
       val coins = genCoins(to)
       /* from=null signifies that it is from the network */
       Network.notifyAllAgents(coins, ActionIdentifiers.COINS_MINTED, from = null)
-      lastDistributionTime = now
     }
   }
 
@@ -69,7 +71,7 @@ trait MintPress {
   }
 
 
-  private def getDeathTime(from: Long) = from + period
+  private def getDeathTime(from: Long) = nextDistributionTime
 
   private val generator = new SecureRandom()
   private val hasher = MessageDigest.getInstance("SHA-512")

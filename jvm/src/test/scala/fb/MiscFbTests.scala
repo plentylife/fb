@@ -14,7 +14,7 @@ import scala.util.Random
 
 /**
   */
-object MiscTests extends TestSuite {
+object MiscFbTests extends TestSuite {
 
   val tests = this {
     'create_agent {

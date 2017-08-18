@@ -11,7 +11,7 @@ import plenty.agent.Accounting
 /**
   * Minting and distributing coins, getting balances, preventing illegial actions
   */
-class AccountingTests extends TestSuite {
+object AccountingTests extends TestSuite {
 
   val as = (0 until 4).map(i => Agent(s"a$i", State()))
   val ns = as map AgentManager.agentAsNode
@@ -21,12 +21,15 @@ class AccountingTests extends TestSuite {
   var originalCoins = Set[Coin]()
 
   val tests = this {
-    'minting {
+    'minting_for_existing {
       'on_first_run {
+        println("\nfirst run")
+        Thread.sleep(TestMintPress.period + 1)
         distributeCoins
         waitClearQueue
 
         for (ap <- Network.getAgents; n <- ns) {
+          println(s"coins of ${ap.id}: ${ap.getAgentInLastKnownState.state.coins.size}")
           val balance = Accounting.getBalance(n)(ap.getAgentInLastKnownState)
           balance ==> TestMintPress.coinsPerPeriod
         }
@@ -40,6 +43,7 @@ class AccountingTests extends TestSuite {
       }
 
       'second_immediate_run {
+        println("\nsecond run")
         distributeCoins
         waitClearQueue
 
@@ -51,6 +55,7 @@ class AccountingTests extends TestSuite {
       }
 
       'third_later_run {
+        println("\nthird run")
         Thread.sleep(TestMintPress.period)
         distributeCoins
         waitClearQueue
@@ -68,6 +73,7 @@ class AccountingTests extends TestSuite {
 
     'accounting {
       'expired {
+        Thread.sleep(TestMintPress.period + 1)
         distributeCoins
         waitClearQueue
 
@@ -83,9 +89,22 @@ class AccountingTests extends TestSuite {
         }
 
         val agentWithClearedCoins = Accounting.clearDeadCoins(aps.head.getAgentInLastKnownState)
+        println(s"live coins ${agentWithClearedCoins.state.coins}")
         assert(agentWithClearedCoins.state.coins.isEmpty)
       }
     }
+
+    
+    'minting_for_new {
+      val a = Agent("new", State())
+      val coins = MintPress.distributeCoinsToNewAgent(a)
+
+      val now = new Date().getTime
+      val assertion = coins map {_.deathTime} map {dt ⇒ dt < now + MintPress.period && dt == MintPress
+        .nextDistributionTime} forall {_ == true}
+      assert(assertion)
+    }
+
   }
 
   def distributeCoins = {
