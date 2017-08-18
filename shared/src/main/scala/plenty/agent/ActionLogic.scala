@@ -117,13 +117,15 @@ object ActionLogic {
     val highestBid = (bidAmounts + 0) max
     val isHighestBid = bid.amount > highestBid
     val isSelf = bid.by != agentAsNode(a)
+    val donationExists = a.state.donations contains bid.donation
 
-    if (hasFunds && isHighestBid && isSelf) {
+    if (hasFunds && isHighestBid && isSelf && donationExists) {
       Network.notifyAllAgents(bid, ActionIdentifiers.ACCEPT_BID_ACTION, a)
     } else {
       val reason = if (!hasFunds) "low on funds"
       else if (!isHighestBid) s"bid is below highest bid of $highestBid"
       else if (!isSelf) "can't bid on your own donation"
+      else if (!donationExists) "donation does not exist"
       else "unknown reason"
 
       val rejection = RejectedBid(reason, bid)

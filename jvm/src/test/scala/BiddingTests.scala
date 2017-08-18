@@ -37,7 +37,29 @@ object BiddingTests extends TestSuite {
         } map {
           Accounting.getSelfBalance
         }
+      }
 
+      'bidding_on_non_existent_donation {
+        val msg = Message.createMessage(bidProper.by, donation.by, BidAction, bidProper)
+
+        Network.send(msg)
+        waitClearQueue
+
+        for (a <- getAgents) {
+          val bids = a.state.bids
+          assert(!a.state.donations.contains(donation))
+          assert(!bids.contains(bidFirst))
+          assert(!bids.contains(bidProper))
+        }
+
+        val payloads = InternalSendInterface.log map { m => m.payload }
+        val rejected = payloads collect {
+          case rej: RejectedBid => rej.bid == bidProper
+        }
+        assert(rejected contains true)
+      }
+
+      'setting_up_donation_and_bid {
         Network.notifyAllAgents(donation, DonateAction, from = AgentManager.agentAsNode(a(0)))
         waitClearQueue
 
