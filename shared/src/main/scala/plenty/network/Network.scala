@@ -35,7 +35,7 @@ object Network {
 
   def receive(msg: Message[_]) = {
     val rid = addNonComplete(msg)
-    println(s"receive rid $rid | $msg")
+//    println(s"receive rid $rid | $msg")
 
     val agentPointer = getAgents.find(_.id == msg.to.id).get
     val p = Promise[Agent]()

@@ -12,7 +12,8 @@ import plenty.agent.model.Agent
 import com.restfb.Parameter
 import com.restfb.types.{Comment, GraphResponse}
 import com.restfb.types.webhook.FeedCommentValue
-import plenty.state.model.{Bid, Donation, RejectedBid}
+import plenty.state.StateManager
+import plenty.state.model.{Bid, Donation, RejectedBid, Transaction}
 
 /**
   * Created by anton on 8/11/17.
@@ -128,6 +129,7 @@ object Responses {
 
   def bidEntered(bid: Bid) = {
     val relatedBids = FbAgent.lastState.bids.filter(_.donation == bid.donation)
+    println("related bids")
     val nodesToNotify = relatedBids map {_.by}
     nodesToNotify foreach {n =>
       // if the one who made the bid
@@ -149,6 +151,18 @@ object Responses {
 
   def bidRejected(rejection: RejectedBid, ui: UserInfo) = {
     sendSimpleMessage(rejection.bid.by.id, s"Your bid was rejected. Reason: ${rejection.reason}")
+  }
+
+  def donationSettled(fromTransaction: Transaction) = {
+    val fromBid = fromTransaction.bid.get
+    StateManager.getRelatedBids(FbAgent.lastState, fromBid) foreach { relBid ⇒
+      val ui = UserInfo.get(relBid.by.id)
+      if (relBid.by == fromTransaction.from) {
+        sendSimpleMessage(ui.id, s"Your have WON the auction for ${fromBid.donation.title}!")
+      } else {
+        sendSimpleMessage(ui.id, s"Your have LOST the auction for ${fromBid.donation.title}")
+      }
+    }
   }
 
   def firstContact(agent: AgentPointer) = {
