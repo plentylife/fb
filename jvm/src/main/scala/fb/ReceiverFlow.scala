@@ -6,7 +6,7 @@ import com.restfb.types.send.{IdMessageRecipient, Message, SendResponse}
 import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem}
 import com.restfb.types.webhook.{Change, FeedCommentValue, WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
-import plenty.agent.{AgentManager, AgentPointer}
+import plenty.agent.{AgentManager, AgentPointer, StateLogic}
 import plenty.network.Network
 
 /**
@@ -55,13 +55,17 @@ object ReceiverFlow {
   private def msgReferralTree(a: AgentPointer, item: MessagingItem) = {
     if (item.getReferral != null) {
       val ref = item.getReferral.getRef
-      if (ref.startsWith("BID_")) {
-        val donationId = ref.replace("BID_", "")
-        val ui = UserInfo.get(a.id)
-        FbAgent.lastState.donations.find(_.id == donationId) match {
-          case Some(donation) => Responses.donationShow(ui, donation, None)
-          case _ => Responses.errorPersonal(a)
-        }
+      processRefString(ref, a)
+    }
+  }
+
+  private def processRefString(ref: String, a: AgentPointer) = {
+    if (ref.startsWith("BID_")) {
+      val donationId = ref.replace("BID_", "")
+      val ui = UserInfo.get(a.id)
+      FbAgent.lastState.donations.find(_.id == donationId) match {
+        case Some(donation) => Responses.donationShow(ui, donation, None, postbackBid = true, showShare = false)
+        case _ => Responses.errorPersonal(a)
       }
     }
   }
@@ -73,7 +77,8 @@ object ReceiverFlow {
     if (pb != null) {
       val ui = UserInfo.get(a.id)
       pb.getPayload match {
-          // fixme get started for bids
+        case "GET_STARTED_PAYLOAD" if pb.getReferral != null ⇒
+          processRefString(pb.getReferral.getRef, a)
         case "ACCOUNT_STATUS_POSTBACK" => Responses.accountStatus(a)
         case "DONATE_START_POSTBACK" =>
           donateStart(a)
@@ -113,7 +118,7 @@ object ReceiverFlow {
           Responses.accountStatus(a)
         } else {
           val recipient = new IdMessageRecipient(ui.id)
-          val msg = new Message(s"We were just talking!")
+          val msg = new Message(s"We are not sure what you mean")
           fbClient.publish("me/messages", classOf[SendResponse],
             Parameter.`with`("recipient", recipient),
             Parameter.`with`("message", msg))
@@ -142,7 +147,7 @@ object ReceiverFlow {
           Responses.donationCancelled(ui)
         case "DONATE_DONE_POSTBACK" =>
           Utility.publishDonation(a) match {
-            case Some((donation, postId)) => Responses.donationShow(ui, donation, Option(postId))
+            case Some((donation, postId)) => Responses.donationShow(ui, donation, Option(postId), postbackBid = false)
             case _ => Responses.errorPersonal(a)
           }
       }
@@ -173,7 +178,14 @@ object ReceiverFlow {
   }
 
   private def createAgent(id: String): AgentPointer = {
-    val a = AgentManager.createAgent(id)
+    var a = AgentManager.createAgent(id, FbAgent.lastState)
+    // adding other coins already existent in network
+//    a = StateLogic.registerCoins(FbAgent.lastState.coins, a)
+//    // as well as donations and bids
+//    var s = a.state
+//    s = s.copy(donations = s.donations ++ FbAgent.lastState.donations)
+//    a = a.copy(state = s)
+
     val n = AgentManager.agentAsNode(a)
     FbAgent.registerNode(n)
     Network.registerAgent(a, FbSendInterface)

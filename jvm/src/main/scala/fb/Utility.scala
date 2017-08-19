@@ -66,8 +66,8 @@ object Utility {
       }
       try {
         val msg = s"${donation.title} \n---\n ${donation.description} " +
-          s"\n===\n if you want this offer, enter your bid at m.me/${Access
-          .pageId}?ref=BID_${donation.id}\nthe link opens messenger and allows you to talk to Plenty bot"
+          s"\n===\n if you want this offer, enter your bid at m.me/" +
+          s"${Access.pageId}?ref=BID_${donation.id}\nthe link opens messenger and allows you to talk to Plenty bot"
         val publishMessageResponse = fbClient.publish(s"${Access.pageId}/feed",
           classOf[Post],
           Parameter.`with`("message", msg),

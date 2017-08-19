@@ -38,10 +38,9 @@ object FbSendInterface extends SendInterface {
         if (filterFbOnly(msg)) {
           val rejection = msg.payload.asInstanceOf[RejectedBid]
           val bid = rejection.bid
-          println(s"BID $bid")
+          println(s"REJECT_BID reason ${rejection.reason} by ${msg.from}")
           if (bid.donation.by == m.from) {
             val uiFrom = UserInfo.get(rejection.bid.by.id)
-            println(s"UI $uiFrom")
             Responses.bidRejected(rejection, uiFrom)
           }
         }

@@ -101,8 +101,8 @@ object AgentManager {
 
   /* Utils */
 
-  def createAgent(id: String): Agent = {
-    var a = Agent(id, state = State())
+  def createAgent(id: String, state: State = State()): Agent = {
+    var a = Agent(id, state = state)
     val coins = MintPress.distributeCoinsToNewAgent(a)
     a = StateLogic.registerCoins(coins, a)
     a

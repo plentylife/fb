@@ -23,7 +23,7 @@ object StateManager {
     val idStr = Seq(random.nextInt(Int.MaxValue), time).mkString("-") + additionalPiece
     val idBytes = idStr.toCharArray map {_.toByte}
     val hash = hasher.digest(idBytes)
-    Base64.getEncoder.encodeToString(hash)
+    Base64.getUrlEncoder.encodeToString(hash).replaceAll("=", "")
   }
 
   def createDonation(title: String, description: String, attachments: Seq[String], by: Node) = {
@@ -46,8 +46,10 @@ object StateManager {
 
   /* Selecting objects */
 
-  /** @return bids that have the donation (of the given bid) in common */
-  def getRelatedBids(state: State, bid: Bid): Set[Bid] = state.bids filter {_.donation == bid.donation}
+  /** @return bids that have the donation (of the given bid) in common.
+    *         takes into account bids and non-settled bids */
+  def getRelatedBids(state: State, bid: Bid): Set[Bid] = (state.bids ++ state.nonSettledBids) filter {
+    _.donation == bid.donation}
 
   def updateHistory(oldState: State, newHistory: History): State = oldState.copy(history = newHistory)
 

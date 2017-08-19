@@ -46,7 +46,7 @@ object Responses {
   }
 
   def accountStatus(agent: AgentPointer) = {
-    val coins = agent.getAgentInLastKnownState.state.coins
+    val coins = Accounting.getOwnValidCoins(agent.getAgentInLastKnownState)
     val coinsWithDeathDate = coins.toSeq sortBy (_.deathTime) map {c =>
       val d = new Date(c.deathTime)
       dateFormatter.format(d) -> c
@@ -92,10 +92,13 @@ object Responses {
 
   def donationCancelled(ui: UserInfo) = sendSimpleMessage(ui.id, "The donation was discarded")
 
-  def donationShow(ui: UserInfo, donation: Donation, postId: Option[String]) = {
+  def donationShow(ui: UserInfo, donation: Donation, postId: Option[String],
+                   postbackBid: Boolean = true, showShare: Boolean = true) = {
     val payload = new GenericTemplatePayload
     val bubble = new Bubble(s"Bid and Share: ${donation.title}")
-    val bidButton = createBidButton(donation)
+    val bidButton =
+      if (postbackBid) createBidButton(donation)
+      else new WebButton("Bid", s"m.me/${Access.pageId}?ref=BID_${donation.id}")
     val shareButton = new ShareButton()
 
     postId map {pid =>
@@ -105,7 +108,7 @@ object Responses {
     }
 
     bubble.addButton(bidButton)
-    bubble.addButton(shareButton)
+    if (showShare) bubble.addButton(shareButton)
     bubble.setSubtitle(donation.description)
     payload.addBubble(bubble)
 
@@ -120,6 +123,7 @@ object Responses {
         throw e
     }
   }
+
   private def createBidButton(donation: Donation) = new PostbackButton("Bid", s"BID_POSTBACK_${donation.id}")
 
   def bidStart(a: AgentPointer) = {
@@ -128,7 +132,8 @@ object Responses {
   }
 
   def bidEntered(bid: Bid) = {
-    val relatedBids = FbAgent.lastState.bids.filter(_.donation == bid.donation)
+    // since this bid is not yet in the state
+    val relatedBids = (FbAgent.lastState.bids + bid).filter(_.donation == bid.donation)
     val nodesToNotify = relatedBids map {_.by}
     nodesToNotify foreach {n =>
       // if the one who made the bid
@@ -154,7 +159,8 @@ object Responses {
     val ui = UserInfo.get(donor)
     val recipient = new IdMessageRecipient(donor)
     val template = new ButtonTemplatePayload(s"A new bid for of ${bid.amount}$thanksSymbol has been entered " +
-      s"for ${bid.donation.title}. The highest bid is ${maxBid}${thanksSymbol}. You can wait or close the auction now")
+      s"for '${bid.donation.title}'. The highest bid is ${maxBid}${thanksSymbol}. You can wait or close the auction " +
+      s"now")
     val button = new PostbackButton("Close auction", s"BID_ACCEPT_POSTBACK_${donation.id}")
     template.addButton(button)
     fbClientPublish(ui, "me/messages", Parameter.`with`("recipient", recipient),
@@ -170,15 +176,15 @@ object Responses {
     StateManager.getRelatedBids(FbAgent.lastState, fromBid) foreach { relBid ⇒
       val ui = UserInfo.get(relBid.by.id)
       if (relBid.by == fromTransaction.from) {
-        sendSimpleMessage(ui.id, s"Your have WON the auction for ${fromBid.donation.title}!")
+        sendSimpleMessage(ui.id, s"Your have WON the auction for '${fromBid.donation.title}'!")
       } else {
-        sendSimpleMessage(ui.id, s"Your have LOST the auction for ${fromBid.donation.title}")
+        sendSimpleMessage(ui.id, s"Your have LOST the auction for '${fromBid.donation.title}'")
       }
     }
     // notifying the donor
     val donation = fromBid.donation
     val donor = donation.by.id
-    sendSimpleMessage(donor, s"The auction for ${donation.title} has closed with the highest bid of " +
+    sendSimpleMessage(donor, s"The auction for '${donation.title}' has closed with the highest bid of " +
       s"${fromTransaction.coins.size}")
   }
 

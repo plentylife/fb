@@ -120,7 +120,7 @@ object ActionLogic {
     val bidAmounts = StateManager getRelatedBids(a.state, bid) map {_.amount}
     val highestBid = (bidAmounts + 0) max
     val isHighestBid = bid.amount > highestBid
-    val isSelf = bid.by != agentAsNode(a)
+    val isSelf = bid.by != bid.donation.by
     val donationExists = a.state.donations contains bid.donation
 
     if (hasFunds && isHighestBid && isSelf && donationExists) {
