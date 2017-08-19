@@ -89,11 +89,12 @@ object ActionLogic {
     * Checks all open bids that can be accepted, and makes a decision whether any of them should be.
     * The current criteria for accepting a bid is that no additional bids were placed on the same donation within the
     * last day
+    * @param hardAuctionClose disregard the one day wait time
     **/
-  def takeBids(agent: Agent): Unit = {
+  def takeBids(agent: Agent, hardAuctionClose: Boolean = false): Unit = {
     println(s"agent ${agent.id} looking to accept bids from ${agent.state.bids}")
     val now = new Date().getTime
-    val criteria = takeBidForDonation(now) _
+    val criteria = takeBidForDonation(now, hardAuctionClose) _
     // bids on donations by the agent
     val bids = agent.state.bids filter {
       _.donation.by == agentAsNode(agent)
@@ -136,11 +137,12 @@ object ActionLogic {
     }
   }
 
-  private def takeBidForDonation(now: Long)(bids: Iterable[Bid]): Option[Bid] = {
+  /** hard auction close to disregard the one day wait time */
+  private def takeBidForDonation(now: Long, hardAuctionClose: Boolean)(bids: Iterable[Bid]): Option[Bid] = {
     if (bids.isEmpty) return None
 
     // has any new bids been submitted in the last day
-    val isAuctionClosed = bids.forall(_.timestamp < now + periodBeforeBidAcceptance)
+    val isAuctionClosed = hardAuctionClose || bids.forall(_.timestamp < now + periodBeforeBidAcceptance)
     if (isAuctionClosed) {
       val maxBid = bids.map(_.amount).max
       val highestBids = bids.filter(_.amount >= maxBid)

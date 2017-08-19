@@ -32,7 +32,10 @@ object AgentManager {
 
   /* Transactions */
 
-  def takeBids(agent: Agent): Unit = ActionLogic.takeBids(agent)
+  /**
+    * @param hardAuctionClose disregard the one day wait time
+    */
+  def takeBids(agent: Agent, hardAuctionClose: Boolean = false): Unit = ActionLogic.takeBids(agent, hardAuctionClose)
 
   /** both onApproveSettleBid and onDenySettleBid are only enacted iff they originate from the donor -- other
     * messages are just suggestions */

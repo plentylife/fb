@@ -28,7 +28,6 @@ object FbSendInterface extends SendInterface {
         if (filterFbOnly(msg)) {
           val bid = msg.payload.asInstanceOf[Bid]
           if (bid.donation.by == m.from) {
-            val uiFrom = UserInfo.get(bid.by.id)
             println("ACCEPT_BID_ACTION")
             Responses.bidEntered(bid)
           }

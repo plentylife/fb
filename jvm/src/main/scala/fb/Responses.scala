@@ -129,7 +129,6 @@ object Responses {
 
   def bidEntered(bid: Bid) = {
     val relatedBids = FbAgent.lastState.bids.filter(_.donation == bid.donation)
-    println("related bids")
     val nodesToNotify = relatedBids map {_.by}
     nodesToNotify foreach {n =>
       // if the one who made the bid
@@ -147,6 +146,19 @@ object Responses {
         Parameter.`with`("message", new Message(new TemplateAttachment(template))))
       }
     }
+
+    // allowing the donor to accept a bid early
+    val donation = bid.donation
+    val donor = donation.by.id
+    val maxBid = relatedBids.map(_.amount).max
+    val ui = UserInfo.get(donor)
+    val recipient = new IdMessageRecipient(donor)
+    val template = new ButtonTemplatePayload(s"A new bid for of ${bid.amount}$thanksSymbol has been entered " +
+      s"for ${bid.donation.title}. The highest bid is ${maxBid}${thanksSymbol}. You can wait or close the auction now")
+    val button = new PostbackButton("Close auction", s"BID_ACCEPT_POSTBACK_${donation.id}")
+    template.addButton(button)
+    fbClientPublish(ui, "me/messages", Parameter.`with`("recipient", recipient),
+      Parameter.`with`("message", new Message(new TemplateAttachment(template))))
   }
 
   def bidRejected(rejection: RejectedBid, ui: UserInfo) = {
@@ -163,6 +175,11 @@ object Responses {
         sendSimpleMessage(ui.id, s"Your have LOST the auction for ${fromBid.donation.title}")
       }
     }
+    // notifying the donor
+    val donation = fromBid.donation
+    val donor = donation.by.id
+    sendSimpleMessage(donor, s"The auction for ${donation.title} has closed with the highest bid of " +
+      s"${fromTransaction.coins.size}")
   }
 
   def firstContact(agent: AgentPointer) = {

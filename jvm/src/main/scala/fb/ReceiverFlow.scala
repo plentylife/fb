@@ -80,6 +80,8 @@ object ReceiverFlow {
         case p: String if p.startsWith("BID_POSTBACK_") =>
           Utility.startBidding(p,a)
           Responses.bidStart(a)
+        case p: String if p.startsWith("BID_ACCEPT_POSTBACK_") =>
+          AgentManager.takeBids(a.getAgentInLastKnownState, hardAuctionClose = true)
         case _ => Responses.unrecognized(a)
       }
     }
