@@ -15,7 +15,7 @@ import plenty.network.Network
 object ReceiverFlow {
 
   def receive(payload: String): Unit = {
-//    println(s"payload $payload")
+    println(s"payload $payload")
     val mapper = new DefaultJsonMapper
     val webhookObject = mapper.toJavaObject(payload, classOf[WebhookObject])
     val iter = webhookObject.getEntryList.listIterator()
@@ -77,8 +77,10 @@ object ReceiverFlow {
     if (pb != null) {
       val ui = UserInfo.get(a.id)
       pb.getPayload match {
-        case "GET_STARTED_PAYLOAD" if pb.getReferral != null ⇒
-          processRefString(pb.getReferral.getRef, a)
+        case "GET_STARTED_PAYLOAD" ⇒
+          if (pb.getReferral != null) {
+            processRefString(pb.getReferral.getRef, a)
+          }
         case "ACCOUNT_STATUS_POSTBACK" => Responses.accountStatus(a)
         case "DONATE_START_POSTBACK" =>
           donateStart(a)
