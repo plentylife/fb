@@ -12,7 +12,7 @@ import scala.concurrent.{Await, Future}
 /**
   * Saving state, modifying state by agents
   */
-object BasicInteractionFlowTests extends TestSuite {
+class BasicInteractionFlowTests extends TestSuite {
 
   FastTestScheduler.start()
 

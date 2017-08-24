@@ -9,7 +9,7 @@ import utest._
 /**
   * Saving state, modifying state by agents
   */
-object BiddingTests extends TestSuite {
+class BiddingTests extends TestSuite {
 
   val a = (0 until 4).map(i => Agent(s"a$i", State()))
   var ap = Seq[AgentPointer]()

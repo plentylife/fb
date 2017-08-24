@@ -11,7 +11,7 @@ import plenty.agent.Accounting
 /**
   * Minting and distributing coins, getting balances, preventing illegial actions
   */
-object AccountingTests extends TestSuite {
+class AccountingTests extends TestSuite {
 
   val as = (0 until 4).map(i => Agent(s"a$i", State()))
   val ns = as map AgentManager.agentAsNode

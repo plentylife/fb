@@ -10,7 +10,7 @@ import utest._
 /**
   * Saving state, modifying state by agents
   */
-object BasicFbInteractionFlowTests extends TestSuite {
+class BasicFbInteractionFlowTests extends TestSuite {
 
   FastTestScheduler.start()
 

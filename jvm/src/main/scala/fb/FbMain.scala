@@ -16,6 +16,6 @@ object FbMain {
     Scheduler.start()
 
     FbAgent.load()
-    FbServer.start()
+    FbServer.startAndWait()
   }
 }

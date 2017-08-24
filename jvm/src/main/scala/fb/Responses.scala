@@ -38,7 +38,7 @@ object Responses {
   def loginButton(senderId: String) = {
     val recipient = new IdMessageRecipient(senderId)
     val template = new ButtonTemplatePayload("to use Plenty bot, you must first link your FB account")
-    val button = new AccountLinkButton(s"${Access.uri}/welcome/$senderId")
+    val button = new AccountLinkButton(s"${FbSettings.uri}/welcome/$senderId")
     template.addButton(button)
     fbClient.publish("me/messages", classOf[SendResponse], Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", new Message(new TemplateAttachment(template)))
@@ -98,7 +98,7 @@ object Responses {
     val bubble = new Bubble(s"Bid and Share: ${donation.title}")
     val bidButton =
       if (postbackBid) createBidButton(donation)
-      else new WebButton("Bid", s"m.me/${Access.pageId}?ref=BID_${donation.id}")
+      else new WebButton("Bid", s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}")
     val shareButton = new ShareButton()
 
     postId map {pid =>

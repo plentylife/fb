@@ -9,7 +9,7 @@ import utest._
 /**
   * Saving state, modifying state by agents
   */
-object TransactionTests extends TestSuite {
+class TransactionTests extends TestSuite {
 
   import S._
 

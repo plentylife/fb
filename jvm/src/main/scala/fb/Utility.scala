@@ -57,7 +57,7 @@ object Utility {
       // fixme don't allow of posting of empty title/description
       val attachments = new util.ArrayList[String]()
       donation.attachments map { url =>
-        val id = fbClient.publish(s"${Access.pageId}/photos",
+        val id = fbClient.publish(s"${FbSettings.pageId}/photos",
           classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
         ).getId
         s"{'media_fbid':'${id}'}"
@@ -67,8 +67,8 @@ object Utility {
       try {
         val msg = s"${donation.title} \n---\n ${donation.description} " +
           s"\n===\n if you want this offer, enter your bid at m.me/" +
-          s"${Access.pageId}?ref=BID_${donation.id}\nthe link opens messenger and allows you to talk to Plenty bot"
-        val publishMessageResponse = fbClient.publish(s"${Access.pageId}/feed",
+          s"${FbSettings.pageId}?ref=BID_${donation.id}\nthe link opens messenger and allows you to talk to Plenty bot"
+        val publishMessageResponse = fbClient.publish(s"${FbSettings.pageId}/feed",
           classOf[Post],
           Parameter.`with`("message", msg),
           Parameter.`with`("attached_media", attachments)

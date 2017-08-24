@@ -10,7 +10,7 @@ import utest._
 /**
   * Saving state, modifying state by agents
   */
-object FbSendInterfaceTests extends TestSuite {
+class FbSendInterfaceTests extends TestSuite {
 
   StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendInterface) }
   FbAgent.load()

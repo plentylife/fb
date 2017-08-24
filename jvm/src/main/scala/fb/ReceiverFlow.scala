@@ -78,6 +78,7 @@ object ReceiverFlow {
       val ui = UserInfo.get(a.id)
       pb.getPayload match {
         case "GET_STARTED_PAYLOAD" ⇒
+          Responses.firstContact(a)
           if (pb.getReferral != null) {
             processRefString(pb.getReferral.getRef, a)
           }
@@ -113,7 +114,7 @@ object ReceiverFlow {
       val isBidding = bidTree(a, msg)
 
       if (!isDonating && !isQuickReply && !isBidding) {
-        if (msg.getText.trim.toLowerCase() == "donate") {
+        if (msg.getText != null && msg.getText.trim.toLowerCase() == "donate") {
           donateStart(a)
         } else if (ui.lastAccess < new Date().getTime - 24 * 60 * 60 * 1000) {
           // hasn't accessed in a day
