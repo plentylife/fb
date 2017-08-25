@@ -1,4 +1,4 @@
-import sbt.Keys.libraryDependencies
+import sbt.Keys.{libraryDependencies, scalaVersion}
 
 lazy val root = project.
   enablePlugins(ScalaJSPlugin)
@@ -7,7 +7,8 @@ lazy val root = project.
   settings(
     publish := {},
     publishLocal := {},
-    scalacOptions += "-feature"
+    scalacOptions ++= Seq("-deprecation", "-feature"),
+    scalaVersion := "2.12.3"
   )
 
 lazy val core = crossProject.in(file(".")).
@@ -17,24 +18,26 @@ lazy val core = crossProject.in(file(".")).
     scalaVersion := "2.12.3",
     libraryDependencies ++= Seq(
       "io.suzaku" %%% "boopickle" % "1.2.6",
-      "com.lihaoyi" %%% "utest" % "0.4.8" % "test"
+      "com.lihaoyi" %%% "utest" % "0.4.8" % "test",
+      "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
     ),
-    testFrameworks += new TestFramework("utest.runner.Framework"),
-    scalacOptions += "-feature"
+    testFrameworks += new TestFramework("utest.runner.Framework")
+//    ,
+//    scalacOptions += "-feature"
   ).
   jvmSettings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % "10.0.9",
       "com.restfb" % "restfb" % "1.43.0"
-    ),
-    scalacOptions += "-feature"
+    )
+//    ,
+//    scalacOptions += "-feature"
   ).
   jsSettings(
-    libraryDependencies ++= Seq(),
-    scalacOptions += "-feature"
+    libraryDependencies ++= Seq()
+//    ,
+//    scalacOptions += "-feature"
   )
 
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
-
-scalacOptions ++= Seq("-deprecation", "-feature")

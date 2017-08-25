@@ -83,7 +83,6 @@ object Network {
 
   def getAgents: Set[AgentPointer] = agents.keySet
 
-  @deprecated
   def clear = {
     agents = Map()
     nodeToAgent = Map()

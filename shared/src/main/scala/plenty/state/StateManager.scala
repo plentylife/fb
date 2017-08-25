@@ -20,7 +20,7 @@ object StateManager {
   /* Creating objects */
 
   private def idGenerator(time: Long, additionalPiece: String = ""): String = {
-    val idStr = Seq(random.nextInt(Int.MaxValue), time).mkString("-") + additionalPiece
+    val idStr = Seq(random.nextInt(Int.MaxValue), time).mkString("") + additionalPiece
     val idBytes = idStr.toCharArray map {_.toByte}
     val hash = hasher.digest(idBytes)
     Base64.getUrlEncoder.encodeToString(hash).replaceAll("=", "")
