@@ -26,10 +26,11 @@ object StateManager {
     Base64.getUrlEncoder.encodeToString(hash).replaceAll("=", "")
   }
 
-  def createDonation(title: String, description: String, attachments: Seq[String], by: Node) = {
+  /** @return donation with the id, by, and timestamp filled only */
+  def createEmptyDonation(by: Node) = {
     val now = new Date().getTime
-    val id = idGenerator(now, title + by.id)
-    Donation(id = id, title = title, description = description, attachments=attachments, by, now)
+    val id = idGenerator(now, by.id)
+    Donation(id = id, by=by, timestamp=now)
   }
 
   def createBid(donation: Donation, amount: Int, by: Node): Bid = {

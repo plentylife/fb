@@ -1,5 +1,6 @@
 package fb
 
+import fb.donation.DonationResponses
 import plenty.agent.AgentManager.onApproveSettleBid
 import plenty.agent.StateLogic
 import plenty.network._
@@ -51,7 +52,7 @@ object FbSendInterface extends SendInterface {
           val transaction = msg.payload.asInstanceOf[Transaction]
           if (transaction.to == msg.from) {
             // checking that only people who have bid on the item get the message
-            Responses.donationSettled(transaction)
+            DonationResponses.donationSettled(transaction)
           }
         }
         Network.receive(msg)

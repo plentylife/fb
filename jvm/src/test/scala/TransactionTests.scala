@@ -232,7 +232,7 @@ private object S {
   var ap = Seq[AgentPointer]()
   val n = a map AgentManager.agentAsNode
 
-  val donation = StateManager.createDonation("d-title", "d-desc", Seq(), AgentManager.agentAsNode(a(0)))
+  val donation = StateManager.createEmptyDonation(AgentManager.agentAsNode(a(0)))
   var bidFirst = StateManager.createBid(donation, amount = 4, by = n(1))
   var bidSecond = StateManager.createBid(donation, amount = 3, by = n(2))
 

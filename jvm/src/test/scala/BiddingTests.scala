@@ -15,7 +15,7 @@ class BiddingTests extends TestSuite {
   var ap = Seq[AgentPointer]()
   val n = a map AgentManager.agentAsNode
 
-  val donation = StateManager.createDonation("d-title", "d-desc", Seq(), AgentManager.agentAsNode(a(0)))
+  val donation = StateManager.createEmptyDonation(AgentManager.agentAsNode(a(0)))
   var bidFirst = StateManager.createBid(donation, amount = 2, by = n(1))
   var bidUnder = StateManager.createBid(donation, amount = 1, by = n(2))
   var bidProper = StateManager.createBid(donation, amount = 3, by = n(3))

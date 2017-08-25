@@ -20,7 +20,7 @@ class FbSendInterfaceTests extends TestSuite {
   val arianne = Node("1269212013184777")
   val anton = getAgents.find(_.id == u1id).get
   val fbAgent = FbAgent.pointer.getAgentInLastKnownState
-  val donation = StateManager.createDonation("d-title", "d-desc", Seq(), anton)
+  val donation = StateManager.createEmptyDonation(anton)
 
   val tests = this {
       'bids {

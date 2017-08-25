@@ -12,6 +12,7 @@ import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
+import akka.util.ByteString
 
 import scala.concurrent.Future
 import scala.io.{Source, StdIn}
@@ -24,25 +25,13 @@ object FbServer {
   private implicit val materializer = ActorMaterializer()
   // needed for the future flatMap/onComplete in the end
   private implicit val executionContext = system.dispatcher
-  private val http = Http(system)
-  private val replaceAppIdTarget = "INSERT_APP_ID"
-
+  /** for making http requests */
+  private val httpClient = Http(system)
 
   def start() = {
-    // inserting app id
-    prepareWebview()
-
-    val webviewHeaders: Seq[HttpHeader] = scala.collection.immutable.Seq(
-//      HttpHeader.parse("X-Frame-Options", "ALLOW-FROM https://www.facebook.com/"),
-        HttpHeader.parse("X-Frame-Options", "ALLOW-FROM https://www.messenger.com/")
-    ) collect {
-      case h: ParsingResult.Ok ⇒ h.header
-    };
 
     val route: Route =
       pathPrefix("backend") {
-        // for verification
-        //        println("REQUEST")
         get {
           parameterMap { params =>
             // fixme implement this properly
@@ -61,29 +50,6 @@ object FbServer {
               complete(StatusCodes.OK)
             }
           }
-      } ~ {
-        respondWithHeaders(webviewHeaders:_*) {
-
-
-          if (!FbSettings.prod) {
-            extractUnmatchedPath {remainingPath ⇒
-              val uri = s"http://localhost:3000$remainingPath"
-              val proxy = http.singleRequest(HttpRequest(uri = uri))
-              complete(proxy)
-            }
-          } else {
-
-            pathEndOrSingleSlash {
-              println("serving index")
-              getFromFile(FbSettings.indexFile)
-            } ~ {
-              println("serving directory")
-              getFromDirectory(FbSettings.webviewFolderPath)
-            }
-
-          }
-        }
-
       }
 
     val password = Source.fromFile("private/pass.txt").mkString.trim.toCharArray
@@ -110,16 +76,6 @@ object FbServer {
     println(s"Server online\nPress RETURN to stop...")
   }
 
-  def prepareWebview() = {
-    val indexFile = Source.fromFile(FbSettings.indexFile).mkString
-    if (indexFile.contains(replaceAppIdTarget)) {
-      val withAppId = indexFile.replaceFirst(replaceAppIdTarget, FbSettings.appId)
-      val writer = new PrintWriter(FbSettings.indexFile)
-      writer.print(withAppId)
-      writer.close()
-    }
-  }
-
   def startAndWait() = {
     start()
     StdIn.readLine() // let it run until user presses return
@@ -130,5 +86,13 @@ object FbServer {
     bindingFuture
       .flatMap(_.unbind()) // trigger unbinding from the port
       .onComplete(_ => system.terminate()) // and shutdown when done
+  }
+
+  /** makes a request and retunrs the bytestring */
+  def makeRequest(req: HttpRequest): Future[String] = httpClient.singleRequest(req) flatMap {
+    resp ⇒
+      val res = resp.entity.dataBytes.runFold(ByteString(""))(_ ++ _) map {
+        _.decodeString(resp.entity.contentType.charsetOption.getOrElse(HttpCharsets.`UTF-8`).value)}
+      res
   }
 }

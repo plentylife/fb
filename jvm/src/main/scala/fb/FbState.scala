@@ -14,23 +14,22 @@ object FbState {
   /** agent -> donation */
   private var bidsInProgress = Map[AgentPointer, Donation]()
 
-  def getOrCreateDonation(node: Node): Donation = {
-    donationsInProgress.get(node) match {
-      case Some(d) => d
-      case _ =>
-        val d = StateManager.createDonation("", "", Nil, node)
-        update(d)
-        d
-    }
+  def getDonation(node: Node): Option[Donation] = {
+    donationsInProgress.get(node)
   }
 
   def donationExists(node: Node) = donationsInProgress.contains(node)
+
+  /** drops donation from tracking
+    * @return optionally a tracked donation by given `node`*/
   def finishDonation(node: Node): Option[Donation] = {
     val d = donationsInProgress.get(node)
     donationsInProgress -= node
     d
   }
-  def update(donation: Donation) = synchronized {
+
+  /** adds or updates a donation to be tracked */
+  def trackInProgress(donation: Donation) = synchronized {
     donationsInProgress += (donation.by -> donation)
   }
 

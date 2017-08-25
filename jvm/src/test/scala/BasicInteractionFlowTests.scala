@@ -20,7 +20,7 @@ class BasicInteractionFlowTests extends TestSuite {
   var ap = Seq[AgentPointer]()
   val n = a map AgentManager.agentAsNode
 
-  val donation = StateManager.createDonation("d-title", "d-desc", Seq(), AgentManager.agentAsNode(a(0)))
+  val donation = StateManager.createEmptyDonation(AgentManager.agentAsNode(a(0)))
   var bid = StateManager.createBid(donation, amount = 1, by = n(1))
   var balances = Seq[Int]()
   // for testing purposes fudging the bid timestamp

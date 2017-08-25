@@ -1,38 +1,27 @@
 package fb
 
-import java.util.Date
+import org.scalatest.FreeSpec
 
-import plenty.agent.AgentManager
-import plenty.agent.model.Agent
-import plenty.network.{MintPress, Network}
-import plenty.state.StateManager
-import plenty.state.model.{Coin, Node, State}
-import utest._
-import plenty.agent.Accounting
-
-import scala.util.Random
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 /**
   */
-class MiscFbTests extends TestSuite {
+class MiscFbTests extends FreeSpec {
 
-  val tests = this {
-    'create_agent {
-      val id = "test-" + Random.nextInt(5000)
-      FbAgent.load()
-      val a = AgentManager.createAgent(id)
+  "Google shortner service" - {
+    val f = Utility.getShortLink("plenty.life")
+    val link = Await.result(f, Duration.Inf)
+    println(link)
 
-      waitClearQueue()
-      FbAgent.lastState.coins.count(_.belongsTo.id == a.id) ==> 10
+    "should produce a valid link" in {
+      assert(link.nonEmpty)
     }
   }
 
-  def waitClearQueue() = {
-    println("waiting on message queue")
-    println(s"non-completes: ${Network.nonCompletes.mkString(" ")}")
-    while (Network.nonCompletes.nonEmpty) {
-      Thread.sleep(300)
-      println(s"non-completes (loop): ${Network.nonCompletes.mkString(" ")}")
-    }
+  "Publishing of donation posts on page" - {
+    FbMain.main(Array())
+
   }
+
 }
