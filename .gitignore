@@ -3,3 +3,4 @@
 data-stores
 https
 private
+hs_err_pid*
