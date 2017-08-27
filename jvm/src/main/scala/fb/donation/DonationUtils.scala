@@ -95,7 +95,7 @@ private[donation] object DonationUtils {
 
   /** @return a string with the questions and answers -- the bulk of the donation description in a post */
   private def producePostBody(d: Donation, bidUrl: String): String = {
-    val title = s"${d.title}\n-----\n"
+    val title = s"${d.title.getOrElse("title is missing")}\n-----\n"
     val qAndA = DonationFlow.fieldsInPostOrder map { f ⇒ publishTextField(d, f) } mkString "\n\n"
     val bidBlock = s"\n===\n This is an open auction. \nTo enter your bid follow $bidUrl\nThis link opens messenger " +
       s"and allows you to talk to Plenty bot"
