@@ -33,7 +33,7 @@ object Responses {
   }
 
   private val dateFormatter = new SimpleDateFormat("dd MMM")
-  private val thanksSymbol: Char = '\u20B8'
+  val thanksSymbol: Char = '\u20B8'
 
   def accountStatus(agent: AgentPointer) = {
     val coins = Accounting.getOwnValidCoins(agent.getAgentInLastKnownState)
@@ -101,7 +101,36 @@ object Responses {
   def firstContact(agent: AgentPointer, isBidding: Boolean = false) = {
     val userInfo = UserInfo.get(agent.id)
     sendSimpleMessage(userInfo.id, s"Hey ${userInfo.name}!")
-    accountStatus(agent)
+    sendSimpleMessage(userInfo.id, "Plenty is simple to use")
+
+    sendPageLinkButton(userInfo)
+
+    if (!isBidding) {
+      accountStatus(agent)
+      sendDonateButton(userInfo)
+    }
+  }
+
+  /** sends a brief message with a button link to the page */
+  def sendPageLinkButton(userInfo: UserInfo): Unit = {
+    val recipient = new IdMessageRecipient(userInfo.id)
+    val template = new ButtonTemplatePayload("Visit `Plenty of Thanks` page for details")
+    val pageLink = s"facebook.com/${FbSettings.pageId}"
+    val button = new WebButton("Plenty of Thanks", pageLink)
+    template.addButton(button)
+    fbClientPublish(userInfo, "me/messages", Parameter.`with`("recipient", recipient),
+      Parameter.`with`("message", new Message(new TemplateAttachment(template))))
+  }
+
+  /** sends a message asking if the user would like to make a donation */
+  def sendDonateButton(userInfo: UserInfo): Unit = {
+    val recipient = new IdMessageRecipient(userInfo.id)
+    val template = new ButtonTemplatePayload(s"Make your first donation, ${userInfo.name}! It can be time, skills, " +
+      s"knowledge, physical items, or anything in-between")
+    val button = new PostbackButton("Donate", "DONATE_START_POSTBACK")
+    template.addButton(button)
+    fbClientPublish(userInfo, "me/messages", Parameter.`with`("recipient", recipient),
+      Parameter.`with`("message", new Message(new TemplateAttachment(template))))
   }
 
 

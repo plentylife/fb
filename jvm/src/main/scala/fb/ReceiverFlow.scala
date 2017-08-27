@@ -38,16 +38,20 @@ object ReceiverFlow {
     Responses.displayTyping(senderId)
 
     var a: AgentPointer = null
+    var needsInto = false
     getAgent(senderId) match {
       case Some(_a) =>
         a = _a
         messageTree(a, item)
       case None =>
         a = createAgent(senderId)
-        Responses.firstContact(a)
+        needsInto = true
+//        Responses.firstContact(a)
     }
-    postbackTree(a, item)
+    val postback = postbackTree(a, item)
     msgReferralTree(a, item)
+
+    if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a)
   }
 
   private def messageTree(a: AgentPointer, msgItem: MessagingItem): Unit = {
@@ -78,7 +82,9 @@ object ReceiverFlow {
     }
   }
 
-  private def postbackTree(a: AgentPointer, item: MessagingItem) = {
+  /**
+    * @return the postback payload (text) */
+  private def postbackTree(a: AgentPointer, item: MessagingItem): String = {
     val pb = item.getPostback
     println(s"postback is $pb")
 
@@ -101,7 +107,8 @@ object ReceiverFlow {
           val donationPostback = DonationFlow.flow(a, pb)
           if (!donationPostback) Responses.unrecognizedAction(a)
       }
-    }
+      pb.getPayload
+    } else ""
   }
 
   private def msgReferralTree(a: AgentPointer, item: MessagingItem) = {
