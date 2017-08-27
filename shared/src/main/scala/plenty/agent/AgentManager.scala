@@ -101,8 +101,13 @@ object AgentManager {
 
   /* Utils */
 
-  def createAgent(id: String, state: State = State()): Agent = {
-    var a = Agent(id, state = state)
+  def createAgent(id: String, copyState: State = State()): Agent = {
+    // fixme removing coins that used to belong to this person, possible only in development
+    // this copy state idea is bad
+    val oldCoins = copyState.coins.filterNot(_.belongsTo.id == id)
+    val cleanCopyState: State = copyState.copy(coins = oldCoins)
+
+    var a = Agent(id, state = cleanCopyState)
     val coins = MintPress.distributeCoinsToNewAgent(a)
     a = StateLogic.registerCoins(coins, a)
     a
