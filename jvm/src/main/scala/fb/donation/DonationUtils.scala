@@ -68,7 +68,7 @@ private[donation] object DonationUtils {
           val id = fbClient.publish(s"${FbSettings.pageId}/photos",
             classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
           ).getId
-          s"{'media_fbid':'${id}'}"
+          s"{'media_fbid':'$id'}"
         } foreach {
           attachments.add
         }
@@ -94,20 +94,21 @@ private[donation] object DonationUtils {
     }
 
   /** @return a string with the questions and answers -- the bulk of the donation description in a post */
-  private def producePostBody(d: Donation, bidUrl: String) = {
+  private def producePostBody(d: Donation, bidUrl: String): String = {
     val title = s"${d.title}\n-----\n"
-    val qAndA = DonationFlow.fieldsInPostOrder map { f ⇒ publishTextField(d, f) } mkString ("\n")
+    val qAndA = DonationFlow.fieldsInPostOrder map { f ⇒ publishTextField(d, f) } mkString "\n\n"
     val bidBlock = s"\n===\n This is an open auction. \nTo enter your bid follow $bidUrl\nThis link opens messenger " +
       s"and allows you to talk to Plenty bot"
+    title + qAndA + bidBlock
   }
 
   private def publishTextField(d: Donation, f: String): String = {
     getTextFieldByName(d, f) map { v ⇒
       val label = f.head.toUpper + f.tail
-      s"$label:\n\n\t$v"
-    } getOrElse ("")
+      s"$label:\n  $v"
+    } getOrElse ""
   }
 
-  def cancelDonation(a: AgentPointer) = FbState.finishDonation(a.node)
+  def cancelDonation(a: AgentPointer): Option[Donation] = FbState.finishDonation(a.node)
 
 }

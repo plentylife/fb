@@ -1,6 +1,8 @@
 package fb
 
 import org.scalatest.FreeSpec
+import plenty.state.StateManager
+import plenty.state.model.Node
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -18,10 +20,4 @@ class MiscFbTests extends FreeSpec {
       assert(link.nonEmpty)
     }
   }
-
-  "Publishing of donation posts on page" - {
-    FbMain.main(Array())
-
-  }
-
 }
