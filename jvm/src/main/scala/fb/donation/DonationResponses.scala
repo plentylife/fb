@@ -77,20 +77,26 @@ object DonationResponses {
   def missingPicture(id: String) = sendSimpleMessage(id, "That wasn't a picture")
 
   def showDonationBubble(a: AgentPointer, donation: Donation, postId: Option[String],
-                         showBidButton: Boolean = true) = {
+                         biddingMode: Boolean = false) = {
     val payload = new GenericTemplatePayload
-    val bubble = new Bubble(s"Bid and Share: ${donation.title}")
-    val bidButton =
-      if (showBidButton) createBidButton(donation)
-      else new WebButton("Bid", s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}")
+    val bubble = new Bubble(s"Bid and Share: ${donation.title.getOrElse("missing title")}")
+    val localBidButton = createBidButton(donation)
+    val remoteBidButton = new WebButton("Bid", s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}")
     val shareButton = new ShareButton()
 
+    // images
+    donation.attachments.headOption foreach bubble.setImageUrl
+    // view link
     postId foreach {pid =>
       val url = s"https://www.facebook.com/$pid"
       val urlButton = new WebButton("View", url)
       bubble.addButton(urlButton)
     }
-    bubble.addButton(bidButton)
+    // bid button
+    if (!biddingMode)
+      bubble.addButton(remoteBidButton)
+    else bubble.addButton(localBidButton)
+    // share button
     if (postId.nonEmpty) bubble.addButton(shareButton)
     payload.addBubble(bubble)
 

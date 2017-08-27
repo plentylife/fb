@@ -27,11 +27,12 @@ object Utility {
     FbAgent.pointer.getAgentInLastKnownState.state.nodes.find(_.id == byId)
   }
 
-  def startBidding(donationRef: String, a: AgentPointer) = {
+  /** @return `true` if a bid can be made */
+  def startBidding(donationRef: String, a: AgentPointer): Boolean = {
     val donationId = donationRef.replace("BID_POSTBACK_", "")
     FbAgent.lastState.donations.find(_.id == donationId) match {
-      case Some(donation) => FbState.trackBid(a, donation)
-      case _ => Responses.errorWithReason(a.id, "Could not find the donation")
+      case Some(donation) => FbState.trackBid(a, donation); true
+      case _ => Responses.errorWithReason(a.id, "Could not find the donation"); false
     }
   }
 

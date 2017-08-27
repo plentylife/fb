@@ -98,8 +98,8 @@ object ReceiverFlow {
           }
         case "ACCOUNT_STATUS_POSTBACK" => Responses.accountStatus(a)
         case p: String if p.startsWith("BID_POSTBACK_") =>
-          Utility.startBidding(p,a)
-          Responses.bidStart(a)
+          val bidPossible = Utility.startBidding(p,a)
+          if (bidPossible) Responses.bidStart(a)
         case p: String if p.startsWith("BID_ACCEPT_POSTBACK_") =>
           AgentManager.takeBids(a.getAgentInLastKnownState, hardAuctionClose = true)
         case _ =>
@@ -138,7 +138,7 @@ object ReceiverFlow {
     if (ref.startsWith("BID_")) {
       val donationId = ref.replace("BID_", "")
       FbAgent.lastState.donations.find(_.id == donationId) match {
-        case Some(donation) => DonationResponses.showDonationBubble(a, donation, None)
+        case Some(donation) => DonationResponses.showDonationBubble(a, donation, None, biddingMode = true)
         case _ =>
           println("ERROR " + s"processRefStringBid ${Option(ref).getOrElse("null ref")}")
           Responses.errorWithReason(a.id, "the auction seems to have been closed")
