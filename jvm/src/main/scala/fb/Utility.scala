@@ -44,7 +44,8 @@ object Utility {
         val bid = StateManager.createBid(donation, amount, a.node)
         println(s"bid ${bid}")
         Network.notifyAllAgents(bid, BidAction, from = a.node)
-      case _ => Responses.errorPersonal(a)
+      case _ => Responses.errorWithReason(a.id, "perhaps that wasn't a number. Try pressing `bid` again and entering " +
+        s"an amount of ${Responses.thanksSymbol}hanks")
     }
   }
 
