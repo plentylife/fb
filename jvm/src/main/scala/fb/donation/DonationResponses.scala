@@ -65,7 +65,7 @@ object DonationResponses {
     val msg = new Message(text)
 
     if (canFinish) msg.addQuickReply(done)
-    if (!required) msg.addQuickReply(skip)
+    if (!required && !canFinish) msg.addQuickReply(skip)
     msg.addQuickReply(cancel)
     Responses.fbClientPublish(a, "me/messages",
       Parameter.`with`("recipient", recipient),
@@ -125,17 +125,18 @@ object DonationResponses {
     val fromBid = fromTransaction.bid.get
     StateManager.getRelatedBids(FbAgent.lastState, fromBid) foreach { relBid ⇒
       val ui = UserInfo.get(relBid.by.id)
+      val title = fromBid.donation.title.getOrElse("missing title")
       if (relBid.by == fromTransaction.from) {
-        sendSimpleMessage(ui.id, s"Your have WON the auction for '${fromBid.donation.title}'!")
+        sendSimpleMessage(ui.id, s"Your have WON the auction for `$title`!")
       } else {
-        sendSimpleMessage(ui.id, s"Your have LOST the auction for '${fromBid.donation.title}'")
+        sendSimpleMessage(ui.id, s"Your have LOST the auction for `$title`")
       }
     }
     // notifying the donor
     val donation = fromBid.donation
     val donor = donation.by.id
-    sendSimpleMessage(donor, s"The auction for '${donation.title}' has closed with the highest bid of " +
-      s"${fromTransaction.coins.size}")
+    sendSimpleMessage(donor, s"The auction for '${donation.title.getOrElse("missing title")}' has closed with the " +
+      s"highest bid of ${fromTransaction.coins.size}")
   }
 
 }

@@ -49,9 +49,12 @@ object ReceiverFlow {
 //        Responses.firstContact(a)
     }
     val postback = postbackTree(a, item)
-    msgReferralTree(a, item)
+    val biddingCallback: Option[() ⇒ Unit] = msgReferralTree(a, item)
+    val isBidding = biddingCallback.nonEmpty
 
-    if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a)
+    if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a, isBidding=isBidding)
+    // this is for formatting purposes. The bid action should come after into
+    biddingCallback foreach(f ⇒ f())
   }
 
   private def messageTree(a: AgentPointer, msgItem: MessagingItem): Unit = {
@@ -111,11 +114,14 @@ object ReceiverFlow {
     } else ""
   }
 
-  private def msgReferralTree(a: AgentPointer, item: MessagingItem) = {
+  /** @return `true` if there is a ref (for now means bidding) */
+  private def msgReferralTree(a: AgentPointer, item: MessagingItem): Option[() ⇒ Unit] = {
     if (item.getReferral != null) {
       val ref = item.getReferral.getRef
-      processRefString(ref, a)
+      val callback = () ⇒ processRefString(ref, a)
+      return Some(callback)
     }
+    return None
   }
 
   private val quickReplyTreeFlows = Set[Function2[AgentPointer, QuickReplyItem, Boolean]](DonationFlow.flow)
@@ -134,7 +140,7 @@ object ReceiverFlow {
     } else false
   }
 
-  private def processRefString(ref: String, a: AgentPointer) = {
+  private def processRefString(ref: String, a: AgentPointer): Unit = {
     if (ref.startsWith("BID_")) {
       val donationId = ref.replace("BID_", "")
       FbAgent.lastState.donations.find(_.id == donationId) match {

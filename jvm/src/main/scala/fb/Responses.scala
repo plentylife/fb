@@ -133,7 +133,6 @@ object Responses {
       Parameter.`with`("message", new Message(new TemplateAttachment(template))))
   }
 
-
   def errorPersonal(a: AgentPointer, errorTag: String = ""): Unit = {
     val ui = UserInfo.get(a.id)
     errorPersonal(ui, errorTag)
@@ -160,7 +159,6 @@ object Responses {
       Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", new Message(msg)))
   }
-
 
   /** simple publish action with error catching (as user feedback) */
   def fbClientPublish(a: AgentPointer, endpoint: String, parameters:Parameter*): GraphResponse = {
