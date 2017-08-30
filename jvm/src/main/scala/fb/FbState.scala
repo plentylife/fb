@@ -14,6 +14,8 @@ object FbState {
   /** agent -> donation */
   private var bidsInProgress = Map[AgentPointer, Donation]()
 
+  /** mapping of donation ids to */
+
   def getDonation(node: Node): Option[Donation] = {
     donationsInProgress.get(node)
   }

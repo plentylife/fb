@@ -166,6 +166,7 @@ object Responses {
   }
 
   /** simple publish action with error catching (as user feedback) */
+  // todo add option for adding recipient from ui
   def fbClientPublish(ui: UserInfo, endpoint: String, parameters:Parameter*): GraphResponse = {
     try {
       fbClient.publish(endpoint, classOf[GraphResponse], parameters:_*)

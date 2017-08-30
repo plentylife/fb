@@ -43,7 +43,6 @@ private[donation] object DonationUtils {
     }
   }
 
-
   /** adds a pictures url from the message if such url exists
     *
     * @return None if there is no image url in the message, otherwise copy of the donation */
@@ -55,7 +54,6 @@ private[donation] object DonationUtils {
       Option(d.copy(attachments = d.attachments ++ pictures))
     else None
   }
-
 
   /**
     * Finishes the donation, drops it from [[FbState]] in-progress tacking, and publishes it as a post on fb
