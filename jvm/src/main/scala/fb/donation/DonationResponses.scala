@@ -88,9 +88,7 @@ object DonationResponses {
     donation.attachments.headOption foreach bubble.setImageUrl
     // view link
     postId foreach {pid =>
-      val url = s"https://www.facebook.com/$pid"
-      val urlButton = new WebButton("View", url)
-      bubble.addButton(urlButton)
+      bubble.addButton(donationLinkButton(pid))
     }
     // bid button
     if (!biddingMode)
@@ -121,6 +119,13 @@ object DonationResponses {
     }
   }
 
+  /** creates a [[WebButton]] that links to the given post with title view */
+  private def donationLinkButton(postId: String, title: String = "View") = {
+    val url = s"https://www.facebook.com/$postId"
+    new WebButton(title, url)
+  }
+
+  /** sends a message to all bidders, and the donor when a bid wins */
   def donationSettled(fromTransaction: Transaction) = {
     val fromBid = fromTransaction.bid.get
     StateManager.getRelatedBids(FbAgent.lastState, fromBid) foreach { relBid ⇒
@@ -128,6 +133,7 @@ object DonationResponses {
       val title = fromBid.donation.title.getOrElse("missing title")
       if (relBid.by == fromTransaction.from) {
         sendSimpleMessage(ui.id, s"Your have WON the auction for `$title`!")
+        askToLeaveContact(ui, fromBid.donation, "This will allow the donor to contact you")
       } else {
         sendSimpleMessage(ui.id, s"Your have LOST the auction for `$title`")
       }
@@ -137,6 +143,18 @@ object DonationResponses {
     val donor = donation.by.id
     sendSimpleMessage(donor, s"The auction for '${donation.title.getOrElse("missing title")}' has closed with the " +
       s"highest bid of ${fromTransaction.coins.size}")
+    askToLeaveContact(UserInfo.get(donor), fromBid.donation, "This will allow the auction winner to contact you")
+  }
+
+  /** sends a message asking to leave contact information */
+  private def askToLeaveContact(userInfo: UserInfo, donation: Donation, explanation: String): Unit = {
+    val template = new ButtonTemplatePayload(s"Please leave your contact information in the comments. $explanation")
+    val button = donationLinkButton(donation.id, "Leave comment")
+    template.addButton(button)
+    val msg = new Message(new TemplateAttachment(template))
+    Responses.fbClientPublish(userInfo, "me/messages",
+      Parameter.`with`("message", msg), Parameter.`with`("recipient", new IdMessageRecipient(userInfo.id))
+    )
   }
 
 }

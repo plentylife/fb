@@ -58,10 +58,13 @@ object DonationFlow {
         FbState.finishDonation(a.node) match {
           case Some(d) ⇒
             publishDonation(d, a) match {
-              case Some((donation, postId)) => DonationResponses.showDonationBubble(a, donation, Option(postId))
+              case Some((pubDonation, postId)) =>
+                val donationWithPostId = pubDonation.copy(id = postId)
+                DonationResponses.showDonationBubble(a, donationWithPostId, Option(postId))
+                Network.notifyAllAgents(donationWithPostId, DonateAction, FbAgent.node)
+
               case _ => Responses.errorPersonal(a)
             }
-            Network.notifyAllAgents(d, DonateAction, FbAgent.node)
 
           case _ ⇒
             Responses.errorPersonal(a, s"publishingPostDonePostback")
