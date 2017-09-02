@@ -16,6 +16,7 @@ object FbMain {
     Scheduler.start()
 
     FbAgent.load()
-    FbServer.startAndWait()
+    if (FbSettings.prod) FbServer.start()
+    else FbServer.startAndWait()
   }
 }

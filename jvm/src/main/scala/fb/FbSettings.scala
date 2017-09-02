@@ -19,6 +19,7 @@ object FbSettings {
   lazy val webviewFolderPath = s(9)
   lazy val indexFile = webviewFolderPath + "index.html"
   lazy val googleShortnerApiKey = s(11)
+  lazy val privacyPolicyFile = s(13)
 
   println(s"Production mode on: $prod")
 }

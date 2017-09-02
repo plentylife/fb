@@ -1,23 +1,23 @@
 package fb
 
-import java.io.{FileInputStream, InputStream, PrintWriter}
+import java.io.{FileInputStream, InputStream}
 import java.security.{KeyStore, SecureRandom}
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.HttpHeader.ParsingResult
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 import scala.io.{Source, StdIn}
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 object FbServer {
   private var bindingFuture: Future[Http.ServerBinding] = null
@@ -50,6 +50,8 @@ object FbServer {
               complete(StatusCodes.OK)
             }
           }
+      } ~ path("privacy-policy") {
+        getFromFile(FbSettings.privacyPolicyFile)
       }
 
     val password = Source.fromFile("private/pass.txt").mkString.trim.toCharArray
@@ -71,13 +73,11 @@ object FbServer {
 
 
     bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080, connectionContext = https)
-//            val bindingFuture = Http().bindAndHandle(route, "127.0.0.1", 8080)
-
-    println(s"Server online\nPress RETURN to stop...")
   }
 
   def startAndWait() = {
     start()
+    println(s"Server online\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return
     stop
   }
@@ -89,10 +89,31 @@ object FbServer {
   }
 
   /** makes a request and retunrs the bytestring */
-  def makeRequest(req: HttpRequest): Future[String] = httpClient.singleRequest(req) flatMap {
-    resp ⇒
-      val res = resp.entity.dataBytes.runFold(ByteString(""))(_ ++ _) map {
-        _.decodeString(resp.entity.contentType.charsetOption.getOrElse(HttpCharsets.`UTF-8`).value)}
-      res
+  def makeRequest(req: HttpRequest): String = {
+    println("making request")
+    val f = httpClient.singleRequest(req) flatMap {
+      resp ⇒
+        println("decoding request")
+        println(s"dataBytes ${resp.entity.dataBytes}")
+        val res: Future[String] = resp.entity.dataBytes.runFold(ByteString(""))(_ ++ _) map { str ⇒
+          try {
+            println(s"bytestring $str")
+            println(s"charset ${resp.entity.contentType.charsetOption.getOrElse(HttpCharsets.`UTF-8`).value}")
+            val decodedStr = str.decodeString(resp.entity.contentType.charsetOption.getOrElse(HttpCharsets.`UTF-8`)
+              .value)
+            println(s"decoded string $decodedStr")
+            decodedStr
+
+          } catch {
+            case e: Throwable ⇒
+              println(s"ERROR while decoding request. ${e.getMessage}")
+              e.printStackTrace()
+              ""
+          }
+        }
+        println("future of decoded string")
+        res
+    }
+    Await.result(f, Duration(20, TimeUnit.SECONDS))
   }
 }

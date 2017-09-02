@@ -54,17 +54,19 @@ object Utility {
   /** takes the link through google's shortner service
     *
     * @return a future with the new link */
-  def getShortLink(url: String): Future[String] = {
+  def getShortLink(url: String): String = {
+    println("getting short link")
     val reqUrl = s"https://www.googleapis.com/urlshortener/v1/url?key=${FbSettings.googleShortnerApiKey}"
     val reqBody = ByteString(s"{'longUrl': '$url'}")
     val entity = HttpEntity.apply(ContentTypes.`application/json`, reqBody)
     val req = HttpRequest(method = HttpMethods.POST, entity = entity, uri = reqUrl)
 
-    val res: Future[String] = FbServer.makeRequest(req).map({ data: String ⇒
-        val jsonObject = JSON.parseRaw(data.toString()) collect { case json: JSONObject ⇒ json }
-        val url = jsonObject map {_.obj.getOrElse("id", "").toString}
-        url.getOrElse("")
-    })
-    res
+    val data = FbServer.makeRequest(req)
+
+    println("parsing into JSON")
+    val jsonObject = JSON.parseRaw(data.toString()) collect { case json: JSONObject ⇒ json }
+    println("parsed into JSON")
+    val shortUrl = jsonObject.map({_.obj.getOrElse("id", "").toString})
+    shortUrl.getOrElse("")
   }
 }

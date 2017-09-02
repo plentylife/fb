@@ -12,7 +12,7 @@ import plenty.state.DonationStateUtils._
 import plenty.state.StateManager
 import plenty.state.model.Donation
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
@@ -72,18 +72,17 @@ private[donation] object DonationUtils {
         }
         try {
           val bidLink = s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}"
-          val f = Utility.getShortLink(bidLink) map { shortBidLink ⇒
-            val msg = producePostBody(donation, shortBidLink)
-            val publishMessageResponse = fbClient.publish(s"${FbSettings.pageId}/feed",
-              classOf[Post],
-              Parameter.`with`("message", msg),
-              Parameter.`with`("attached_media", attachments)
-            )
-
-            Some(donation -> publishMessageResponse.getId)
-          }
-          // fixme
-          Await.result(f, Duration(5, TimeUnit.SECONDS))
+          println("about to get a short link")
+          val shortBidLink = Utility.getShortLink(bidLink)
+          println("got short link")
+          val msg = producePostBody(donation, shortBidLink)
+          val publishMessageResponse = fbClient.publish(s"${FbSettings.pageId}/feed",
+            classOf[Post],
+            Parameter.`with`("message", msg),
+            Parameter.`with`("attached_media", attachments)
+          )
+          println("posted donation")
+          Some(donation -> publishMessageResponse.getId)
         } catch {
           case e: Throwable =>
             Responses.errorPersonal(a, s"publishingPostInUtils $e")
