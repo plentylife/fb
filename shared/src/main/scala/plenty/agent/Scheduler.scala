@@ -3,7 +3,7 @@ package plenty.agent
 import plenty.agent.model.Agent
 import plenty.network.Network
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import plenty.executionContext
 import scala.concurrent.{Future, Promise}
 
 /**

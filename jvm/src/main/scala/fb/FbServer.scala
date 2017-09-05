@@ -21,7 +21,7 @@ import scala.util.Failure
 
 object FbServer {
   private var bindingFuture: Future[Http.ServerBinding] = null
-  private implicit val system = ActorSystem("my-system")
+  private implicit val system = ActorSystem.apply("my-system")
   private implicit val materializer = ActorMaterializer()
   // needed for the future flatMap/onComplete in the end
   private implicit val executionContext = system.dispatcher
@@ -93,15 +93,10 @@ object FbServer {
     println("making request")
     val f = httpClient.singleRequest(req) flatMap {
       resp ⇒
-        println("decoding request")
-        println(s"dataBytes ${resp.entity.dataBytes}")
         val res: Future[String] = resp.entity.dataBytes.runFold(ByteString(""))(_ ++ _) map { str ⇒
           try {
-            println(s"bytestring $str")
-            println(s"charset ${resp.entity.contentType.charsetOption.getOrElse(HttpCharsets.`UTF-8`).value}")
             val decodedStr = str.decodeString(resp.entity.contentType.charsetOption.getOrElse(HttpCharsets.`UTF-8`)
               .value)
-            println(s"decoded string $decodedStr")
             decodedStr
 
           } catch {

@@ -12,8 +12,7 @@ import scala.concurrent.duration.Duration
 class MiscFbTests extends FreeSpec {
 
   "Google shortner service" - {
-    val f = Utility.getShortLink("plenty.life")
-    val link = Await.result(f, Duration.Inf)
+    val link = Utility.getShortLink("plenty.life")
     println(link)
 
     "should produce a valid link" in {
