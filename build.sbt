@@ -31,7 +31,7 @@ lazy val core = crossProject.in(file(".")).
   ).
   jvmSettings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http" % "10.0.9",
+      "com.typesafe.akka" %% "akka-http" % "10.0.10",
       "com.restfb" % "restfb" % "1.43.0"
     ),
     mainClass in assembly := Some("fb.FbMain"),

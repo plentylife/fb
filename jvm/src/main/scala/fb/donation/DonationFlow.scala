@@ -62,9 +62,9 @@ object DonationFlow {
               case Some((pubDonation, postId)) =>
                 println(s"published donation with post id $postId")
                 val donationWithPostId = pubDonation.copy(id = postId)
-                DonationResponses.showDonationBubble(a, pubDonation, Option(postId))
-                // cannot change post id here. Causes havoc, because the links are using the old id.
-                Network.notifyAllAgents(pubDonation, DonateAction, FbAgent.node)
+                DonationResponses.showDonationBubble(a, donationWithPostId, Option(postId))
+                Network.notifyAllAgents(donationWithPostId, DonateAction, FbAgent.node)
+                DonationUtils.finalizeDonationPost(donationWithPostId)
 
               case _ => Responses.errorPersonal(a)
             }

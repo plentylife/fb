@@ -75,6 +75,20 @@ class DonationTests extends FreeSpec {
       val fakeDonation = StateManager.createEmptyDonation(fakeNode)
       DonationUtils.publishDonation(fakeDonation, fakePointer)
     }
+
+    val realPostId = "1420741541308144_1438598576189107"
+    "should be able to update with action links" in {
+      val fakeNode = Node(anton)
+      val fakeDonation = StateManager.createEmptyDonation(fakeNode).copy(id = realPostId)
+      DonationUtils.finalizeDonationPost(fakeDonation)
+    }
+
+    "should be able to mark as settled" in {
+      val fakeNode = Node(anton)
+      val fakeDonation = StateManager.createEmptyDonation(fakeNode).copy(id = realPostId)
+      val fakeBid = StateManager.createBid(donation = fakeDonation, amount = 7, by=fakeNode)
+      ExternalDonationUtils.markPostAsSettled(fakeBid)
+    }
   }
 
 }

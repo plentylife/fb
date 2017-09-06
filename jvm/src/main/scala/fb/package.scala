@@ -9,4 +9,5 @@ import scala.concurrent.ExecutionContext
   */
 package object fb {
   val fbClient = new DefaultFacebookClient(FbSettings.pageToken, Version.VERSION_2_9)
+  val thanksSymbol: Char = '\u20B8'
 }

@@ -46,7 +46,7 @@ object Utility {
         println(s"bid ${bid}")
         Network.notifyAllAgents(bid, BidAction, from = a.node)
       case _ => Responses.errorWithReason(a.id, "perhaps that wasn't a number. Try pressing `bid` again and entering " +
-        s"an amount of ${Responses.thanksSymbol}hanks")
+        s"an amount of ${thanksSymbol}hanks")
     }
   }
 

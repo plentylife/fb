@@ -1,6 +1,6 @@
 package fb
 
-import fb.donation.DonationResponses
+import fb.donation.{DonationResponses, ExternalDonationUtils}
 import plenty.agent.AgentManager.onApproveSettleBid
 import plenty.agent.StateLogic
 import plenty.network._
@@ -53,6 +53,7 @@ object FbSendInterface extends SendInterface {
           if (transaction.to == msg.from) {
             // checking that only people who have bid on the item get the message
             DonationResponses.donationSettled(transaction)
+            ExternalDonationUtils.markPostAsSettled(transaction.bid.get)
           }
         }
         Network.receive(msg)

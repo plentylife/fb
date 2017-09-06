@@ -1,19 +1,13 @@
 package fb
 
-import com.restfb.types.send.GenericTemplatePayload
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.Date
 
+import com.restfb.Parameter
+import com.restfb.types.GraphResponse
 import com.restfb.types.send._
 import plenty.agent.{Accounting, AgentPointer}
-import plenty.agent.model.Agent
-import com.restfb.Parameter
-import com.restfb.types.{Comment, GraphResponse}
-import com.restfb.types.webhook.FeedCommentValue
-import plenty.state.StateManager
-import plenty.state.model.{Bid, Donation, RejectedBid, Transaction}
+import plenty.state.model.{Bid, Donation, RejectedBid}
 
 /**
   * Created by anton on 8/11/17.
@@ -22,9 +16,7 @@ object Responses {
 
   def displayTyping(id: String) = {
     import com.restfb.Parameter
-    import com.restfb.types.send.IdMessageRecipient
-    import com.restfb.types.send.SendResponse
-    import com.restfb.types.send.SenderActionEnum
+    import com.restfb.types.send.{IdMessageRecipient, SendResponse, SenderActionEnum}
     val recipient = new IdMessageRecipient(id)
     val senderActionParam = Parameter.`with`("sender_action", SenderActionEnum.typing_on)
     val recipientParam = Parameter.`with`("recipient", recipient)
@@ -33,7 +25,6 @@ object Responses {
   }
 
   private val dateFormatter = new SimpleDateFormat("dd MMM")
-  val thanksSymbol: Char = '\u20B8'
 
   def accountStatus(agent: AgentPointer) = {
     val coins = Accounting.getOwnValidCoins(agent.getAgentInLastKnownState)
@@ -71,7 +62,7 @@ object Responses {
       val ui = UserInfo.get(n.id)
       val recipient = new IdMessageRecipient(n.id)
       val template = new ButtonTemplatePayload(s"A new bid of ${bid.amount}$thanksSymbol has been entered " +
-        s"for ${bid.donation.title}")
+        s"for ${bid.donation.title.getOrElse("missing title")}")
       val button = createBidButton(bid.donation)
       template.addButton(button)
       fbClientPublish(ui, "me/messages", Parameter.`with`("recipient", recipient),
@@ -86,8 +77,8 @@ object Responses {
     val ui = UserInfo.get(donor)
     val recipient = new IdMessageRecipient(donor)
     val template = new ButtonTemplatePayload(s"A new bid for of ${bid.amount}$thanksSymbol has been entered " +
-      s"for '${bid.donation.title}'. The highest bid is ${maxBid}${thanksSymbol}. You can wait or close the auction " +
-      s"now")
+      s"for '${bid.donation.title.getOrElse("missing title")}'. The highest bid is ${maxBid}${thanksSymbol}. You can " +
+        "wait or close the auction now")
     val button = new PostbackButton("Close auction", s"BID_ACCEPT_POSTBACK_${donation.id}")
     template.addButton(button)
     fbClientPublish(ui, "me/messages", Parameter.`with`("recipient", recipient),
