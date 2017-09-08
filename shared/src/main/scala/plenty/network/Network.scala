@@ -68,10 +68,10 @@ object Network {
 
   /* agent registration */
 
-  private var agents: Map[AgentPointer, SendInterface] = Map()
+  private var agents: Map[AgentPointer, SendReceiveInterface] = Map()
   private var nodeToAgent: Map[Node, AgentPointer] = Map()
 
-  def registerAgent(agent: Agent, interface: SendInterface): AgentPointer = {
+  def registerAgent(agent: Agent, interface: SendReceiveInterface): AgentPointer = {
     println(s"registering ${agent.id} with interface ${interface.getClass}")
     val pointer = new AgentPointer(agent)
     agents += pointer -> interface

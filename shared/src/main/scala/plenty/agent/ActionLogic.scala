@@ -1,87 +1,91 @@
 package plenty.agent
 
 import java.util.Date
+import java.util.logging.Logger
 
 import plenty.agent.AgentManager.agentAsNode
 import plenty.agent.model.Agent
 import plenty.network.{ActionIdentifiers, Network}
 import plenty.state.StateManager
 import plenty.state.model._
+
 import scala.language.postfixOps
 
 /**
   * Logic of agent's actions such as accepting bids, accepting coins, etc
   */
 object ActionLogic {
+  private val log = Logger.getLogger("ActionLogic")
+
   private val periodBeforeBidAcceptance: Int = 24 * 60 * 60 * 1000
+
+  /* Demurage */
+
+  def applyDemurage(implicit a: Agent): Unit = {
+    Accounting.prodDemurageTransaction(a) match {
+      case None ⇒ log.warning("Could not send out demurage")
+      case Some(t) ⇒ Network.notifyAllAgents(t, ActionIdentifiers.TRANSACTION, a.node)
+    }
+  }
 
   /* Transacting */
 
   def transactOnPromisedBids(implicit agent: Agent): Unit = {
     for (bid <- agent.state.nonSettledBids) {
       if (bid.by.id == AgentManager.agentAsNode(agent).id) {
-        transact(bid.donation.by, bid.amount, bid)
+        transactBid(bid)
       }
     }
   }
 
-  private def lowOnFundsRejection(t: Transaction) = RejectedTransaction("low on funds", t)
-
-  def transact(to: Node, amount: Int, bid: Bid)(implicit agent: Agent): Option[InsufficientBalance] = {
-    println(s"agent ${agent.id} creating transaction to ${to}")
-    Accounting.createTransaction(to, amount) match {
+  def transactBid(bid: Bid)(implicit agent: Agent): Option[WrongTransactionAmount] = {
+    Accounting.createTransaction(bid.donation.by, bid.amount) match {
       case Left(e) =>
         e match {
-          case _: InsufficientBalance => Network.notifyAllAgents(bid, ActionIdentifiers.RETRACT_BID_ACTION, agent)
+          case _: WrongTransactionAmount =>
+            // if transaction fails, retracting bid
+            Network.notifyAllAgents(bid, ActionIdentifiers.RETRACT_BID_ACTION, agent)
           case _ => Unit
         }
         Option(e)
-      // fixme send network message
       case Right(_t: Transaction) =>
-        // attaching bid
-        val t = _t.copy(bid = Some(bid))
+        val t = StateManager.transformTransaction(_t, bid = bid)
         Network.notifyAllAgents(t, ActionIdentifiers.SETTLE_BID_ACTION, agent)
         None
     }
   }
 
   /**
-    * the only agent allowed to approve or deny a bid is the one accepting it
+    * Makes sure that a transaction that settles a bid is valid and issues an [[ActionIdentifiers.APPROVE_SETTLE_BID_ACTION]]
     * */
-  def verifyTransactionForBid(t: Transaction, agent: Agent) = {
-//    if (t.to == agentAsNode(agent)) {
-      t.bid match {
-        case Some(bid) =>
-          agent.state.nonSettledBids.find(_ == bid) match {
-            case Some(trustedBid) => Accounting.verifyTransaction(t, trustedBid.amount, agent) match {
-              case None => Network.notifyAllAgents(t, ActionIdentifiers.APPROVE_SETTLE_BID_ACTION, agent)
+  def verifyTransactionForBid(t: BidTransaction, agent: Agent) = {
+    agent.state.nonSettledBids.find(_ == t.bid) match {
+      case Some(trustedBid) =>
+        var v: Either[TransactionException, Unit] = Accounting.verifyTransaction(t, agent)
+        v = v.flatMap(_ ⇒ Accounting.verifyTransactionAmount(t, trustedBid.amount))
+      v match {
+        case v: Right[_,_] => Network.notifyAllAgents(t, ActionIdentifiers.APPROVE_SETTLE_BID_ACTION, agent)
 
-              case Some(e: InsufficientBalance) => Network.notifyAllAgents(lowOnFundsRejection(t),
-                ActionIdentifiers.DENY_SETTLE_BID_ACTION, agent)
-            }
-            case _ => Network.notifyAllAgents(RejectedTransaction("could not find the bid", t), ActionIdentifiers
-              .DENY_SETTLE_BID_ACTION, agent)
-          }
-        case _ => Network.notifyAllAgents(RejectedTransaction("improper formatting", t), ActionIdentifiers
-          .DENY_SETTLE_BID_ACTION, agent)
+        case v: Left[_,_] => Network.notifyAllAgents(lowOnFundsRejection(t),
+          ActionIdentifiers.DENY_SETTLE_BID_ACTION, agent)
       }
-//    }
-  }
-
-  /** manages the minting of new coins
-    * checks that the transaction is for the agent */
-  def finishTransaction(t: Transaction, agent: Agent) = {
-    if (agentAsNode(agent) == t.to) {
-      val coins = Accounting.transferCoins(t)
-      Network.notifyAllAgents(coins, ActionIdentifiers.COINS_MINTED, agent)
+      case _ => Network.notifyAllAgents(RejectedTransaction("could not find the bid", t), ActionIdentifiers
+        .DENY_SETTLE_BID_ACTION, agent)
     }
   }
 
-  //  /** given an exception sends out a message to the network */
-  //  private def exceptionToNetworkNotification(e: Exception, agent: Agent) = {
-  //    case e: InsufficientBalance => Network.notifyAllAgents(RejectedTransaction("low on funds", t),
-  //      ActionIdentifiers.DENY_SETTLE_BID_ACTION, agent)
-  //  }
+  /**
+    * Verifies that the transaction advertises coins that indeed belong to the sender of the transaction
+    * Issues an [[ActionIdentifiers.ACCEPT_TRANSACTION]] or [[ActionIdentifiers.REJECT_TRANSACTION]]
+    **/
+  // fixme. must verify that the sender indeed issued the transaction
+  def verifyTransaction(t: Transaction, a: Agent) = {
+    Accounting.verifyTransaction(t, a) match {
+      case _: Right[_,_] => Network.notifyAllAgents(t, ActionIdentifiers.ACCEPT_TRANSACTION, a)
+      case _: Left[_,_] => Network.notifyAllAgents(RejectedTransaction("coins do not belong to the sender", t),
+        ActionIdentifiers.REJECT_TRANSACTION, a)
+    }
+  }
 
   /* Bidding */
 
@@ -94,7 +98,7 @@ object ActionLogic {
   def takeBids(agent: Agent, hardAuctionClose: Boolean = false): Unit = {
     println(s"agent ${agent.id} looking to accept bids from ${agent.state.bids}")
     val now = new Date().getTime
-    val criteria = takeBidForDonation(now, hardAuctionClose) _
+    val takenBids = takeBidForDonation(now, hardAuctionClose) _
     // bids on donations by the agent
     val bids = agent.state.bids filter {
       _.donation.by == agentAsNode(agent)
@@ -102,7 +106,7 @@ object ActionLogic {
     val bidsByDonation = bids.groupBy(_.donation.id)
     val accepted = bidsByDonation.flatMap(kv => {
       val (_, bids) = kv
-      criteria(bids)
+      takenBids(bids)
     })
 
     //    println(s"agent ${agent.id} has accepted ${accepted}")
@@ -142,7 +146,7 @@ object ActionLogic {
     if (bids.isEmpty) return None
 
     // has any new bids been submitted in the last day
-    val isAuctionClosed = hardAuctionClose || bids.forall(_.timestamp < now + periodBeforeBidAcceptance)
+    val isAuctionClosed = hardAuctionClose || bids.forall(_.timestamp < now - periodBeforeBidAcceptance)
     if (isAuctionClosed) {
       val maxBid = bids.map(_.amount).max
       val highestBids = bids.filter(_.amount >= maxBid)
@@ -152,27 +156,6 @@ object ActionLogic {
       None
     }
   }
-
-  //  def bidSettling(t: Transaction, agent: Agent): Unit = {
-  //    if (t.to == agentAsNode(agent) && validateBidSettle(t, agent)) {
-  //      Network.notifyAllAgents(t, ActionIdentifiers.APPROVE_SETTLE_BID_ACTION, AgentManager.agentAsNode(agent))
-  //    } else {
-  //      Network.notifyAllAgents(t, ActionIdentifiers.DENY_SETTLE_BID_ACTION, AgentManager.agentAsNode(agent))
-  //    }
-  //  }
-
-  //  private def validateBidSettle(t: Transaction, a: Agent): Boolean = {
-  //    t.bid match {
-  //      case Some(tbid) =>
-  //        val bid = a.state.nonSettledBids.find(_ == tbid)
-  //        if (bid.isEmpty) return false
-  //        val coins = a.state.coins.intersect(t.coins)
-  //        if (coins.size < bid.get.amount) return false
-  //        return true
-  //      case _ => false
-  //    }
-  //  }
-
 
   /* Relays */
 
@@ -188,4 +171,7 @@ object ActionLogic {
     }
   }
 
+  /* Utils */
+
+  private def lowOnFundsRejection[T <: Transaction](t: T) = RejectedTransaction("low on funds", t)
 }

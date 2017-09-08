@@ -9,6 +9,7 @@ import com.restfb.{DefaultJsonMapper, Parameter}
 import fb.donation.{DonationFlow, DonationResponses}
 import plenty.agent.{AgentManager, AgentPointer, StateLogic}
 import plenty.network.Network
+import plenty.state.model.Node
 
 /**
   * Created by anton on 8/10/17.
@@ -44,7 +45,7 @@ object ReceiverFlow {
         a = _a
         messageTree(a, item)
       case None =>
-        a = createAgent(senderId)
+        a = createAgent(Node(senderId))
         needsInto = true
 //        Responses.firstContact(a)
     }
@@ -171,8 +172,8 @@ object ReceiverFlow {
     Network.getAgents.find(_.id == id)
   }
 
-  private def createAgent(id: String): AgentPointer = {
-    var a = AgentManager.createAgent(id, FbAgent.lastState)
+  private def createAgent(n: Node): AgentPointer = {
+    var a = AgentManager.createAgent(n, FbAgent.lastState)
     // adding other coins already existent in network
 //    a = StateLogic.registerCoins(FbAgent.lastState.coins, a)
 //    // as well as donations and bids
@@ -180,9 +181,8 @@ object ReceiverFlow {
 //    s = s.copy(donations = s.donations ++ FbAgent.lastState.donations)
 //    a = a.copy(state = s)
 
-    val n = AgentManager.agentAsNode(a)
     FbAgent.registerNode(n)
-    Network.registerAgent(a, FbSendInterface)
+    Network.registerAgent(a, FbSendReceiveInterface$)
   }
 
 }

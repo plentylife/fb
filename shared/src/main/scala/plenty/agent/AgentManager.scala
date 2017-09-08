@@ -1,7 +1,7 @@
 package plenty.agent
 
 import plenty.agent.model.Agent
-import plenty.network.{Message, MintPress}
+import plenty.network.Message
 import plenty.state.model._
 import sun.management.resources.agent
 
@@ -33,33 +33,41 @@ object AgentManager {
   /* Transactions */
 
   /**
+    * for now just checks if a message came from the receiver and then changes the owner of the coins */
+  def onAcceptTransaction(t: Transaction, a: Agent, msg: Message[_]): Agent = {
+    if (t.from != msg.from) {
+      return a
+    }
+
+    StateLogic.finishTransaction(t, a)
+  }
+
+  /**
     * @param hardAuctionClose disregard the one day wait time
     */
   def takeBids(agent: Agent, hardAuctionClose: Boolean = false): Unit = ActionLogic.takeBids(agent, hardAuctionClose)
 
   /** both onApproveSettleBid and onDenySettleBid are only enacted iff they originate from the donor -- other
     * messages are just suggestions */
-  def onApproveSettleBid(t: Transaction, a: Agent, msg: Message[_]): Agent = {
+  def onApproveSettleBid(t: BidTransaction, a: Agent, msg: Message[_]): Agent = {
     // has this been already settled?
-    // fixme. t.bid.get is unsafe
-    val bid = t.bid.get
+    val bid = t.bid
     if (bid.donation.by != msg.from) {
       return a
     }
 
     if (a.state.nonSettledBids contains bid) {
-      val newA = StateLogic.registerApprovedBidSettle(t, a)
-      ActionLogic.finishTransaction(t, a)
-      newA
+      var agentUpd = StateLogic.registerApprovedBidSettle(t, a)
+      agentUpd = StateLogic.finishTransaction(t, agentUpd)
+      agentUpd
     } else a
   }
 
 
   /** both onApproveSettleBid and onDenySettleBid are only enacted iff they originate from the donor -- other
     * messages are just suggestions */
-  def onDenySettleBid(t: Transaction, agent: Agent, msg: Message[_]): Agent = {
-    // fixme needs to be verified
-    val bid = t.bid.get
+  def onDenySettleBid(t: BidTransaction, agent: Agent, msg: Message[_]): Agent = {
+    val bid = t.bid
     if (bid.donation.by != msg.from) {
       return agent
     }
@@ -101,20 +109,20 @@ object AgentManager {
 
   /* Utils */
 
-  def createAgent(id: String, copyState: State = State()): Agent = {
+  def createAgent(node: Node, copyState: State = State()): Agent = {
     // fixme removing coins that used to belong to this person, possible only in development
     // this copy state idea is bad
-    val oldCoins = copyState.coins.filterNot(_.belongsTo.id == id)
-    val cleanCopyState: State = copyState.copy(coins = oldCoins)
+//    val oldCoins = copyState.coins.filterNot(_.belongsTo.id == node)
+//    val cleanCopyState: State = copyState.copy(coins = oldCoins)
 
-    var a = Agent(id, state = cleanCopyState)
-    val coins = MintPress.distributeCoinsToNewAgent(a)
-    a = StateLogic.registerCoins(coins, a)
+    var a = Agent(node, state = State())
+//    val coins = MintPress.distributeCoinsToNewAgent(a)
+//    a = StateLogic.registerCoins(coins, a)
     a
   }
 
   implicit def agentAsNode(agent: Agent): Node = {
-    Node(agent.id)
+    agent.node
   }
 
 }

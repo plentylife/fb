@@ -11,11 +11,13 @@ object FbMain {
   def main(args: Array[String]): Unit = {
 
     // loading network
-    StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendInterface) }
+    StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface$) }
 
     Scheduler.start()
 
+    // loading coins as well
     FbAgent.load()
+
     if (FbSettings.prod) FbServer.start()
     else FbServer.startAndWait()
   }

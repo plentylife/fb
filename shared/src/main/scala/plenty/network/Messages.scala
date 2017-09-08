@@ -28,6 +28,8 @@ abstract class Message[P] {
 trait PayloadIdentifier[P] {
   val typeOfMsg: String
 
+  def cast(o: Any): P = o.asInstanceOf[P]
+
   override def toString: String = typeOfMsg
 
   override def equals(o: scala.Any): Boolean = o match {
@@ -50,11 +52,16 @@ object ActionIdentifiers {
   /* coin management */
   val COINS_MINTED = Message.createAction[Set[Coin]]("COINS_MINTED")
 
+  /* transaction */
+  val TRANSACTION = Message.createAction[Transaction]("TRANSACTION")
+  val ACCEPT_TRANSACTION = Message.createAction[Transaction]("ACCEPT_TRANSACTION")
+  val REJECT_TRANSACTION = Message.createAction[RejectedTransaction[Transaction]]("REJECT_TRANSACTION")
+
   /* bid to transfer */
   val BID_TAKE_ACTION = Message.createAction[Bid]("BID_TAKE_ACTION")
-  val SETTLE_BID_ACTION = Message.createAction[Transaction]("SETTLE_BID_ACTION")
-  val DENY_SETTLE_BID_ACTION = Message.createAction[RejectedTransaction]("DENY_SETTLE_BID_ACTION")
-  val APPROVE_SETTLE_BID_ACTION = Message.createAction[Transaction]("APPROVE_SETTLE_BID_ACTION")
+  val SETTLE_BID_ACTION = Message.createAction[BidTransaction]("SETTLE_BID_ACTION")
+  val DENY_SETTLE_BID_ACTION = Message.createAction[RejectedTransaction[BidTransaction]]("DENY_SETTLE_BID_ACTION")
+  val APPROVE_SETTLE_BID_ACTION = Message.createAction[BidTransaction]("APPROVE_SETTLE_BID_ACTION")
 
   /* bidding */
   /** a message back signifying that a bid has been accepted for consideration */
@@ -71,10 +78,6 @@ object DonateAction extends PayloadIdentifier[Donation] {
 
 object BidAction extends PayloadIdentifier[Bid] {
   override val typeOfMsg: String = "BID_ACTION"
-}
-
-object TransactionAction extends PayloadIdentifier[Transaction] {
-  override val typeOfMsg: String = "TRANSACTION_ACTION"
 }
 
 

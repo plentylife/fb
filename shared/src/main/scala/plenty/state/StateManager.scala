@@ -5,9 +5,10 @@ import java.nio.ByteBuffer
 import java.security.{MessageDigest, SecureRandom}
 import java.util.{Base64, Date}
 
+import boopickle.Default._
 import plenty.agent.model.Agent
 import plenty.state.model._
-import boopickle.Default._
+import prickle.Pickler
 
 /**
   * The entry point into state management.
@@ -30,31 +31,43 @@ object StateManager {
   def createEmptyDonation(by: Node) = {
     val now = new Date().getTime
     val id = idGenerator(now, by.id)
-    Donation(id = id, by=by, timestamp=now)
+    Donation(id = id, by = by, timestamp = now)
   }
 
   def createBid(donation: Donation, amount: Int, by: Node): Bid = {
     val now = new Date().getTime
     val id = idGenerator(now, amount + by.id)
-    Bid(id = id, donation = donation, amount=amount, by=by, timestamp = now)
+    Bid(id = id, donation = donation, amount = amount, by = by, timestamp = now)
   }
 
-  def createTransaction(coins: Set[Coin], from: Node, to: Node) = {
+  def createTransaction(coins: Set[Coin], from: Node, to: Node): Transaction = {
     val now = new Date().getTime
-    val id = idGenerator(now, s"transaction$from$to")
-    Transaction(id, now, coins, from, to)
+    val id = idGenerator(now, s"$from$to$now")
+    BaseTransaction(id, now, coins, from, to)
   }
+
+  def asDemurage(t: Transaction): DemurageTransaction = {
+    DemurageTransaction(t.id, t.timestamp, t.coins, from = t.from, to = t.to)
+  }
+
+  def transformTransaction(t: Transaction, bid: Bid): BidTransaction = {
+    BidTransaction(t.id, t.timestamp, t.coins, from = t.from, to = t.to, bid)
+  }
+
 
   /* Selecting objects */
 
   /** @return bids that have the donation (of the given bid) in common.
     *         takes into account bids and non-settled bids */
   def getRelatedBids(state: State, bid: Bid): Set[Bid] = (state.bids ++ state.nonSettledBids) filter {
-    _.donation == bid.donation}
+    _.donation == bid.donation
+  }
 
-  def updateHistory(oldState: State, newHistory: History): State = oldState.copy(history = newHistory)
+  def updateChains(state: State, newChains: Chains): State = state.copy(chains = newChains)
 
   /* disk IO */
+
+  implicit val agentPickler: Pickler[Agent] = Pickler.materializePickler[Agent]
 
   def save(agent: Agent) = {
     val archiveFilename = s"./data-stores/archive/${agent.id}-${new Date().getTime}.plenty"
@@ -63,14 +76,11 @@ object StateManager {
     val archive = new BufferedOutputStream(new FileOutputStream(archiveFilename))
     val current = new BufferedOutputStream(new FileOutputStream(currentFilename))
 
+    //    val pickle = Pickle.intoBytes(agent)
+    val pickle = prickle.Pickle.intoString(agent)
 
-    val pickle = Pickle.intoBytes(agent)
-
-    while (pickle.remaining() > 0) {
-      val next = pickle.get()
-      archive.write(next)
-      current.write(next)
-    }
+    new PrintWriter(archive).write(pickle)
+//    new PrintWriter(current).write(pickle)
 
     archive.close() // You may end up with 0 bytes file if not calling close.
     current.close()
@@ -88,13 +98,14 @@ object StateManager {
     while (reader.available() > 0) {
       bytes = bytes :+ reader.read().toByte
     }
-    Unpickle[Agent].fromBytes(ByteBuffer.wrap(bytes.toArray))
+    // fixme terrible
+    prickle.Unpickle[Agent].fromString(bytes.map{_.toChar}.mkString).getOrElse(Agent(Node("fake"), State()))
   }
 
   def loadAll(): Set[Agent] = {
     val currentDir = new File("./data-stores/current/")
     val allAgentFiles = currentDir.listFiles()
-    val agents = allAgentFiles map {f => loadFromFile(f.getAbsolutePath)}
+    val agents = allAgentFiles map { f => loadFromFile(f.getAbsolutePath) }
     val agentSet = agents.toSet
     // making sure there isn't something wrong with saving
     require(agentSet.size == agents.size, "Duplicate agent files in current directory")

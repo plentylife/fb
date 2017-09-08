@@ -27,18 +27,11 @@ object Responses {
   private val dateFormatter = new SimpleDateFormat("dd MMM")
 
   def accountStatus(agent: AgentPointer) = {
-    val coins = Accounting.getOwnValidCoins(agent.getAgentInLastKnownState)
-    val coinsWithDeathDate = coins.toSeq sortBy (_.deathTime) map {c =>
-      val d = new Date(c.deathTime)
-      dateFormatter.format(d) -> c
-    }
-    val deathDateOredered = coinsWithDeathDate map (_._1)
-    val coinsByDeathDate = coinsWithDeathDate groupBy (_._1)
-    val coinCountByDeathDate = coinsByDeathDate map (c => c._1 -> c._2.size)
-    val sortedBalance = coinCountByDeathDate.toSeq sortBy (c => deathDateOredered.indexOf(c._1))
+    val balance = Accounting.getSelfBalance(agent.getAgentInLastKnownState)
+    val rate = Accounting.calculateDemurageRate(agent.getAgentInLastKnownState)
+    val expirationBlock = s"decaying at ${Math.ceil(rate * 100)}% per day"
 
-    val expirationBlock = sortedBalance map {b => s"${b._2}$thanksSymbol expire on ${b._1}"} mkString "\n"
-    val msg = s"Your account balance is ${coins.size} ${thanksSymbol}hanks:\n$expirationBlock"
+    val msg = s"Your account balance is ${balance} ${thanksSymbol}hanks:\n$expirationBlock"
     sendSimpleMessage(agent.id, msg)
   }
 

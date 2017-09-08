@@ -16,20 +16,22 @@ object Receiver {
     registerNode(m.payload.asInstanceOf[Node], toAgent)
 
     case m if m.payloadId == ActionIdentifiers.COINS_MINTED =>
-      registerCoins(m.asInstanceOf[Message[Set[Coin]]].payload, toAgent)
+        // fixme. firuger out what to do with this message type
+      //registerCoins(m.asInstanceOf[Message[Set[Coin]]].payload, toAgent)
+      toAgent
 
     /* Transactions */
 
     case m if m.payloadId == ActionIdentifiers.SETTLE_BID_ACTION =>
-    ActionLogic.verifyTransactionForBid(m.payload.asInstanceOf[Transaction], toAgent)
+    ActionLogic.verifyTransactionForBid(m.payload.asInstanceOf[BidTransaction], toAgent)
       toAgent
 
     case m if m.payloadId == ActionIdentifiers.APPROVE_SETTLE_BID_ACTION =>
-      val t = m.payload.asInstanceOf[Transaction]
+      val t = m.payload.asInstanceOf[BidTransaction]
       onApproveSettleBid(t, toAgent, m)
 
     case m if m.payloadId == ActionIdentifiers.DENY_SETTLE_BID_ACTION =>
-      val t = m.payload.asInstanceOf[RejectedTransaction].transaction
+      val t = m.payload.asInstanceOf[RejectedTransaction[BidTransaction]].transaction
       onDenySettleBid(t, toAgent, m)
 
     /* Bids */
@@ -57,5 +59,24 @@ object Receiver {
     case m if (m.payloadId.typeOfMsg == DonateAction.typeOfMsg) ||
       (m.payloadId.typeOfMsg == RelayIdentifiers.DONATION_RELAY.typeOfMsg) =>
       registerDonation(m.asInstanceOf[Message[Donation]], toAgent)
+
+    case _ ⇒ properMatchingFunction(incomingMessage)
+  }
+
+  /** this is how the matching function should have been written from the beginning*/
+  private def properMatchingFunction(incomingMessage: Message[_])(implicit toAgent: Agent): Agent = {
+    val m = incomingMessage
+    incomingMessage.payloadId match {
+      case ActionIdentifiers.TRANSACTION ⇒
+        val p = ActionIdentifiers.TRANSACTION.cast(m.payload)
+        ActionLogic.verifyTransaction(p, toAgent)
+        toAgent
+
+      case ActionIdentifiers.ACCEPT_TRANSACTION ⇒
+        val p = ActionIdentifiers.ACCEPT_TRANSACTION.cast(m.payload)
+        AgentManager.onAcceptTransaction(p, toAgent, m)
+      case ActionIdentifiers.REJECT_TRANSACTION ⇒
+        toAgent
+    }
   }
 }

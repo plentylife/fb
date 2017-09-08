@@ -12,7 +12,7 @@ class AgentTests extends TestSuite {
     'agent {
       val node = Node("node_id")
       val state = State(nodes = Set(node))
-      val agent = Agent("agent_id", state = state)
+      val agent = Agent(Node("agent_id"), state = state)
 
       'can_be_saved {
         StateManager.save(agent)

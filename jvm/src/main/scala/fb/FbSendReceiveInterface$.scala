@@ -9,7 +9,7 @@ import plenty.state.model.{Bid, RejectedBid, Transaction}
 
 
 /** for interacting with Plenty by intercepting messages in the network */
-object FbSendInterface extends SendInterface {
+object FbSendReceiveInterface$ extends SendReceiveInterface {
   override def send(msg: Message[_]): Unit = {
     implicit val impMsg = msg
     println(s"FB NET: $msg")
@@ -49,11 +49,11 @@ object FbSendInterface extends SendInterface {
 
       case m if m.payloadId == ActionIdentifiers.APPROVE_SETTLE_BID_ACTION =>
         if (filterFbOnly(msg)) {
-          val transaction = msg.payload.asInstanceOf[Transaction]
+          val transaction = ActionIdentifiers.APPROVE_SETTLE_BID_ACTION.cast(msg.payload)
           if (transaction.to == msg.from) {
             // checking that only people who have bid on the item get the message
             DonationResponses.donationSettled(transaction)
-            ExternalDonationUtils.markPostAsSettled(transaction.bid.get)
+            ExternalDonationUtils.markPostAsSettled(transaction.bid)
           }
         }
         Network.receive(msg)

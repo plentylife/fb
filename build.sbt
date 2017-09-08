@@ -19,6 +19,8 @@ lazy val core = crossProject.in(file(".")).
     scalaVersion := "2.12.3",
     libraryDependencies ++= Seq(
       "io.suzaku" %%% "boopickle" % "1.2.6",
+      "com.softwaremill.quicklens" %%% "quicklens" % "1.4.8",
+      "com.github.benhutchison" %%% "prickle" % "1.1.13",
       "com.lihaoyi" %%% "utest" % "0.4.8" % "test",
       "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
     ),

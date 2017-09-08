@@ -6,7 +6,7 @@ import fb.Responses.{createBidButton, sendSimpleMessage}
 import fb._
 import plenty.agent.AgentPointer
 import plenty.state.StateManager
-import plenty.state.model.{Donation, Transaction}
+import plenty.state.model.{BidTransaction, Donation, Transaction}
 import Responses._
 
 object DonationResponses {
@@ -126,8 +126,8 @@ object DonationResponses {
   }
 
   /** sends a message to all bidders, and the donor when a bid wins */
-  def donationSettled(fromTransaction: Transaction) = {
-    val fromBid = fromTransaction.bid.get
+  def donationSettled(fromTransaction: BidTransaction) = {
+    val fromBid = fromTransaction.bid
     StateManager.getRelatedBids(FbAgent.lastState, fromBid) foreach { relBid ⇒
       val ui = UserInfo.get(relBid.by.id)
       val title = fromBid.donation.title.getOrElse("missing title")

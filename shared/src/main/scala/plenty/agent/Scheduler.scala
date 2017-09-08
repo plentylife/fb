@@ -1,10 +1,9 @@
 package plenty.agent
 
-import plenty.agent.model.Agent
+import plenty.executionContext
 import plenty.network.Network
 
-import plenty.executionContext
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 /**
   * Runs CRON type tasks
@@ -32,13 +31,9 @@ trait Scheduler {
 
   def execute() = {
     Network.getAgents.foreach(ap => {
-      val p = Promise[Agent]()
-      ap.getAgentToModify(p)
-      p.future.map(agent => {
-        AgentManager.takeBids(agent)
-        val a = Accounting.clearDeadCoins(agent)
-        ap.set(a)
-      })
+      val agent = ap.getAgentInLastKnownState
+      AgentManager.takeBids(agent)
+      ActionLogic.applyDemurage(agent)
     })
   }
 }
