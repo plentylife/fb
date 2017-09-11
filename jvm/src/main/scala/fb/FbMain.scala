@@ -11,7 +11,7 @@ object FbMain {
   def main(args: Array[String]): Unit = {
 
     // loading network
-    StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface$) }
+    StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
 
     Scheduler.start()
 

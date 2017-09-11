@@ -69,7 +69,7 @@ object Responses {
     val maxBid = relatedBids.map(_.amount).max
     val ui = UserInfo.get(donor)
     val recipient = new IdMessageRecipient(donor)
-    val template = new ButtonTemplatePayload(s"A new bid for of ${bid.amount}$thanksSymbol has been entered " +
+    val template = new ButtonTemplatePayload(s"A new bid of ${bid.amount}$thanksSymbol has been entered " +
       s"for '${bid.donation.title.getOrElse("missing title")}'. The highest bid is ${maxBid}${thanksSymbol}. You can " +
         "wait or close the auction now")
     val button = new PostbackButton("Close auction", s"BID_ACCEPT_POSTBACK_${donation.id}")

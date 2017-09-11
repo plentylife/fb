@@ -38,7 +38,7 @@ object FbAgent {
   private def create: AgentPointer = {
     // manual creation as to not create coins
     val a = Agent(node, state = State())
-    Network.registerAgent(a, FbSendReceiveInterface$)
+    Network.registerAgent(a, FbSendReceiveInterface)
   }
 
   def registerNode(toRegister: Node): Unit = {

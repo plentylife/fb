@@ -123,10 +123,13 @@ object Codecs {
   implicit val donationEnc: Encoder[Donation] = deriveEncoder[Donation]
   implicit val bidEnc: Encoder[Bid] = deriveEncoder[Bid]
   implicit val transactionEncoder = new Encoder[Transaction] {
-    override def apply(a: Transaction) = a match {
-      case t: BidTransaction ⇒ deriveEncoder[BidTransaction].apply(t)
-      case t: BaseTransaction ⇒ deriveEncoder[BaseTransaction].apply(t)
-      case t: DemurageTransaction ⇒ deriveEncoder[DemurageTransaction].apply(t)
+    override def apply(a: Transaction) = {
+      val base = a match {
+        case t: BidTransaction ⇒ deriveEncoder[BidTransaction].apply(t)
+        case t: BaseTransaction ⇒ deriveEncoder[BaseTransaction].apply(t)
+        case t: DemurageTransaction ⇒ deriveEncoder[DemurageTransaction].apply(t)
+      }
+      base.deepMerge(ttypeEnc.apply(a.transactionType))
     }
   }
   implicit val chainsEnc: Encoder[Chains] = deriveEncoder[Chains]
@@ -143,7 +146,7 @@ object Codecs {
   implicit val demtDec: Decoder[DemurageTransaction] = deriveDecoder[DemurageTransaction]
   implicit val transactionDec: Decoder[Transaction] = new Decoder[Transaction] {
     override def apply(c: HCursor): Result[Transaction] =
-      c.downField("transactionType").as(ttypeDec).toOption.get match {
+      c.as(ttypeDec).toOption.get match {
         case TransactionType.BID ⇒ c.as(bidtDec) map {_.asInstanceOf[Transaction]}
         case TransactionType.BASE ⇒ c.as(basetDec) map {_.asInstanceOf[Transaction]}
         case TransactionType.DEMURAGE ⇒ c.as(demtDec) map {_.asInstanceOf[Transaction]}

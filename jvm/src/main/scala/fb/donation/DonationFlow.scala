@@ -99,7 +99,8 @@ object DonationFlow {
       case Some(thisQuestionField) ⇒
         val updated = fillOutDonationField(d, thisQuestionField, msg)
         updated foreach FbState.trackInProgress
-        if (thisQuestionField == "pictures" && updated.isEmpty) DonationResponses.missingPicture(a.id)
+        if ((thisQuestionField == "pictures" || thisQuestionField == "first_picture")
+          && updated.isEmpty) DonationResponses.missingPicture(a.id)
 
         determineNextQuestion(updated.getOrElse(d)) match {
           case Some(nextQuestionField) ⇒

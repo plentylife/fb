@@ -1,9 +1,5 @@
 package plenty.state.model
 
-import java.security.PublicKey
-import java.sql.Timestamp
-import java.util.Date
-
 /**
   * Representation of a node in a network (such as a friend)
   */
@@ -15,7 +11,7 @@ import java.util.Date
   * @param mintTime the Unix epoch instant
   * @param lastTransactionTime Unix epoch instant of the last transaction
   * */
- case class Coin(id: Long, belongsTo: Node, mintTime: Long, lastTransactionTime: Long)
+ case class Coin(id: Long, belongsTo: Node, mintTime: Long, lastTransactionTime: Long) extends EquatableById[Long]
 
 /**
   * Represents a donation made by a node

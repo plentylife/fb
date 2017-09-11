@@ -8,9 +8,10 @@ import plenty.network.{BidAction, Network}
 import plenty.state.StateManager
 import plenty.state.model.{Donation, Node}
 
+import scala.concurrent.Await
 import scala.language.postfixOps
 import scala.util.parsing.json.{JSON, JSONObject}
-
+import scala.concurrent.duration._
 /**
   * Created by anton on 8/15/17.
   */
@@ -20,8 +21,8 @@ object Utility {
     val a = AgentManager.createAgent(n, FbAgent.lastState)
 
     FbAgent.registerNode(n)
-    val p = Network.registerAgent(a, FbSendReceiveInterface$)
-    CoinDistributor.give(a)
+    val p = Network.registerAgent(a, FbSendReceiveInterface)
+    Await.ready(CoinDistributor.give(p), 1 seconds)
     p
   }
 

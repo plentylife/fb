@@ -9,7 +9,7 @@ import plenty.state.model.{Bid, RejectedBid, Transaction}
 
 
 /** for interacting with Plenty by intercepting messages in the network */
-object FbSendReceiveInterface$ extends SendReceiveInterface {
+object FbSendReceiveInterface extends SendReceiveInterface {
   override def send(msg: Message[_]): Unit = {
     implicit val impMsg = msg
     println(s"FB NET: $msg")

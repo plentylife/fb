@@ -25,6 +25,9 @@ object DonationResponses {
     "pictures" → "Perhaps another picture? When finished, press `Done`."
   )
 
+  /** which questions can be the last question asked*/
+  private val canFinishOnQuestion = Set("first_picture", "pictures")
+
   private val isRequiredText = "(required)"
   private val canBeBlankText = "(can be blank)"
   private val missedRequiredText = "this answer cannot be blank"
@@ -46,7 +49,7 @@ object DonationResponses {
 
     if (missedLastTime) sendSimpleMessage(a.id, missedRequiredText)
     val required = DonationFlow.requiredFields.contains(questionName)
-    sendWithOptions(a, fullText, DonationFlow.fieldsInQuestionOrder.last == questionName, required)
+    sendWithOptions(a, fullText, canFinishOnQuestion contains questionName, required)
   }
 
   def donationInstruction(agent: AgentPointer) = {
@@ -129,7 +132,8 @@ object DonationResponses {
   /** sends a message to all bidders, and the donor when a bid wins */
   def donationSettled(fromTransaction: BidTransaction) = {
     val fromBid = fromTransaction.bid
-    StateManager.getRelatedBids(FbAgent.lastState, fromBid) foreach { relBid ⇒
+    val relatedBids = StateManager.getRelatedBids(FbAgent.lastState, fromBid)
+    relatedBids foreach { relBid ⇒
       val ui = UserInfo.get(relBid.by.id)
       val title = fromBid.donation.title.getOrElse("missing title")
       if (relBid.by == fromTransaction.from) {
