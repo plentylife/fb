@@ -3,7 +3,7 @@ package fb
 import plenty.agent.AgentPointer
 import plenty.agent.model.Agent
 import plenty.executionContext
-import plenty.network.{ActionIdentifiers, Message, Network}
+import plenty.network.{ActionIdentifiers, Message, MintPress, Network}
 import plenty.state.model.{Node, State}
 
 import scala.concurrent.{Future, Promise}
@@ -29,7 +29,7 @@ object FbAgent {
     val p = Promise[Agent]()
     pointer.getAgentToModify(p)
     p.future map { a ⇒
-      val filledCoins = MintPress.fillCoinSet(a.state.coins)
+      val filledCoins = MintPress.fillCoinSet(a.state.coins, node)
       val s = a.state.copy(coins = filledCoins)
       pointer.set(a.copy(state = s))
     }

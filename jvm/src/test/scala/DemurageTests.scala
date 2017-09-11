@@ -1,14 +1,14 @@
 import java.util.Date
 
 import TestUtilities._
-import fb.MintPress
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.agent.model.Agent
-import plenty.network.{ActionIdentifiers, Network}
+import plenty.network.{ActionIdentifiers, MintPress, Network}
 import plenty.state.StateManager
-import plenty.state.model.{Node, State}
+import plenty.state.model.{Coin, Node, State}
 
+import scala.collection.immutable
 import scala.language.postfixOps
 
 class DemurageTests extends FreeSpec with Matchers {
@@ -16,7 +16,7 @@ class DemurageTests extends FreeSpec with Matchers {
     val numNodes = 4
     val now = new Date().getTime
     val ns = (0 until numNodes) map { i ⇒ Node(i.toString) }
-    val cs = MintPress.fillCoinSet(Set()).map {_.copy(belongsTo = ns(0))}
+    val cs = MintPress.fillCoinSet(Set(), ns(0))
     val csg = cs.grouped(100).toSeq
     val s = State(nodes = ns.toSet, coins = cs)
     val as = ns.map(n => Agent(n, s))
@@ -63,11 +63,11 @@ class DemurageTests extends FreeSpec with Matchers {
 
 class TransactionTests extends FreeSpec {
   val numNodes = 3
-  val ns = (0 until numNodes) map { i ⇒ Node(i.toString) }
-  val cs = MintPress.fillCoinSet(Set()).map {_.copy(belongsTo = ns(0))}
-  val csg = cs.grouped(100)
+  val ns: immutable.IndexedSeq[Node] = (0 until numNodes) map { i ⇒ Node(i.toString) }
+  val cs: Set[Coin] = MintPress.fillCoinSet(Set(), ns(0))
+  val csg: Iterator[Set[Coin]] = cs.grouped(100)
   val s = State(nodes = ns.toSet, coins = cs)
-  val as = ns.map(n => Agent(n, s))
+  val as: immutable.IndexedSeq[Agent] = ns.map(n => Agent(n, s))
 
   "Illegal transactions" - {
     Network.clear

@@ -1,23 +1,15 @@
 package fb.donation
 
 import java.util
-import java.util.concurrent.TimeUnit
+import java.util.logging._
 
 import com.restfb.Parameter
 import com.restfb.types.{GraphResponse, Photo, Post}
 import fb._
 import plenty.agent.AgentPointer
-import plenty.network.{DonateAction, Network}
 import plenty.state.DonationStateUtils._
 import plenty.state.StateManager
 import plenty.state.model.{Bid, Donation}
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import java.util.logging._
-
-import fb.donation.DonationUtils.updateDonation
 
 private[donation] object DonationUtils {
   private val logger = Logger.getLogger("DonationUtils")
@@ -29,7 +21,7 @@ private[donation] object DonationUtils {
   }
 
   def fillOutDonationField(d: Donation, field: String, msg: DonationMessage): Option[Donation] = {
-    if (field == "pictures") {
+    if (field == "pictures" || field == "first_picture") {
       addPictures(d, msg)
     } else fillOutTextField(d, field, msg)
   }
@@ -65,33 +57,33 @@ private[donation] object DonationUtils {
     * @return donation with post id
     **/
   def publishDonation(donation: Donation, a: AgentPointer): Option[(Donation, String)] = {
-        val attachments = new util.ArrayList[String]()
-        donation.attachments map { url =>
-          val id = fbClient.publish(s"${FbSettings.pageId}/photos",
-            classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
-          ).getId
-          s"{'media_fbid':'$id'}"
-        } foreach {
-          attachments.add
-        }
-        try {
-          val msg = producePostBody(donation)
-          val publishMessageResponse = fbClient.publish(s"${FbSettings.pageId}/feed",
-            classOf[Post],
-            Parameter.`with`("message", msg),
-            Parameter.`with`("attached_media", attachments)
-          )
-          Some(donation -> publishMessageResponse.getId)
-        } catch {
-          case e: Throwable =>
-            Responses.errorPersonal(a, s"publishingPostInUtils $e")
-            None
-        }
+    val attachments = new util.ArrayList[String]()
+    donation.attachments map { url =>
+      val id = fbClient.publish(s"${FbSettings.pageId}/photos",
+        classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
+      ).getId
+      s"{'media_fbid':'$id'}"
+    } foreach {
+      attachments.add
     }
+    try {
+      val msg = producePostBody(donation)
+      val publishMessageResponse = fbClient.publish(s"${FbSettings.pageId}/feed",
+        classOf[Post],
+        Parameter.`with`("message", msg),
+        Parameter.`with`("attached_media", attachments)
+      )
+      Some(donation -> publishMessageResponse.getId)
+    } catch {
+      case e: Throwable =>
+        Responses.errorPersonal(a, s"publishingPostInUtils $e")
+        None
+    }
+  }
 
   /** runs the current post message through a supplied function, and updates the donation post with the result.
     * assumes that the donation id is the post id. */
-  private[donation] def updateDonation(donation: Donation, updateBy: (String, Donation) ⇒ String) = {
+  private[donation] def updateDonation(donation: Donation, updateBy: (String, Donation) ⇒ String): Unit = {
     try {
       val fieldList = new util.ArrayList[String]()
       fieldList.add("message")
@@ -111,11 +103,12 @@ private[donation] object DonationUtils {
   }
 
   /** updates donation post with action links */
-  def finalizeDonationPost(donation: Donation) = {
+  def finalizeDonationPost(donation: Donation): Unit = {
     val updater = (oldMessage: String, d: Donation) ⇒ {
       val bidLink = s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}"
       val shortBidLink = Utility.getShortLink(bidLink)
-      val bidBlock = s"\n===\n This is an open auction. \nTo enter your bid follow $shortBidLink\nThis link opens messenger " +
+      val bidBlock = s"\n===\n This is an open auction. \nTo enter your bid follow $shortBidLink\nThis link opens " +
+        s"messenger " +
         s"and allows you to talk to Plenty bot"
       oldMessage + bidBlock
     }
@@ -142,9 +135,9 @@ private[donation] object DonationUtils {
 private[fb] object ExternalDonationUtils {
   /** puts a header on the donation post
     * assumes that the donation id is post id */
-  def markPostAsSettled(winningBid: Bid) = {
+  def markPostAsSettled(winningBid: Bid): Unit = {
     val updater = (oldMessage: String, d: Donation) ⇒ {
-      val header = s"This auction is CLOSED. The winning bid amount is ${winningBid.amount}${thanksSymbol}\n===\n\n"
+      val header = s"This auction is CLOSED. The winning bid amount is ${winningBid.amount}$thanksSymbol\n===\n\n"
       header + oldMessage
     }
     DonationUtils.updateDonation(winningBid.donation, updater)

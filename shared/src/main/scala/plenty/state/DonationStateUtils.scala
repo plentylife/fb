@@ -16,6 +16,7 @@ object DonationStateUtils {
     case "where" ⇒ getTextFieldByName(d, name).nonEmpty
     case "why" ⇒ getTextFieldByName(d, name).nonEmpty
     case "how" ⇒ getTextFieldByName(d, name).nonEmpty
+    case "first_picture" ⇒ getTextFieldByName(d, name).nonEmpty
     case "pictures" ⇒ false
   }
 
@@ -28,6 +29,7 @@ object DonationStateUtils {
     case "where" ⇒ d.where
     case "why" ⇒ d.why
     case "how" ⇒ d.how
+    case "first_picture" ⇒ d.attachments.headOption
   }
 
   /** replaces the value with given value in donation field with given name
