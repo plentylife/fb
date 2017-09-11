@@ -13,7 +13,7 @@ object DonationFlow {
 
   /** field names ordered by the order of questions that the user is asked as they are filling out a new donation */
   private[donation] val fieldsInQuestionOrder: Seq[String] = Seq("title", "why", "what", "where", "when", "how", "who",
-    "pictures")
+    "first_picture", "pictures")
   /** field names ordered by the order that they are presented in a post */
   private[donation] val fieldsInPostOrder: Seq[String] = Seq("what", "why", "where", "when", "how", "who")
   /** fields that are required to be filled out */

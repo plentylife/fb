@@ -21,7 +21,8 @@ object DonationResponses {
     "where" → "*Where*? What is the location?",
     "how" → "*How* can this be obtained? Are there conditions, etc?",
     "who" → "People like to know *who* they are interacting with. A few words about yourself, please.",
-    "pictures" → "Also, people love *pictures*. Send us a few. When finished, press `Done`."
+    "first_picture" → "Also, people love *pictures*. Send us a few. When finished, press `Done`.",
+    "pictures" → "Perhaps another picture? When finished, press `Done`."
   )
 
   private val isRequiredText = "(required)"
@@ -29,8 +30,8 @@ object DonationResponses {
   private val missedRequiredText = "this answer cannot be blank"
 
   /** maximum length of the first line of subtitle in donation template in characters */
-  private val subtitleWhatMaxLenght = 100
-  private val subtitleWhereMaxLenght = 15
+  private val subtitleWhatMaxLength = 100
+  private val subtitleWhereMaxLength = 15
 
   /** sending appropriate response to the user, prompting to enter the next piece of info.
     * if a field was missed (in last answer), notifies the user of the fact
@@ -99,9 +100,9 @@ object DonationResponses {
     payload.addBubble(bubble)
 
     var subtitle = donation.what.getOrElse("")
-    if (subtitle.length > subtitleWhatMaxLenght) subtitle = subtitle.take(subtitleWhatMaxLenght) + "..."
+    if (subtitle.length > subtitleWhatMaxLength) subtitle = subtitle.take(subtitleWhatMaxLength) + "..."
     donation.where foreach {where ⇒
-      val subWhere = if (where.length > subtitleWhereMaxLenght) where.take(subtitleWhereMaxLenght) + "..." else where
+      val subWhere = if (where.length > subtitleWhereMaxLength) where.take(subtitleWhereMaxLength) + "..." else where
       subtitle += s"\n$subWhere"
     }
 
@@ -132,10 +133,10 @@ object DonationResponses {
       val ui = UserInfo.get(relBid.by.id)
       val title = fromBid.donation.title.getOrElse("missing title")
       if (relBid.by == fromTransaction.from) {
-        sendSimpleMessage(ui.id, s"Your have WON the auction for `$title`!")
+        sendSimpleMessage(ui.id, s"You have WON the auction for `$title`!")
         askToLeaveContact(ui, fromBid.donation, "This will allow the donor to contact you")
       } else {
-        sendSimpleMessage(ui.id, s"Your have LOST the auction for `$title`")
+        sendSimpleMessage(ui.id, s"You have LOST the auction for `$title`")
       }
     }
     // notifying the donor

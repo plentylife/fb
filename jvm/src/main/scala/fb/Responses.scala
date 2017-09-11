@@ -39,7 +39,7 @@ object Responses {
 
   def bidStart(a: AgentPointer) = {
     accountStatus(a)
-    sendSimpleMessage(a.id, s"How many ${thanksSymbol}hanks would you like to bid?")
+    sendSimpleMessage(a.id, s"How many ${thanksSymbol}hanks would you like to bid? (a round number)")
   }
 
   def bidEntered(bid: Bid) = {
