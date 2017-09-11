@@ -12,8 +12,8 @@ import plenty.network.Message
                   val donations: Set[Donation] = Set[Donation](),
                   val bids: Set[Bid] = Set(),
                   val nonSettledBids: Set[Bid] = Set(),
-                  val chains: Chains = Chains(),
-                  val relay: Relay = Relay()
+                  val chains: Chains = Chains()
+//                  val relay: Relay = Relay()
                 )
 
  case class Chains(

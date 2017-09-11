@@ -4,15 +4,23 @@ import java.io._
 import java.security.{MessageDigest, SecureRandom}
 import java.util.{Base64, Date}
 
+import io.circe.Decoder.Result
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.generic.semiauto.deriveEncoder
+import io.circe.parser._
+import io.circe.syntax._
+import io.circe.{Decoder, Encoder, HCursor}
 import plenty.agent.model.Agent
 import plenty.state.model._
-import prickle.Pickler
 
 /**
   * The entry point into state management.
   *
   */
 object StateManager {
+  import Codecs._
+
   private val random = new SecureRandom()
   private val hasher = MessageDigest.getInstance("SHA-512")
 
@@ -65,8 +73,6 @@ object StateManager {
 
   /* disk IO */
 
-  implicit val agentPickler: Pickler[Agent] = Pickler.materializePickler[Agent]
-
   def save(agent: Agent): Unit = {
     val archiveFilename = s"./data-stores/archive/${agent.id}-${new Date().getTime}.plenty"
     val currentFilename = s"./data-stores/current/${agent.id}.plenty"
@@ -74,7 +80,7 @@ object StateManager {
     //    val archive = new BufferedOutputStream(new FileOutputStream(archiveFilename))
     val current = new BufferedOutputStream(new FileOutputStream(currentFilename))
 
-    val pickle = prickle.Pickle.intoString(agent)
+    val pickle = agent.asJson.noSpaces
 
     // fixme. archive should be functional as well
     //    new PrintWriter(archive).write(pickle)
@@ -93,14 +99,8 @@ object StateManager {
   }
 
   private def loadFromFile(filename: String): Agent = {
-    val reader = new BufferedInputStream(new FileInputStream(filename))
-
-    var bytes = Seq[Byte]()
-    while (reader.available() > 0) {
-      bytes = bytes :+ reader.read().toByte
-    }
-    // fixme terrible
-    prickle.Unpickle[Agent].fromString(bytes.map {_.toChar}.mkString).getOrElse(Agent(Node("fake"), State()))
+    val source = scala.io.Source.fromFile(filename).mkString
+    decode[Agent](source).toOption.get
   }
 
   def loadAll(): Set[Agent] = {
@@ -114,4 +114,43 @@ object StateManager {
   }
 }
 
+object Codecs {
+  import io.circe._, io.circe.generic.semiauto._
+
+  implicit val ttypeEnc: Encoder[TransactionType.Value] = Encoder.forProduct1("type")(u ⇒ u.toString)
+  implicit val nodeEnc: Encoder[Node] = deriveEncoder[Node]
+  implicit val coinEnc: Encoder[Coin] = deriveEncoder[Coin]
+  implicit val donationEnc: Encoder[Donation] = deriveEncoder[Donation]
+  implicit val bidEnc: Encoder[Bid] = deriveEncoder[Bid]
+  implicit val transactionEncoder = new Encoder[Transaction] {
+    override def apply(a: Transaction) = a match {
+      case t: BidTransaction ⇒ deriveEncoder[BidTransaction].apply(t)
+      case t: BaseTransaction ⇒ deriveEncoder[BaseTransaction].apply(t)
+      case t: DemurageTransaction ⇒ deriveEncoder[DemurageTransaction].apply(t)
+    }
+  }
+  implicit val chainsEnc: Encoder[Chains] = deriveEncoder[Chains]
+
+
+  implicit val ttypeDec: Decoder[TransactionType.Value] = Decoder.forProduct1("type")(TransactionType.withName)
+  implicit val nodeDec: Decoder[Node] = deriveDecoder[Node]
+  implicit val coinDec: Decoder[Coin] = deriveDecoder[Coin]
+  implicit val donationDec: Decoder[Donation] = deriveDecoder[Donation]
+  implicit val bidDec: Decoder[Bid] = deriveDecoder[Bid]
+  implicit val chainsDec: Decoder[Chains] = deriveDecoder[Chains]
+  implicit val bidtDec: Decoder[BidTransaction] = deriveDecoder[BidTransaction]
+  implicit val basetDec: Decoder[BaseTransaction] = deriveDecoder[BaseTransaction]
+  implicit val demtDec: Decoder[DemurageTransaction] = deriveDecoder[DemurageTransaction]
+  implicit val transactionDec: Decoder[Transaction] = new Decoder[Transaction] {
+    override def apply(c: HCursor): Result[Transaction] =
+      c.downField("transactionType").as(ttypeDec).toOption.get match {
+        case TransactionType.BID ⇒ c.as(bidtDec) map {_.asInstanceOf[Transaction]}
+        case TransactionType.BASE ⇒ c.as(basetDec) map {_.asInstanceOf[Transaction]}
+        case TransactionType.DEMURAGE ⇒ c.as(demtDec) map {_.asInstanceOf[Transaction]}
+      }
+  }
+  implicit val transactionDecoder = new Decoder[Transaction] {
+    override def apply(c: HCursor) = ???
+  }
+}
 

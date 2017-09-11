@@ -1,7 +1,7 @@
 import org.scalatest.FreeSpec
 import plenty.agent.model.Agent
 import plenty.state.StateManager
-import plenty.state.model.{Node, State}
+import plenty.state.model.{DemurageTransaction, Node, State}
 
 /**
   * Saving state, modifying state by agents
@@ -9,6 +9,7 @@ import plenty.state.model.{Node, State}
 class StateTests extends FreeSpec {
   "agent" - {
     val node = Node("node_id")
+    val t = DemurageTransaction("tid", 0, Set(), node, Node("to"))
     val state = State(nodes = Set(node))
     val agent = Agent(Node("agent_id"), state = state)
 

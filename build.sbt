@@ -18,10 +18,10 @@ lazy val core = crossProject.in(file(".")).
     version := "0.1-SNAPSHOT",
     scalaVersion := "2.12.3",
     libraryDependencies ++= Seq(
-      "io.suzaku" %%% "boopickle" % "1.2.6",
+      "io.circe" %%% "circe-core" % "0.8.0",
+      "io.circe" %%% "circe-parser" % "0.8.0",
+      "io.circe" %%% "circe-generic" % "0.8.0",
       "com.softwaremill.quicklens" %%% "quicklens" % "1.4.8",
-      "com.github.benhutchison" %%% "prickle" % "1.1.13",
-      "com.lihaoyi" %%% "utest" % "0.4.8" % "test",
       "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
     ),
     testFrameworks += new TestFramework("utest.runner.Framework"),

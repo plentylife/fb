@@ -5,7 +5,7 @@ import plenty.agent.{Accounting, AgentManager, AgentPointer, Scheduler}
 import plenty.network.{BidAction, _}
 import plenty.state.StateManager
 import plenty.state.model.State
-import utest._
+
 
 /**
   * Saving state, modifying state by agents

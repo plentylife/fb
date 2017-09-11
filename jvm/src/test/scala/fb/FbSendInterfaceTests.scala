@@ -5,7 +5,7 @@ import plenty.state.StateManager
 import plenty.agent.AgentManager._
 import plenty.network.{ActionIdentifiers, Network}
 import plenty.state.model.{Node, RejectedBid}
-import utest._
+
 
 /**
   * Saving state, modifying state by agents

@@ -4,7 +4,6 @@ import plenty.network.BidAction
 import plenty.network._
 import plenty.state.StateManager
 import plenty.state.model.{Node, State}
-import utest._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
