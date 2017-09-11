@@ -1,13 +1,11 @@
 package fb
 
-import java.util.Date
-
 import com.restfb.types.send.{IdMessageRecipient, Message, SendResponse}
 import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem, QuickReplyItem}
-import com.restfb.types.webhook.{Change, FeedCommentValue, WebhookEntry, WebhookObject}
+import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
 import fb.donation.{DonationFlow, DonationResponses}
-import plenty.agent.{AgentManager, AgentPointer, StateLogic}
+import plenty.agent.{AgentManager, AgentPointer}
 import plenty.network.Network
 import plenty.state.model.Node
 
@@ -26,16 +24,16 @@ object ReceiverFlow {
     }
   }
 
-  private def process(entry: WebhookEntry) = {
+  private def process(entry: WebhookEntry): Unit = {
     val msgIter = entry.getMessaging.iterator()
     while (msgIter.hasNext) {
       processMessagingItem(msgIter.next())
     }
   }
 
-  private def processMessagingItem(item: MessagingItem) = {
+  private def processMessagingItem(item: MessagingItem): Unit = {
     val senderId = item.getSender.getId
-//    println(s"Messaging item $item")
+    //    println(s"Messaging item $item")
     Responses.displayTyping(senderId)
 
     var a: AgentPointer = null
@@ -45,17 +43,17 @@ object ReceiverFlow {
         a = _a
         messageTree(a, item)
       case None =>
-        a = createAgent(Node(senderId))
+        a = Utility.createAgent(Node(senderId))
         needsInto = true
-//        Responses.firstContact(a)
+      //        Responses.firstContact(a)
     }
     val postback = postbackTree(a, item)
     val biddingCallback: Option[() ⇒ Unit] = msgReferralTree(a, item)
     val isBidding = biddingCallback.nonEmpty
 
-    if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a, isBidding=isBidding)
+    if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a, isBidding = isBidding)
     // this is for formatting purposes. The bid action should come after into
-    biddingCallback foreach(f ⇒ f())
+    biddingCallback foreach (f ⇒ f())
   }
 
   private def messageTree(a: AgentPointer, msgItem: MessagingItem): Unit = {
@@ -102,7 +100,7 @@ object ReceiverFlow {
           }
         case "ACCOUNT_STATUS_POSTBACK" => Responses.accountStatus(a)
         case p: String if p.startsWith("BID_POSTBACK_") =>
-          val bidPossible = Utility.startBidding(p,a)
+          val bidPossible = Utility.startBidding(p, a)
           if (bidPossible) Responses.bidStart(a)
         case p: String if p.startsWith("BID_ACCEPT_POSTBACK_") =>
           AgentManager.takeBids(a.agentInLastState, hardAuctionClose = true)
@@ -122,7 +120,7 @@ object ReceiverFlow {
       val callback = () ⇒ processRefString(ref, a)
       return Some(callback)
     }
-    return None
+    None
   }
 
   private val quickReplyTreeFlows = Set[Function2[AgentPointer, QuickReplyItem, Boolean]](DonationFlow.flow)
@@ -172,17 +170,5 @@ object ReceiverFlow {
     Network.getAgents.find(_.id == id)
   }
 
-  private def createAgent(n: Node): AgentPointer = {
-    var a = AgentManager.createAgent(n, FbAgent.lastState)
-    // adding other coins already existent in network
-//    a = StateLogic.registerCoins(FbAgent.lastState.coins, a)
-//    // as well as donations and bids
-//    var s = a.state
-//    s = s.copy(donations = s.donations ++ FbAgent.lastState.donations)
-//    a = a.copy(state = s)
-
-    FbAgent.registerNode(n)
-    Network.registerAgent(a, FbSendReceiveInterface$)
-  }
 
 }

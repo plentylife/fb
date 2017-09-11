@@ -1,25 +1,29 @@
 package fb
 
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers._
-import akka.http.scaladsl.unmarshalling._
 import akka.util.ByteString
 import com.restfb.types.webhook.messaging.MessagingItem
-import plenty.agent.AgentPointer
-import plenty.network.{BidAction, Network, Message ⇒ NetMessage}
+import plenty.agent.{AgentManager, AgentPointer}
+import plenty.network.{BidAction, Network}
 import plenty.state.StateManager
 import plenty.state.model.{Donation, Node}
 
-import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.util.parsing.json.{JSON, JSONObject}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by anton on 8/15/17.
   */
 object Utility {
+
+  def createAgent(n: Node): AgentPointer = {
+    val a = AgentManager.createAgent(n, FbAgent.lastState)
+
+    FbAgent.registerNode(n)
+    val p = Network.registerAgent(a, FbSendReceiveInterface$)
+    CoinDistributor.give(a)
+    p
+  }
 
   /** gets the node of the sender from FB agent [[plenty.state.model.State]] */
   def getNodeFromFbAgent(msg: MessagingItem): Option[Node] = {
@@ -38,12 +42,12 @@ object Utility {
 
   private val bidRegex = "[0-9]+".r
 
-  def processTextAsBid(txt: String, donation: Donation, a: AgentPointer) = {
+  def processTextAsBid(txt: String, donation: Donation, a: AgentPointer): Unit = {
     bidRegex.findFirstMatchIn(txt) match {
       case Some(rm) =>
         val amount = rm.group(0).toInt
         val bid = StateManager.createBid(donation, amount, a.node)
-        println(s"bid ${bid}")
+        println(s"bid $bid")
         Network.notifyAllAgents(bid, BidAction, from = a.node)
       case _ => Responses.errorWithReason(a.id, "perhaps that wasn't a number. Try pressing `bid` again and entering " +
         s"an amount of ${thanksSymbol}hanks")
@@ -64,7 +68,7 @@ object Utility {
     val data = FbServer.makeRequest(req)
 
     println("parsing into JSON")
-    val jsonObject = JSON.parseRaw(data.toString()) collect { case json: JSONObject ⇒ json }
+    val jsonObject = JSON.parseRaw(data.toString) collect { case json: JSONObject ⇒ json }
     println("parsed into JSON")
     val shortUrl = jsonObject.map({_.obj.getOrElse("id", "").toString})
     shortUrl.getOrElse("")

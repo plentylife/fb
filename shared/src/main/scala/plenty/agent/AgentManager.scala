@@ -22,7 +22,7 @@ object AgentManager {
   }
 
   def registerDonation(msg: Message[Donation], toAgent: Agent): Agent = {
-    implicit var agent = toAgent
+    implicit var agent: Agent = toAgent
     val donation = msg.payload
     agent = StateLogic.donationRegistration(donation)
     // todo. for now no relaying
@@ -109,17 +109,9 @@ object AgentManager {
 
   /* Utils */
 
-  def createAgent(node: Node, copyState: State = State()): Agent = {
-    // fixme removing coins that used to belong to this person, possible only in development
-    // this copy state idea is bad
-//    val oldCoins = copyState.coins.filterNot(_.belongsTo.id == node)
-//    val cleanCopyState: State = copyState.copy(coins = oldCoins)
+  def createAgent(node: Node, copyState: State = State()): Agent =
+    Agent(node, state = copyState)
 
-    var a = Agent(node, state = State())
-//    val coins = MintPress.distributeCoinsToNewAgent(a)
-//    a = StateLogic.registerCoins(coins, a)
-    a
-  }
 
   implicit def agentAsNode(agent: Agent): Node = {
     agent.node
