@@ -1,11 +1,9 @@
 package plenty.state
 
 import java.io._
-import java.nio.ByteBuffer
 import java.security.{MessageDigest, SecureRandom}
 import java.util.{Base64, Date}
 
-import boopickle.Default._
 import plenty.agent.model.Agent
 import plenty.state.model._
 import prickle.Pickler
@@ -28,7 +26,7 @@ object StateManager {
   }
 
   /** @return donation with the id, by, and timestamp filled only */
-  def createEmptyDonation(by: Node) = {
+  def createEmptyDonation(by: Node): Donation = {
     val now = new Date().getTime
     val id = idGenerator(now, by.id)
     Donation(id = id, by = by, timestamp = now)
@@ -69,25 +67,28 @@ object StateManager {
 
   implicit val agentPickler: Pickler[Agent] = Pickler.materializePickler[Agent]
 
-  def save(agent: Agent) = {
+  def save(agent: Agent): Unit = {
     val archiveFilename = s"./data-stores/archive/${agent.id}-${new Date().getTime}.plenty"
     val currentFilename = s"./data-stores/current/${agent.id}.plenty"
 
-    val archive = new BufferedOutputStream(new FileOutputStream(archiveFilename))
+    //    val archive = new BufferedOutputStream(new FileOutputStream(archiveFilename))
     val current = new BufferedOutputStream(new FileOutputStream(currentFilename))
 
-    //    val pickle = Pickle.intoBytes(agent)
     val pickle = prickle.Pickle.intoString(agent)
 
-    new PrintWriter(archive).write(pickle)
-//    new PrintWriter(current).write(pickle)
+    // fixme. archive should be functional as well
+    //    new PrintWriter(archive).write(pickle)
+    val w = new PrintWriter(current)
+    w.write(pickle)
+    w.flush()
+    w.close()
 
-    archive.close() // You may end up with 0 bytes file if not calling close.
+    //    archive.close() // You may end up with 0 bytes file if not calling close.
     current.close()
   }
 
   def load(agentId: String): Agent = {
-    val filename = s"./data-stores/current/${agentId}.plenty"
+    val filename = s"./data-stores/current/$agentId.plenty"
     loadFromFile(filename)
   }
 
@@ -99,7 +100,7 @@ object StateManager {
       bytes = bytes :+ reader.read().toByte
     }
     // fixme terrible
-    prickle.Unpickle[Agent].fromString(bytes.map{_.toChar}.mkString).getOrElse(Agent(Node("fake"), State()))
+    prickle.Unpickle[Agent].fromString(bytes.map {_.toChar}.mkString).getOrElse(Agent(Node("fake"), State()))
   }
 
   def loadAll(): Set[Agent] = {
@@ -108,7 +109,7 @@ object StateManager {
     val agents = allAgentFiles map { f => loadFromFile(f.getAbsolutePath) }
     val agentSet = agents.toSet
     // making sure there isn't something wrong with saving
-    require(agentSet.size == agents.size, "Duplicate agent files in current directory")
+    require(agentSet.size == agents.length, "Duplicate agent files in current directory")
     agentSet
   }
 }
