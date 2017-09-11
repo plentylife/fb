@@ -27,9 +27,8 @@ lazy val core = crossProject.in(file(".")).
     testFrameworks += new TestFramework("utest.runner.Framework"),
     mainClass in assembly := Some("fb.FbMain"),
     assemblyJarName in assembly := "plenty.jar",
-    test in assembly := {}
-//    ,
-//    scalacOptions += "-feature"
+    test in assembly := {},
+    scalacOptions ++= Seq("-deprecation", "-feature")
   ).
   jvmSettings(
     libraryDependencies ++= Seq(

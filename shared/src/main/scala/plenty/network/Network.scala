@@ -61,7 +61,7 @@ object Network {
     val buildMessage = (to: Node) => Message.createMessage(fromNode = from, toNode = to, msgPayloadId = payloadId,
       msgPayload = payload)
     for (ap <- getAgents) {
-      val msg = buildMessage(AgentManager.agentAsNode(ap.getAgentInLastKnownState))
+      val msg = buildMessage(AgentManager.agentAsNode(ap.agentInLastState))
       send(msg)
     }
   }

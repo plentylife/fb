@@ -31,7 +31,7 @@ trait Scheduler {
 
   def execute() = {
     Network.getAgents.foreach(ap => {
-      val agent = ap.getAgentInLastKnownState
+      val agent = ap.agentInLastState
       AgentManager.takeBids(agent)
       ActionLogic.applyDemurage(agent)
     })

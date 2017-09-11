@@ -105,7 +105,7 @@ object ReceiverFlow {
           val bidPossible = Utility.startBidding(p,a)
           if (bidPossible) Responses.bidStart(a)
         case p: String if p.startsWith("BID_ACCEPT_POSTBACK_") =>
-          AgentManager.takeBids(a.getAgentInLastKnownState, hardAuctionClose = true)
+          AgentManager.takeBids(a.agentInLastState, hardAuctionClose = true)
         case _ =>
           // checking for donation postback
           val donationPostback = DonationFlow.flow(a, pb)

@@ -20,7 +20,7 @@ object FbAgent {
   def pointer = _pointer
   def node = _node
 
-  def lastState = pointer.getAgentInLastKnownState.state
+  def lastState = pointer.agentInLastState.state
 
   /** gets or creates a fb agent
     * sets coins */

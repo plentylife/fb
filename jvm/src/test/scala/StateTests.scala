@@ -7,7 +7,7 @@ import utest._
 /**
   * Saving state, modifying state by agents
   */
-class AgentTests extends TestSuite {
+class StateTests extends TestSuite {
   val tests = this {
     'agent {
       val node = Node("node_id")

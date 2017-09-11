@@ -14,10 +14,9 @@ import scala.util.Random
   */
 object Accounting {
 
-  val demurageRateCalculatePeriod: Int = 30 * 24 * 60 * 60 * 1000
+  val demurageRateCalculatePeriod: Long = 30 * 24 * 60 * 60 * 1000L
 
-  val demuragePeriod: Int = 24 * 60 * 60 * 1000
-
+  val demuragePeriod: Long = 24 * 60 * 60 * 1000L
 
   /** Figures out if the agents should give away coins, and gives them away */
   def prodDemurageTransaction(agent: Agent): Option[DemurageTransaction] = {
@@ -31,43 +30,48 @@ object Accounting {
     Random.shuffle(agent.state.nodes).headOption
   }
 
-  def calculateDemurage(a: Agent): Double = {
+  def calculateDemurage(a: Agent, atTime: Long = new Date().getTime): Double = {
     val coins = getOwnCoins(a)
     val lastDemurageTime = getLastDemurageTime(a)
     val rate = calculateDemurageRate(a)
-    val now = new Date().getTime
 
-    coins map { c ⇒
+    val perCoin = coins.toIterator map { c ⇒
       // dumurage accrue start time
       lastDemurageTime getOrElse c.lastTransactionTime
     } map { st ⇒
       // periods
-      (now - st) / demuragePeriod
+      (atTime - st) / demuragePeriod.toDouble
     } map { p ⇒
       // per coin demurage
       1 - Math.pow(1 - rate, p)
-    } sum
+    }
+    perCoin.sum
   }
 
   /** The mathematical function for calculating the demurage rate given the ratio of currency flow out / flow in
     * Linear function, 0.1 at 0, 0.01 at 1, and 0 at 2
     * */
   def demurageRateFunction(flowRatio: Double): Double = {
+    val stage1 = 0.05
+    val s2 = 0.005
+    val diff = stage1 - s2
     if (flowRatio <= 1) {
-      0.1 - 0.09 * flowRatio
+      stage1 - diff * flowRatio
     } else if (flowRatio < 2) {
-      0.01 - 0.01 * (flowRatio - 1)
+      s2 - s2 * (flowRatio - 1)
     } else 0.0
   }
 
   def calculateDemurageRate(a: Agent): Double = {
     val now = new Date().getTime
-    val flow = a.state.chains.transactions filter {
+    val flow = getOwnTransactions(a) filter {
       _.timestamp > now - demurageRateCalculatePeriod
-    } map { t ⇒ if (t.from == a.node) -t.coins.size else t.coins.size }
-    val flowIn = flow.filter(_ > 0).sum
-    val flowOut = flow.filter(_ < 0).sum
-    demurageRateFunction(flowOut.toDouble / flowIn)
+    }
+    val flowIn = flow.filter(_.to == a.node).map(_.coins.size).sum
+    val flowOut = flow.filter(_.from == a.node).map(_.coins.size).sum
+    // avoiding div by 0
+    val ratio = if (flowIn != 0) flowOut.toDouble / flowIn else 0
+    demurageRateFunction(ratio)
   }
 
   def getLastDemurageTime(a: Agent): Option[Long] = a.state.chains.transactions.collectFirst {
@@ -91,6 +95,10 @@ object Accounting {
 
   /* Transactions */
 
+  def getOwnTransactions(a: Agent): List[Transaction] = a.state.chains.transactions filter {
+    t ⇒ t.to == a.node || t.from == a.node
+  }
+
   def createTransaction(to: Node, amount: Int)(implicit agent: Agent): Either[WrongTransactionAmount, Transaction] = {
     val coins = getOwnCoins(agent)
     if (!canTransactAmount(amount)) return Left(new WrongTransactionAmount)
@@ -102,15 +110,16 @@ object Accounting {
   /** checks if the coins actually belong to the sender and that the amount is correct */
   def verifyTransaction(transaction: Transaction, agent: Agent): Either[CoinsDoNotBelongToSender, Unit] = {
     val coinIds = transaction.coins.map {_.id}
-    if (agent.state.coins.filterNot(c ⇒ coinIds contains c.id).forall(_.belongsTo == transaction.from))
-      Right()
+    val verifiedCoins = agent.state.coins.filter(c ⇒ coinIds contains c.id)
+    if (verifiedCoins.nonEmpty && verifiedCoins.forall(_.belongsTo == transaction.from))
+      Right(Unit)
     else
       Left(new CoinsDoNotBelongToSender())
   }
 
   def verifyTransactionAmount(t: Transaction, forAmount: Int): Either[WrongTransactionAmount, Unit] = {
     if (t.coins.size >= forAmount)
-      Right()
+      Right(Unit)
     else
       Left(new WrongTransactionAmount())
   }
@@ -119,8 +128,6 @@ object Accounting {
   def transferCoins(transaction: Transaction): Set[Coin] = {
     transaction.coins map {_.copy(belongsTo = transaction.to, lastTransactionTime = transaction.timestamp)}
   }
-
-  /* Utility */
 
   private def canTransactAmount(amount: Int)(implicit agent: Agent): Boolean = {
     canTransactAmount(AgentManager.agentAsNode(agent), agent, amount)

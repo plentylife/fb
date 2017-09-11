@@ -18,4 +18,7 @@ package object plenty {
     .concreteType[BaseTransaction].concreteType[DemurageTransaction]
   implicit val chainsPickler: Pickler[Chains] = Pickler.materializePickler[Chains]
   implicit val statePickler: Pickler[State] = Pickler.materializePickler[State]
+
+
+  def daysToMillis(d: Int) = d * 24 * 60 * 60 * 1000L
 }

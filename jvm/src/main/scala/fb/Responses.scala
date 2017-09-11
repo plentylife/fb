@@ -27,8 +27,8 @@ object Responses {
   private val dateFormatter = new SimpleDateFormat("dd MMM")
 
   def accountStatus(agent: AgentPointer) = {
-    val balance = Accounting.getSelfBalance(agent.getAgentInLastKnownState)
-    val rate = Accounting.calculateDemurageRate(agent.getAgentInLastKnownState)
+    val balance = Accounting.getSelfBalance(agent.agentInLastState)
+    val rate = Accounting.calculateDemurageRate(agent.agentInLastState)
     val expirationBlock = s"decaying at ${Math.ceil(rate * 100)}% per day"
 
     val msg = s"Your account balance is ${balance} ${thanksSymbol}hanks:\n$expirationBlock"

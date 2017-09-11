@@ -82,7 +82,9 @@ object ActionLogic {
   def verifyTransaction(t: Transaction, a: Agent) = {
     Accounting.verifyTransaction(t, a) match {
       case _: Right[_,_] => Network.notifyAllAgents(t, ActionIdentifiers.ACCEPT_TRANSACTION, a)
-      case _: Left[_,_] => Network.notifyAllAgents(RejectedTransaction("coins do not belong to the sender", t),
+      case _: Left[_,_] =>
+        log.info(s"${t.id} | ${t.from} -> ${t.to} failed on verify (agent ${a.id})")
+        Network.notifyAllAgents(RejectedTransaction("coins do not belong to the sender", t),
         ActionIdentifiers.REJECT_TRANSACTION, a)
     }
   }

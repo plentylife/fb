@@ -5,6 +5,7 @@ import plenty.network.PayloadIdentifier
 
 import scala.collection.immutable.Queue
 import scala.concurrent.Promise
+import scala.language.implicitConversions
 
 /**
   * Allows safe parallel modification and retrieval of [[plenty.agent.model.Agent]]s
@@ -22,7 +23,7 @@ class AgentPointer(private var agent: Agent) {
     giveAgent()
   }
 
-  def getAgentInLastKnownState = agent
+  def agentInLastState = agent
 
   def set(a: Agent) = synchronized {
     agentAvailable = true
@@ -44,4 +45,8 @@ class AgentPointer(private var agent: Agent) {
     case p: AgentPointer => p.agent == this.agent
     case _ => false
   }
+}
+
+object AgentPointer {
+  implicit def pToA(p: AgentPointer): Agent = p.agentInLastState
 }

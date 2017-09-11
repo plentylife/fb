@@ -24,7 +24,7 @@ object Utility {
   /** gets the node of the sender from FB agent [[plenty.state.model.State]] */
   def getNodeFromFbAgent(msg: MessagingItem): Option[Node] = {
     val byId = msg.getSender.getId
-    FbAgent.pointer.getAgentInLastKnownState.state.nodes.find(_.id == byId)
+    FbAgent.pointer.agentInLastState.state.nodes.find(_.id == byId)
   }
 
   /** @return `true` if a bid can be made */
