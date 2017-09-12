@@ -7,7 +7,8 @@ import plenty.network.Network
 import plenty.state.StateManager
 import plenty.state.model.{Donation, Node}
 
-import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Promise}
 
 class MiscFbTests extends FreeSpec with Matchers {
 
@@ -41,4 +42,15 @@ class MiscFbTests extends FreeSpec with Matchers {
         StateManager.save(upd)
     }
   }
+
+//  "Future is returned when network has no more messages" in {
+//    import plenty.executionContext
+//    val rid = Network.addNonComplete(null)
+//    val f = Network.waitUntilQueueClear
+//    f onComplete {
+//      case _ ⇒ println("finished")
+//    }
+//    Network.removeNonComplete(rid)
+//    Await.ready(f, Duration.Inf)
+//  }
 }

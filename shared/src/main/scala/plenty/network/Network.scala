@@ -91,6 +91,7 @@ object Network {
   private var msgCounter: Long = 0
   private val resetCounterAt = Long.MaxValue - 2
   private var _nonCompletes = Map[Long, Message[_]]()
+  private var messageQueueEmptyPromise: Option[Promise[Unit]] = None
 
   /** after returning, increments value by 1 and makes sure that it is not beyond bounds of Long
     * @return the current value of the counter */
@@ -107,6 +108,7 @@ object Network {
   private def removeNonComplete(id: Long) = this.synchronized {
 //    println(s"trying to remove $id")
     _nonCompletes -= id
+    onEmptyQueue()
   }
 
   private def addNonComplete(msg: Message[_]): Long = this.synchronized {
@@ -116,6 +118,18 @@ object Network {
   }
 
   def nonCompletes: Map[Long, Message[_]] = _nonCompletes
+
+  private def onEmptyQueue() = if (_nonCompletes.isEmpty) {
+    messageQueueEmptyPromise foreach {_.success(Unit)}
+  }
+
+  def waitUntilQueueClear: Future[Unit] = {
+    val p = Promise[Unit]()
+    println(s"Messages left ${nonCompletes.size}")
+    messageQueueEmptyPromise = Option(p)
+    onEmptyQueue()
+    p.future
+  }
 
   private def throwErrorFromMsg(e: Throwable) = throw e
 }

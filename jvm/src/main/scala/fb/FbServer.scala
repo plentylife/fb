@@ -12,6 +12,8 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
+import plenty.network.Network
+import sun.misc.{Signal, SignalHandler}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
@@ -73,19 +75,40 @@ object FbServer {
 
 
     bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080, connectionContext = https)
+    handleSigTerm
+  }
+
+  def handleSigTerm = {
+    val handler = new SignalHandler {
+      override def handle(signal: Signal): Unit = {
+        println("=== TERMINATING ===")
+        stop(() ⇒ {
+          Await.ready(Network.waitUntilQueueClear, Duration.Inf)
+          println("Network is torn down")
+        })
+      }
+    }
+    Signal.handle(new Signal("TERM"), handler)
+    Signal.handle(new Signal("INT"), handler)
   }
 
   def startAndWait() = {
     start()
     println(s"Server online\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return
-    stop
+    stop(() ⇒ ())
   }
 
-  def stop() = {
+  def stop(beforeTerminate: () ⇒ Unit) = {
     bindingFuture
       .flatMap(_.unbind()) // trigger unbinding from the port
-      .onComplete(_ => system.terminate()) // and shutdown when done
+      .onComplete { _ =>
+      println("Server is torn down")
+      beforeTerminate()
+      println("Final termination")
+      system.terminate() // and shutdown actors when done
+      System.exit(0)
+    }
   }
 
   /** makes a request and retunrs the bytestring */
