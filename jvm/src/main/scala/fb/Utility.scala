@@ -47,15 +47,22 @@ object Utility {
 
   private val bidRegex = "[0-9]+".r
 
-  def processTextAsBid(txt: String, donation: Donation, a: AgentPointer): Unit = {
+  def processTextAsBid(txt: String, donation: Donation, a: AgentPointer): Boolean = {
     bidRegex.findFirstMatchIn(txt) match {
       case Some(rm) =>
-        val amount = rm.group(0).toInt
+        val amountStr = rm.group(0)
+        // making sure it was not a float
+        if (amountStr.trim.length != txt.trim.length) {
+          return false
+        }
+
+        val amount = amountStr.toInt
         val bid = StateManager.createBid(donation, amount, a.node)
         println(s"bid $bid")
         Network.notifyAllAgents(bid, BidAction, from = a.node)
-      case _ => Responses.errorWithReason(a.id, "perhaps that wasn't a number. Try pressing `bid` again and entering " +
-        s"an amount of ${thanksSymbol}hanks")
+        true
+      case _ =>
+        false
     }
   }
 

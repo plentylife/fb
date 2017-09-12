@@ -41,8 +41,9 @@ object FbSendReceiveInterface extends SendReceiveInterface {
           val bid = rejection.bid
           println(s"REJECT_BID reason ${rejection.reason} by ${msg.from}")
           if (bid.donation.by == m.from) {
-            val uiFrom = UserInfo.get(rejection.bid.by.id)
-            Responses.bidRejected(rejection, uiFrom)
+            FbState.trackBid(Network.getAgents.find(_.id == bid.by.id).get, bid.donation)
+            val uiBidder = UserInfo.get(rejection.bid.by.id)
+            Responses.bidRejected(rejection, uiBidder)
           }
         }
         Network.receive(msg)

@@ -39,7 +39,8 @@ object Responses {
 
   def bidStart(a: AgentPointer) = {
     accountStatus(a)
-    sendSimpleMessage(a.id, s"How many ${thanksSymbol}hanks would you like to bid? (a round number)")
+    sendWithCancelOption(a, s"How many ${thanksSymbol}hanks would you like to bid? (a round number)",
+      "CANCEL_BID_POSTBACK")
   }
 
   def bidEntered(bid: Bid) = {
@@ -79,7 +80,7 @@ object Responses {
   }
 
   def bidRejected(rejection: RejectedBid, ui: UserInfo) = {
-    sendSimpleMessage(rejection.bid.by.id, s"Your bid was rejected. Reason: ${rejection.reason}")
+    sendWithCancelOption(ui, s"Your bid was rejected. Reason: ${rejection.reason}. Try again", "CANCEL_BID_POSTBACK")
   }
 
   def firstContact(agent: AgentPointer, isBidding: Boolean = false) = {
@@ -145,14 +146,18 @@ object Responses {
   }
 
   /** Sends a message with a quick option to cancel */
-  def sendWithCancelOption(a: AgentPointer, text: String, postbackTag: String) = {
-    val recipient = new IdMessageRecipient(a.id)
+  def sendWithCancelOption(a: AgentPointer, text: String, postbackTag: String): Unit = {
+    sendWithCancelOption(UserInfo.get(a.id), text, postbackTag)
+  }
+
+  def sendWithCancelOption(ui: UserInfo, text: String, postbackTag: String): Unit = {
+    val recipient = new IdMessageRecipient(ui.id)
 
     val cancel = new QuickReply("Cancel", postbackTag)
     val msg = new Message(text)
 
     msg.addQuickReply(cancel)
-    Responses.fbClientPublish(a, "me/messages",
+    Responses.fbClientPublish(ui, "me/messages",
       Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", msg))
   }

@@ -4,6 +4,7 @@ import com.restfb.types.send.{IdMessageRecipient, Message, SendResponse}
 import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem, QuickReplyItem}
 import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMessages_zh_TW
 import fb.donation.{DonationFlow, DonationResponses}
 import plenty.agent.model.Agent
 import plenty.agent.{AgentManager, AgentPointer}
@@ -131,7 +132,7 @@ object ReceiverFlow {
   }
 
   private val quickReplyTreeFlows = Set[Function2[AgentPointer, QuickReplyItem, Boolean]](DonationFlow.flow,
-    ReportProblem.flow)
+    ReportProblem.flow, bidQuickReplyFlow)
   /** @return true if the tree is executed */
   private def quickReplyTree(msgItem: MessagingItem, ui: UserInfo, a: AgentPointer): Boolean = {
     val qr = msgItem.getMessage.getQuickReply
@@ -145,6 +146,15 @@ object ReceiverFlow {
       }
       triggeredAny
     } else false
+  }
+
+  private def bidQuickReplyFlow(a: AgentPointer, qr: QuickReplyItem): Boolean = {
+    qr.getPayload match {
+      case "CANCEL_BID_POSTBACK" ⇒
+        FbState.popBid(a)
+        true
+      case _ ⇒ false
+    }
   }
 
   private def processRefString(ref: String, a: AgentPointer): Unit = {
@@ -164,7 +174,13 @@ object ReceiverFlow {
   private def bidTree(a: AgentPointer, msg: MessageItem): Boolean = {
     FbState.popBid(a) match {
       case Some(d) =>
-        Utility.processTextAsBid(msg.getText, d, a)
+        Utility.processTextAsBid(msg.getText, d, a) match {
+            // putting the bid back on; the user can try again.
+          case false ⇒
+            FbState.trackBid(a, d)
+            Responses.sendWithCancelOption(a, "Was that a round number? Try again", "CANCEL_BID_POSTBACK")
+          case true ⇒
+        }
         true
       case _ => false
     }
