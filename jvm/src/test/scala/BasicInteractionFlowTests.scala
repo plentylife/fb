@@ -111,8 +111,7 @@ class BasicInteractionFlowTests extends FreeSpec with Matchers {
     Network.getAgents.map(_.agentInLastState)
   }
 
-}
-
-object FastTestScheduler extends Scheduler {
-  override val cycleTime = 6000
+  object FastTestScheduler extends Scheduler {
+    override val cycleTime = 6000
+  }
 }

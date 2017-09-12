@@ -1,5 +1,7 @@
 package plenty.agent
 
+import java.util.logging.Level
+
 import plenty.agent.model._
 import plenty.network._
 import plenty.state.StateManager
@@ -10,6 +12,8 @@ import com.softwaremill.quicklens._
   * Facilitates interaction between two [[plenty.agent.model.Agent]]
   */
 object StateLogic {
+  private val logger = java.util.logging.Logger.getLogger("StateLogic")
+  logger.setLevel(Level.ALL)
 
   def registerNode(node: Node, agent: Agent): Agent = {
     var s = agent.state
@@ -21,9 +25,12 @@ object StateLogic {
 
   def registerCoins(coins: Set[Coin], agent: Agent): Agent = {
     var s = agent.state
-    var stateCoins = s.coins ++ coins
     // removing old coins states
-    stateCoins = stateCoins -- coins
+    val coinids = coins map {_.id}
+    val filteredById = s.coins filterNot {c ⇒ coinids contains c.id}
+    println(s"\n\nfiltered by id ${filteredById.size}")
+    var stateCoins = s.coins diff coins
+    println(s"diffed ${stateCoins.size}")
     // replacing with new coin states
     stateCoins ++= coins
 
@@ -78,6 +85,7 @@ object StateLogic {
     * The transaction must be verified by this point */
   def finishTransaction(t: Transaction, agent: Agent): Agent = {
     val coins = Accounting.transferCoins(t)
+    println(s"transfering ${coins.size} coins to ${coins.map{_.belongsTo}} | ${agent.id}")
     registerCoins(coins, agent).modify(_.state.chains.transactions).using(list ⇒ t +: list)
   }
 

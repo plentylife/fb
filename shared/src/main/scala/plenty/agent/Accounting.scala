@@ -109,8 +109,8 @@ object Accounting {
 
   /** checks if the coins actually belong to the sender and that the amount is correct */
   def verifyTransaction(transaction: Transaction, agent: Agent): Either[CoinsDoNotBelongToSender, Unit] = {
-    val coinIds = transaction.coins.map {_.id}
-    val verifiedCoins = agent.state.coins.filter(c ⇒ coinIds contains c.id)
+//    val coinIds = transaction.coins.map {_.id}
+    val verifiedCoins = agent.state.coins intersect transaction.coins
     if (verifiedCoins.nonEmpty && verifiedCoins.forall(_.belongsTo == transaction.from))
       Right(Unit)
     else

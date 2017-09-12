@@ -2,14 +2,16 @@ import java.util.Date
 
 import TestUtilities._
 import org.scalatest.{FreeSpec, Matchers}
-import plenty.agent.{Accounting, AgentPointer}
+import plenty.agent.{Accounting, ActionLogic, AgentPointer}
 import plenty.agent.model.Agent
 import plenty.network.{ActionIdentifiers, MintPress, Network}
 import plenty.state.StateManager
-import plenty.state.model.{Coin, Node, State}
+import plenty.state.model.{Coin, DemurageTransaction, Node, State}
 
 import scala.collection.immutable
+import scala.concurrent.Promise
 import scala.language.postfixOps
+import plenty.executionContext
 
 class DemurageTests extends FreeSpec with Matchers {
   "Demurrage" - {
@@ -28,7 +30,7 @@ class DemurageTests extends FreeSpec with Matchers {
     Network.notifyAllAgents(t, ActionIdentifiers.TRANSACTION, ns(0))
     waitClearQueue()
 
-    ns.tail.tail zip csg foreach { case (n, c) ⇒
+    ns.takeRight(numNodes - 2) zip ap(1).agentInLastState.state.coins.grouped(100).toSeq foreach { case (n, c) ⇒
       Stream(ns(1)) map { from ⇒ from → StateManager.createTransaction(c, from, n) } foreach { case (f, p) ⇒
         Network.notifyAllAgents(p, ActionIdentifiers.TRANSACTION, f)
       }
@@ -56,6 +58,28 @@ class DemurageTests extends FreeSpec with Matchers {
       // taking non-spenders
       ap.takeRight(numNodes - 2) foreach { a ⇒
         Accounting.calculateDemurage(a, now + plenty.daysToMillis(1)) shouldBe 5.0 +- 0.1
+      }
+    }
+
+    "demurrage should be transacted if non-zero" in {
+      import com.softwaremill.quicklens._
+      val prom = Promise[Agent]()
+      ap(2).getAgentToModify(prom)
+
+      // putting last transaction time into the past
+      prom.future foreach {a ⇒
+        a.modify(_.state.coins).using(
+          _.map{
+            _.modify(_.lastTransactionTime).using(_ - plenty.daysToMillis(2))
+          }
+        )
+      }
+
+      ActionLogic.applyDemurage(ap(2))
+      TestUtilities.waitClearQueue()
+
+      ap(2).agentInLastState.state.chains.transactions.collectFirst {
+        case t: DemurageTransaction ⇒ t.coins.size should be(10)
       }
     }
   }
