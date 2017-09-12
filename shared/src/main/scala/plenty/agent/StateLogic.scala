@@ -23,8 +23,7 @@ object StateLogic {
     var s = agent.state
     var stateCoins = s.coins ++ coins
     // removing old coins states
-    val newCoinIds = coins map {_.id}
-    stateCoins = stateCoins.filterNot(c ⇒ newCoinIds contains c.id)
+    stateCoins = stateCoins -- coins
     // replacing with new coin states
     stateCoins ++= coins
 
