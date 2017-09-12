@@ -5,9 +5,13 @@ import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem, QuickRepl
 import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
 import fb.donation.{DonationFlow, DonationResponses}
+import plenty.agent.model.Agent
 import plenty.agent.{AgentManager, AgentPointer}
 import plenty.network.Network
 import plenty.state.model.Node
+import plenty.executionContext
+
+import scala.concurrent.Future
 
 /**
   * Created by anton on 8/10/17.
@@ -33,27 +37,26 @@ object ReceiverFlow {
 
   private def processMessagingItem(item: MessagingItem): Unit = {
     val senderId = item.getSender.getId
-    //    println(s"Messaging item $item")
-    Responses.displayTyping(senderId)
+    // todo figure out if this is needed
+//    Responses.displayTyping(senderId)
 
-    var a: AgentPointer = null
     var needsInto = false
-    getAgent(senderId) match {
-      case Some(_a) =>
-        a = _a
+    (getAgent(senderId) match {
+      case Some(a) =>
         messageTree(a, item)
+        Future {a}
       case None =>
-        a = Utility.createAgent(Node(senderId))
         needsInto = true
-      //        Responses.firstContact(a)
-    }
-    val postback = postbackTree(a, item)
-    val biddingCallback: Option[() ⇒ Unit] = msgReferralTree(a, item)
-    val isBidding = biddingCallback.nonEmpty
+        Utility.createAgent(Node(senderId))
+    }) foreach { a ⇒
+      val postback = postbackTree(a, item)
+      val biddingCallback: Option[() ⇒ Unit] = msgReferralTree(a, item)
+      val isBidding = biddingCallback.nonEmpty
 
-    if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a, isBidding = isBidding)
-    // this is for formatting purposes. The bid action should come after into
-    biddingCallback foreach (f ⇒ f())
+      if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a, isBidding = isBidding)
+      // this is for formatting purposes. The bid action should come after into
+      biddingCallback foreach (f ⇒ f())
+    }
   }
 
   private def messageTree(a: AgentPointer, msgItem: MessagingItem): Unit = {
@@ -68,8 +71,9 @@ object ReceiverFlow {
         isDonating = DonationFlow.flow(a, msg)
       }
       val isBidding = bidTree(a, msg)
+      val isReporting = ReportProblem.flow(a, msg)
 
-      if (!isDonating && !isQuickReply && !isBidding) {
+      if (!isDonating && !isQuickReply && !isBidding && !isReporting) {
         if (msg.getText != null && msg.getText.trim.toLowerCase() == "donate") {
           DonationFlow.startDonationFlow(a)
         } else {
@@ -92,7 +96,7 @@ object ReceiverFlow {
 
     if (pb != null) {
       val ui = UserInfo.get(a.id)
-      pb.getPayload match {
+      val unallocatedCases: PartialFunction[String, Unit] = {
         case "GET_STARTED_PAYLOAD" ⇒
           Responses.firstContact(a, isBidding = pb.getReferral != null)
           if (pb.getReferral != null) {
@@ -104,11 +108,14 @@ object ReceiverFlow {
           if (bidPossible) Responses.bidStart(a)
         case p: String if p.startsWith("BID_ACCEPT_POSTBACK_") =>
           AgentManager.takeBids(a.agentInLastState, hardAuctionClose = true)
-        case _ =>
-          // checking for donation postback
-          val donationPostback = DonationFlow.flow(a, pb)
-          if (!donationPostback) Responses.unrecognizedAction(a)
+
       }
+
+      val fullTree = unallocatedCases orElse DonationFlow.flow(a) orElse ReportProblem.flow(a) orElse ({
+        case _ ⇒ Responses.unrecognizedAction(a)
+      }: PartialFunction[String, Unit])
+      fullTree(pb.getPayload)
+
       pb.getPayload
     } else ""
   }
@@ -123,7 +130,8 @@ object ReceiverFlow {
     None
   }
 
-  private val quickReplyTreeFlows = Set[Function2[AgentPointer, QuickReplyItem, Boolean]](DonationFlow.flow)
+  private val quickReplyTreeFlows = Set[Function2[AgentPointer, QuickReplyItem, Boolean]](DonationFlow.flow,
+    ReportProblem.flow)
   /** @return true if the tree is executed */
   private def quickReplyTree(msgItem: MessagingItem, ui: UserInfo, a: AgentPointer): Boolean = {
     val qr = msgItem.getMessage.getQuickReply

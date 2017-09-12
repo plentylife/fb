@@ -152,10 +152,12 @@ object DonationResponses {
   }
 
   /** sends a message asking to leave contact information */
-  private def askToLeaveContact(userInfo: UserInfo, donation: Donation, explanation: String): Unit = {
+  def askToLeaveContact(userInfo: UserInfo, donation: Donation, explanation: String): Unit = {
     val template = new ButtonTemplatePayload(s"Please leave your contact information in the comments. $explanation")
     val button = donationLinkButton(donation.id, "Leave comment")
+    val reportBtn = new PostbackButton("Report a problem", ReportProblem.POSTBACK)
     template.addButton(button)
+    template.addButton(reportBtn)
     val msg = new Message(new TemplateAttachment(template))
     Responses.fbClientPublish(userInfo, "me/messages",
       Parameter.`with`("message", msg), Parameter.`with`("recipient", new IdMessageRecipient(userInfo.id))

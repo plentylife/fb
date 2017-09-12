@@ -1,22 +1,30 @@
 package fb
 
-import org.scalatest.FreeSpec
-import plenty.state.StateManager
-import plenty.state.model.Node
+import fb.donation.DonationResponses
+import org.scalatest.{FreeSpec, Matchers}
+import plenty.state.model.{Donation, Node}
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+class MiscFbTests extends FreeSpec with Matchers {
 
-/**
-  */
-class MiscFbTests extends FreeSpec {
-
-  "Google shortner service" - {
+  "Google shortner service" in {
     val link = Utility.getShortLink("plenty.life")
     println(link)
 
     "should produce a valid link" in {
       assert(link.nonEmpty)
     }
+  }
+
+  "Email" - {
+    "should be sent" in {
+      Utility.sendEmail(EmailInfo("subject", "this is a test problem", "antonkats@gmail.com")) shouldBe 0
+    }
+  }
+
+  "Report a problem button should be present beside leaving a comment" in {
+    // anton in test
+    val anton = "1783146675033183"
+    DonationResponses.askToLeaveContact(UserInfo(anton, "anton", "last name"),
+      Donation(id = "fake", by = Node(anton), timestamp = 0), explanation = "explanation")
   }
 }

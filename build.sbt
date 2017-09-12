@@ -18,6 +18,7 @@ lazy val core = crossProject.in(file(".")).
     version := "0.1-SNAPSHOT",
     scalaVersion := "2.12.3",
     libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "scalarx" % "0.3.2",
       "io.circe" %%% "circe-core" % "0.8.0",
       "io.circe" %%% "circe-parser" % "0.8.0",
       "io.circe" %%% "circe-generic" % "0.8.0",
@@ -32,6 +33,8 @@ lazy val core = crossProject.in(file(".")).
   ).
   jvmSettings(
     libraryDependencies ++= Seq(
+      "javax.mail" % "javax.mail-api" % "1.6.0",
+      "com.sun.mail" % "javax.mail" % "1.6.0",
       "com.typesafe.akka" %% "akka-http" % "10.0.10",
       "com.restfb" % "restfb" % "1.43.0"
     ),

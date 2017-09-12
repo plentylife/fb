@@ -35,15 +35,12 @@ object DonationFlow {
   /** Executes if the postback is triggerting the creation of a new donation
     * Creates a new donation instance with empty fields and adds it to [[FbState]] to be tracked
     * @return `true` if the flow executes, `false` otherwise */
-  def flow(a: AgentPointer, postback: PostbackItem): Boolean = {
-    val payload = postback.getPayload
-    if (payload != null && payload.nonEmpty) {
-      if (payload == "DONATE_START_POSTBACK") {
+  def flow(a: AgentPointer): PartialFunction[String, Unit] = {
+    {
+      case "DONATE_START_POSTBACK" ⇒ {
         startDonationFlow(a)
-        return true
       }
     }
-    false
   }
 
   /** Listens to quick replies options in term (new donation cancelled, done)

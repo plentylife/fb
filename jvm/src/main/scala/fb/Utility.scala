@@ -1,29 +1,33 @@
 package fb
 
+import javax.mail.Message.RecipientType
+import javax.mail.{Session, Transport, internet}
+import javax.mail.internet.{InternetAddress, MimeMessage}
+
 import akka.http.scaladsl.model._
 import akka.util.ByteString
 import com.restfb.types.webhook.messaging.MessagingItem
 import plenty.agent.{AgentManager, AgentPointer}
+import plenty.executionContext
 import plenty.network.{BidAction, Network}
 import plenty.state.StateManager
 import plenty.state.model.{Donation, Node}
 
-import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.language.postfixOps
+import scala.sys.process._
 import scala.util.parsing.json.{JSON, JSONObject}
-import scala.concurrent.duration._
+
 /**
   * Created by anton on 8/15/17.
   */
 object Utility {
-
-  def createAgent(n: Node): AgentPointer = {
+  def createAgent(n: Node): Future[AgentPointer] = {
     val a = AgentManager.createAgent(n, FbAgent.lastState)
 
     FbAgent.registerNode(n)
     val p = Network.registerAgent(a, FbSendReceiveInterface)
-    Await.ready(CoinDistributor.give(p), 1 seconds)
-    p
+    CoinDistributor.give(p) map { _ ⇒ p }
   }
 
   /** gets the node of the sender from FB agent [[plenty.state.model.State]] */
@@ -55,6 +59,11 @@ object Utility {
     }
   }
 
+  /** Sends an email using sendmail */
+  def sendEmail(e: EmailInfo) = {
+    val cmd = s"echo ${e.body} | mail -s '${e.subject}' ${e.to}"
+    Process(Seq("sh", "-c", cmd)).!
+  }
 
   /** takes the link through google's shortner service
     *
@@ -74,4 +83,8 @@ object Utility {
     val shortUrl = jsonObject.map({_.obj.getOrElse("id", "").toString})
     shortUrl.getOrElse("")
   }
+
+  def getCancelQuickReplyPostback(tag: String): String = tag + "_CANCEL_POSTBACK"
 }
+
+case class EmailInfo(subject: String, body: String, to: String)

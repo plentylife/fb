@@ -21,7 +21,7 @@ object CoinDistributor {
   /** takes coins from [[FbAgent]] and gives them away, as long as [[FbAgent]] has any
     * it also forces the coins into the agents state, thus allowing the agent to instantly know their balance
     * @return a future, upon comletion of which, the agent should know about their coins */
-  def give(p: AgentPointer): Future[_] = {
+  def give(p: AgentPointer): Future[Unit] = {
     var f = Future {}
     val cs = Accounting.getOwnCoins(FbAgent.pointer.agentInLastState).take(coinsPerAccount)
     if (cs.nonEmpty) {

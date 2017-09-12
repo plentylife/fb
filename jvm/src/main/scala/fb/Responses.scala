@@ -144,6 +144,19 @@ object Responses {
       Parameter.`with`("message", new Message(msg)))
   }
 
+  /** Sends a message with a quick option to cancel */
+  def sendWithCancelOption(a: AgentPointer, text: String, postbackTag: String) = {
+    val recipient = new IdMessageRecipient(a.id)
+
+    val cancel = new QuickReply("Cancel", postbackTag)
+    val msg = new Message(text)
+
+    msg.addQuickReply(cancel)
+    Responses.fbClientPublish(a, "me/messages",
+      Parameter.`with`("recipient", recipient),
+      Parameter.`with`("message", msg))
+  }
+
   /** simple publish action with error catching (as user feedback) */
   def fbClientPublish(a: AgentPointer, endpoint: String, parameters:Parameter*): GraphResponse = {
     fbClientPublish(UserInfo.get(a.id), endpoint, parameters:_*)
