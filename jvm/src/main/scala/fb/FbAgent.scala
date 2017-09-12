@@ -42,8 +42,6 @@ object FbAgent {
   }
 
   def registerNode(toRegister: Node): Unit = {
-    val msg = Message.createMessage(null, toNode = _node, msgPayloadId = ActionIdentifiers.REGISTER_NODE,
-      msgPayload = toRegister)
-    Network.send(msg)
+    Network.notifyAllAgents(toRegister, ActionIdentifiers.REGISTER_NODE, node)
   }
 }

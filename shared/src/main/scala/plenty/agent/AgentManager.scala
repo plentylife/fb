@@ -56,6 +56,7 @@ object AgentManager {
       return a
     }
 
+
     if (a.state.nonSettledBids contains bid) {
       var agentUpd = StateLogic.registerApprovedBidSettle(t, a)
       agentUpd = StateLogic.finishTransaction(t, agentUpd)
