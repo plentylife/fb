@@ -28,7 +28,7 @@ object ReportProblem {
   def flow(a: AgentPointer, msg: MessageItem): Boolean = {
     val exec = inProgress contains a.node
     if (exec) {
-      U sendEmail msg.getText match {
+      U sendEmail(a.node, msg.getText) match {
         case 0 ⇒ R.success(a.node)
         case _ ⇒ R.failure(a.node)
       }
@@ -55,6 +55,6 @@ private object U {
   }
 
   /** Sends out an email indicating a problem with user message to antonkats@gmail.com */
-  def sendEmail(msg: String): Int = Utility.sendEmail(EmailInfo("Reported feedback in Plenty", body = msg, to =
+  private def sendEmail(msg: String): Int = Utility.sendEmail(EmailInfo("Reported feedback in Plenty", body = msg, to =
     "antonkats@gmail.com"))
 }
