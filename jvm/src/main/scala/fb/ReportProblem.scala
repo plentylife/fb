@@ -42,19 +42,19 @@ private object R {
   type F = (Node) ⇒ Unit
 
   val prompt: (AgentPointer ⇒ Unit) =
-    a ⇒ Responses.sendWithCancelOption(a, "What is the problem?", ReportProblem.CANCEL_POSTBACK)
+    a ⇒ Responses.sendWithCancelOption(a, "What would you like to tell us?", ReportProblem.CANCEL_POSTBACK)
   val success: F = n ⇒ Responses.sendSimpleMessage(n.id, "We will get back to you shortly")
-  val failure: F = n ⇒ Responses.sendSimpleMessage(n.id, "Sorry, we were unable to submit your problem. Please email " +
-    "us at admin@plenty.life")
+  val failure: F = n ⇒ Responses.sendSimpleMessage(n.id, "Sorry, we were unable to submit your feedback. Please email" +
+    " us at admin@plenty.life")
 }
 
 private object U {
   def sendEmail(n: Node, msg: String): Int = {
-    val body = s"${n.id} has reported:\n\n$msg"
+    val body = s"${n.id} has feedback:\n\n$msg"
     sendEmail(body)
   }
 
   /** Sends out an email indicating a problem with user message to antonkats@gmail.com */
-  def sendEmail(msg: String) = Utility.sendEmail(EmailInfo("Reported problem in Plenty", body = msg, to =
+  def sendEmail(msg: String): Int = Utility.sendEmail(EmailInfo("Reported feedback in Plenty", body = msg, to =
     "antonkats@gmail.com"))
 }
