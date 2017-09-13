@@ -77,15 +77,25 @@ object ReceiverFlow {
       if (!isDonating && !isQuickReply && !isBidding && !isReporting) {
         if (msg.getText != null && msg.getText.trim.toLowerCase() == "donate") {
           DonationFlow.startDonationFlow(a)
+        } else if (isAskingForBalance(msg)) {
+          Responses.accountStatus(a)
         } else {
           val recipient = new IdMessageRecipient(ui.id)
-          val msg = new Message(s"We are not sure what you mean")
+          val msg = new Message(s"We are not sure what you mean. Use the menu beside the message compose bar, at the " +
+            s"bottom of the screen")
           fbClient.publish("me/messages", classOf[SendResponse],
             Parameter.`with`("recipient", recipient),
             Parameter.`with`("message", msg))
         }
       }
 
+    }
+  }
+
+  private def isAskingForBalance(msg: MessageItem) = {
+    msg.getText != null && {
+      val t = msg.getText.toLowerCase
+      (t contains "thank") || (t contains "balance") || (t contains "status")
     }
   }
 
@@ -174,12 +184,11 @@ object ReceiverFlow {
   private def bidTree(a: AgentPointer, msg: MessageItem): Boolean = {
     FbState.popBid(a) match {
       case Some(d) =>
-        Utility.processTextAsBid(msg.getText, d, a) match {
-            // putting the bid back on; the user can try again.
-          case false ⇒
-            FbState.trackBid(a, d)
-            Responses.sendWithCancelOption(a, "Was that a round number? Try again", "CANCEL_BID_POSTBACK")
-          case true ⇒
+        if (Utility.processTextAsBid(msg.getText, d, a)) {
+
+        } else {
+          FbState.trackBid(a, d)
+          Responses.sendWithCancelOption(a, "Was that a round number? Try again", "CANCEL_BID_POSTBACK")
         }
         true
       case _ => false
