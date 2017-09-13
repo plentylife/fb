@@ -17,7 +17,7 @@ import scala.language.postfixOps
 object ActionLogic {
   private val log = Logger.getLogger("ActionLogic")
 
-  private val periodBeforeBidAcceptance: Int = 24 * 60 * 60 * 1000
+  private val periodBeforeBidAcceptance: Long = plenty.daysToMillis(2)
 
   /* Demurage */
 
@@ -62,7 +62,7 @@ object ActionLogic {
   /**
     * Makes sure that a transaction that settles a bid is valid and issues an [[ActionIdentifiers.APPROVE_SETTLE_BID_ACTION]]
     * */
-  def verifyTransactionForBid(t: BidTransaction, agent: Agent) = {
+  def verifyTransactionForBid(t: BidTransaction, agent: Agent): Unit = {
     agent.state.nonSettledBids.find(_ == t.bid) match {
       case Some(trustedBid) =>
         var v: Either[TransactionException, Unit] = Accounting.verifyTransaction(t, agent)
@@ -83,7 +83,7 @@ object ActionLogic {
     * Issues an [[ActionIdentifiers.ACCEPT_TRANSACTION]] or [[ActionIdentifiers.REJECT_TRANSACTION]]
     **/
   // fixme. must verify that the sender indeed issued the transaction
-  def verifyTransaction(t: Transaction, a: Agent) = {
+  def verifyTransaction(t: Transaction, a: Agent): Unit = {
     Accounting.verifyTransaction(t, a) match {
       case _: Right[_,_] => Network.notifyAllAgents(t, ActionIdentifiers.ACCEPT_TRANSACTION, a)
       case _: Left[_,_] =>
@@ -165,13 +165,13 @@ object ActionLogic {
 
   /* Relays */
 
-  def relayDonation(donation: Donation)(implicit agent: Agent) = {
+  def relayDonation(donation: Donation)(implicit agent: Agent): Unit = {
     if (!agent.state.donations.contains(donation)) {
       //      CommsManager.basicRelay(donation, RelayIdentifiers.DONATION_RELAY, AgentManager.agentAsNode(agent))
     }
   }
 
-  def relayBid(bid: Bid)(implicit agent: Agent) = {
+  def relayBid(bid: Bid)(implicit agent: Agent): Unit = {
     if (!agent.state.bids.contains(bid)) {
       //      CommsManager.basicRelay(bid, RelayIdentifiers.BID_RELAY, AgentManager.agentAsNode(agent))
     }
