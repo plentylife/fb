@@ -117,7 +117,7 @@ private[donation] object DonationUtils {
 
   /** @return a string with the questions and answers -- the bulk of the donation description in a post */
   private def producePostBody(d: Donation): String = {
-    val title = s"${d.title.getOrElse("title is missing")}\n-----\n"
+    val title = s"Open auction\n${d.title.getOrElse("title is missing")}\n-----\n"
     val qAndA = DonationFlow.fieldsInPostOrder map { f ⇒ publishTextField(d, f) } mkString "\n\n"
     title + qAndA
   }
