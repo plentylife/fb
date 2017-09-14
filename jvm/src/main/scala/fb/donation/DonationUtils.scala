@@ -106,8 +106,8 @@ private[donation] object DonationUtils {
   def finalizeDonationPost(donation: Donation): Unit = {
     val updater = (oldMessage: String, d: Donation) ⇒ {
       val bidLink = s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}"
-      val shortBidLink = Utility.getShortLink(bidLink)
-      val bidBlock = s"\n===\n This is an open auction. \nTo enter your bid follow $shortBidLink\nThis link opens " +
+//      val shortBidLink = Utility.getShortLink(bidLink)
+      val bidBlock = s"\n===\n This is an open auction. \nTo enter your bid follow $bidLink\nThis link opens " +
         s"messenger " +
         s"and allows you to talk to Plenty bot"
       oldMessage + bidBlock
