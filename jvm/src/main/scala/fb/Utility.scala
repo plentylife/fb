@@ -67,8 +67,8 @@ object Utility {
   }
 
   /** Sends an email using sendmail */
-  def sendEmail(e: EmailInfo) = {
-    val cmd = s"echo ${e.body} | mail -s '${e.subject}' ${e.to}"
+  def sendEmail(e: EmailInfo): Int = {
+    val cmd = s"echo '${e.body}' | mail -s '${e.subject}' ${e.to}"
     Process(Seq("sh", "-c", cmd)).!
   }
 
