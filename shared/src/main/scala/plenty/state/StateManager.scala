@@ -93,22 +93,26 @@ object StateManager {
     current.close()
   }
 
-  def load(agentId: String, subFolder: String ="current/"): Agent = {
+  def load(agentId: String, subFolder: String ="current/"): Option[Agent] = {
     val filename = s"./data-stores/$subFolder$agentId.plenty"
-    loadFromFile(filename)
+    if (new File(filename).exists())
+      loadFromFile(filename)
+    else None
   }
 
-  private def loadFromFile(filename: String): Agent = {
+  private def loadFromFile(filename: String): Option[Agent] = {
     val source = scala.io.Source.fromFile(filename).mkString
-    decode[Agent](source).toOption.get
+    val decoderRes = decode[Agent](source)
+    decoderRes.toOption
   }
 
   def loadAll(subFolder: String = "current/"): Set[Agent] = {
     val currentDir = new File(s"./data-stores/$subFolder")
     val allAgentFiles = currentDir.listFiles()
-    val agents = allAgentFiles map { f => loadFromFile(f.getAbsolutePath) }
+    val agents = allAgentFiles flatMap { f => loadFromFile(f.getAbsolutePath) }
     val agentSet = agents.toSet
     // making sure there isn't something wrong with saving
+    require(agents.length == allAgentFiles.length, "Wrong file formatting. Could not load some agents")
     require(agentSet.size == agents.length, "Duplicate agent files in current directory")
     agentSet
   }
@@ -122,8 +126,10 @@ object Codecs {
   implicit val coinEnc: Encoder[Coin] = deriveEncoder[Coin]
   implicit val donationEnc: Encoder[Donation] = deriveEncoder[Donation]
   implicit val bidEnc: Encoder[Bid] = deriveEncoder[Bid]
-  implicit val transactionEncoder = new Encoder[Transaction] {
-    override def apply(a: Transaction) = {
+  implicit val transactionEncoder: Encoder[Transaction] {
+    def apply(a: Transaction): Json
+  } = new Encoder[Transaction] {
+    override def apply(a: Transaction): Json = {
       val base = a match {
         case t: BidTransaction ⇒ deriveEncoder[BidTransaction].apply(t)
         case t: BaseTransaction ⇒ deriveEncoder[BaseTransaction].apply(t)
@@ -144,16 +150,10 @@ object Codecs {
   implicit val bidtDec: Decoder[BidTransaction] = deriveDecoder[BidTransaction]
   implicit val basetDec: Decoder[BaseTransaction] = deriveDecoder[BaseTransaction]
   implicit val demtDec: Decoder[DemurageTransaction] = deriveDecoder[DemurageTransaction]
-  implicit val transactionDec: Decoder[Transaction] = new Decoder[Transaction] {
-    override def apply(c: HCursor): Result[Transaction] =
-      c.as(ttypeDec).toOption.get match {
-        case TransactionType.BID ⇒ c.as(bidtDec) map {_.asInstanceOf[Transaction]}
-        case TransactionType.BASE ⇒ c.as(basetDec) map {_.asInstanceOf[Transaction]}
-        case TransactionType.DEMURAGE ⇒ c.as(demtDec) map {_.asInstanceOf[Transaction]}
-      }
-  }
-  implicit val transactionDecoder = new Decoder[Transaction] {
-    override def apply(c: HCursor) = ???
+  implicit val transactionDec: Decoder[Transaction] = (c: HCursor) => c.as(ttypeDec).toOption.get match {
+    case TransactionType.BID ⇒ c.as(bidtDec) map {_.asInstanceOf[Transaction]}
+    case TransactionType.BASE ⇒ c.as(basetDec) map {_.asInstanceOf[Transaction]}
+    case TransactionType.DEMURAGE ⇒ c.as(demtDec) map {_.asInstanceOf[Transaction]}
   }
 }
 

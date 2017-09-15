@@ -23,7 +23,7 @@ object CoinDistributor {
     val cs = MintPress.fillCoinSet(FbAgent.lastState.coins, p.node).take(coinsPerAccount)
     if (cs.nonEmpty) {
 
-      val fAll: TraversableOnce[Future[Any]] = Network.getAgents.map { ap =>
+      val fAll: TraversableOnce[Future[Any]] = (Network.getAgents + p).map { ap =>
         ap.getAgentToModify().map {_ ⇒
           ap.set(StateLogic.registerCoins(cs, ap.agentInLastState))
         }
