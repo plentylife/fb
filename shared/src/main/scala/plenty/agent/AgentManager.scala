@@ -1,5 +1,6 @@
 package plenty.agent
 
+import plenty.agent.StateLogic.registerCoins
 import plenty.agent.model.Agent
 import plenty.network.Message
 import plenty.state.model._
@@ -14,7 +15,9 @@ object AgentManager {
   /* Misc registrations */
 
   def registerNode(node: Node, agent: Agent): Agent = {
-    StateLogic.registerNode(node, agent)
+    if (node != agent.node) {
+      StateLogic.registerNode(node, agent)
+    } else agent
   }
 
   def registerCoins(coins: Set[Coin], agent: Agent): Agent = {
@@ -39,7 +42,13 @@ object AgentManager {
       return a
     }
 
-    StateLogic.finishTransaction(t, a)
+    finishTransaction(t, a)
+  }
+
+  private def finishTransaction(t: Transaction, a: Agent): Agent = {
+    val coins = Accounting.transferCoins(t)  // fixme adding to transactions should be followed by save
+    val au = StateLogic.registerCoins(coins, a)
+    StateLogic.registerTransaction(t, au)
   }
 
   /**
@@ -59,7 +68,7 @@ object AgentManager {
 
     if (a.state.nonSettledBids contains bid) {
       var agentUpd = StateLogic.registerApprovedBidSettle(t, a)
-      agentUpd = StateLogic.finishTransaction(t, agentUpd)
+      agentUpd = finishTransaction(t, agentUpd)
       agentUpd
     } else a
   }

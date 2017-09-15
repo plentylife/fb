@@ -11,7 +11,7 @@ import plenty.agent.{Accounting, ActionLogic, AgentPointer}
 import plenty.executionContext
 import plenty.network.{MintPress, Network}
 import plenty.state.StateManager
-import plenty.state.model.{Coin, DemurageTransaction, Node}
+import plenty.state.model.{Coin, DemurageTransaction, Node, TransactionType}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Promise}
@@ -34,16 +34,14 @@ class AccountingFbTests extends FreeSpec with Matchers {
 
 
     "new user coins should belong to that user" in {
-      val newAgent = Await.result(
-        FbAgent.load()
-          Utility.createAgent(ns(0))
-        Duration.Inf)
+      FbAgent.load()
+      val newAgent = Await.result(Utility.createAgent(ns(0)),Duration.Inf)
       waitClearQueue()
 
-      newAgent.state.coins should have size (2023)
       Accounting.getOwnCoins(newAgent) should have size (7)
       Accounting.getBalance(ns(0))(FbAgent.pointer.agentInLastState) shouldBe 7
-      FbAgent.pointer.agentInLastState.state.coins should have size (2023)
+      Accounting.getBalance(FbAgent.pointer.node)(newAgent) shouldBe 0
+      Accounting.getBalance(FbAgent.pointer.node)(FbAgent.pointer) shouldBe 0
       aps = aps :+ newAgent
       originalCoins = originalCoins :+ Accounting.getOwnCoins(newAgent)
     }
@@ -58,11 +56,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
       val newAgent = Await.result(Utility.createAgent(ns(1)), Duration.Inf)
       waitClearQueue()
 
-
-      val coinsNotBelongingToFbAgentN1 = aps(0).agentInLastState.state.coins.filterNot(_.belongsTo == FbAgent.node)
-      val coinsNotBelongingToFbAgentFB = FbAgent.pointer.state.coins.filterNot(_.belongsTo == FbAgent.node)
       Accounting.getOwnCoins(newAgent) should have size (7)
-      newAgent.state.coins should have size (2023)
       Accounting.getBalance(ns(0))(FbAgent.pointer.agentInLastState) shouldBe 7
       Accounting.getBalance(ns(0))(newAgent) shouldBe 7
       Accounting.getBalance(ns(1))(aps(0)) shouldBe 7
@@ -72,6 +66,10 @@ class AccountingFbTests extends FreeSpec with Matchers {
       Accounting.getCoins(ns(0), FbAgent.pointer) shouldBe originalCoins(0)
       Accounting.getCoins(ns(0), newAgent) shouldBe originalCoins(0)
 
+      Accounting.getBalance(FbAgent.pointer.node)(newAgent) shouldBe 0
+      Accounting.getBalance(FbAgent.pointer.node)(FbAgent.pointer) shouldBe 0
+      Accounting.getBalance(FbAgent.pointer.node)(aps(0)) shouldBe 0
+
       aps = aps :+ newAgent
       originalCoins = originalCoins :+ Accounting.getOwnCoins(newAgent)
     }
@@ -80,6 +78,8 @@ class AccountingFbTests extends FreeSpec with Matchers {
       div("2")
       Network.clear
       StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+      aps = ns.collect {case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+      FbAgent.load()
 
       val usedCoins = aps flatMap { a ⇒ Accounting.getOwnCoins(a) } toSet;
       val rightCountUserCoins = 7 * aps.size
@@ -87,16 +87,18 @@ class AccountingFbTests extends FreeSpec with Matchers {
 
       val minted: Set[Coin] = MintPress.fillCoinSet(FbAgent.lastState.coins, FbAgent.node)
       (minted intersect usedCoins) shouldBe empty
-      minted should have size (0)
+      minted should not be empty
     }
 
     "Demurrage" - {
       "After a short time" - {
         "Users should still have 7 coins" in {
-          div("3")
-
           Network.clear
           StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+          aps = ns.collect {case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+          FbAgent.load()
+
+          div("3")
 
           Network.getAgents foreach { a ⇒
             ActionLogic.applyDemurage(a)
@@ -119,39 +121,82 @@ class AccountingFbTests extends FreeSpec with Matchers {
         }
       }
 
-      "After a long time" in {
-        div("4")
+      "After a long time" - {
+        "users should have less coins" in {
+          Network.clear
+          StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+          aps = ns.collect {case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+          FbAgent.load()
+
+          div("4")
+
+          val now = new Date().getTime
+          def fakeT(from: Node) =
+            DemurageTransaction("fake", now - plenty.daysToMillis(4), Set(), from, ns(0))
+
+          // setting a fake demurrage transaction to yesterday
+          Network.getAgents foreach { ap ⇒
+            Await.ready(ap.getAgentToModify().map({ a ⇒
+              val upd = a.modify(_.state.chains.transactions).using(_ :+ fakeT(a.node))
+              ap.set(upd)
+            }), Duration.Inf)
+          }
+          waitClearQueue()
+
+          Network.getAgents foreach { a ⇒
+            ActionLogic.applyDemurage(a)
+          }
+          waitClearQueue()
+
+          val bal = 6
+
+          Accounting.getOwnCoins(aps(0)) intersect originalCoins(0) should have size(bal)
+          Accounting.getCoins(ns(0), FbAgent.pointer) intersect originalCoins(0) should have size(bal)
+          Accounting.getCoins(ns(0), aps(1)) intersect originalCoins(0) should have size(bal)
+
+          Accounting.getOwnCoins(aps(1)) intersect originalCoins(1) should have size(bal)
+          Accounting.getCoins(ns(1), FbAgent.pointer) intersect originalCoins(1) should have size(bal)
+          Accounting.getCoins(ns(1), aps(0)) intersect originalCoins(1) should have size(bal)
+
+          val fbPerspect = Accounting.getCoins(ns(0), FbAgent.pointer) ++ Accounting.getCoins(ns(1), FbAgent.pointer)
+          fbPerspect should have size(14)
+          fbPerspect intersect originalCoins.flatten.toSet should have size 14
+        }
+      }
+    }
+
+    "Transaction tracking" - {
+      "Demurrage transactions shoud be present for all" in {
         Network.clear
         StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+        aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+        FbAgent.load()
 
-        val now = new Date().getTime
-        val fakeT = DemurageTransaction("fake", now - plenty.daysToMillis(1), Set(), FbAgent.node, ns(0))
-        val prom = Promise[Agent]()
-        FbAgent.pointer.getAgentToModify(prom)
+        div("5")
 
-        Await.ready(prom.future.map { a ⇒
-          val upd = a.modify(_.state.chains.transactions)
-            .using(_ :+ fakeT)
-        }, Duration.Inf)
-
-        Network.getAgents foreach { a ⇒
-          ActionLogic.applyDemurage(a)
+        (aps :+ FbAgent.pointer) foreach { ap ⇒
+          val ts = ap.agentInLastState.state.chains.transactions.filterNot(_.id == "fake")
+          ts should have size (2)
+          ns foreach { n ⇒
+            ts.count(t ⇒ t.transactionType == TransactionType.DEMURAGE && t.from == n && t.to != n) shouldBe 1
+          }
         }
-        waitClearQueue()
+      }
+    }
 
-        Accounting.getBalance(ns(0))(FbAgent.pointer.agentInLastState) shouldBe 7
-        Accounting.getBalance(ns(0))(aps(1)) shouldBe 7
-        Accounting.getBalance(ns(1))(aps(0)) shouldBe 7
-        Accounting.getBalance(ns(1))(FbAgent.pointer) shouldBe 7
+    "Agent states" - {
+      "Should not contain fb_agent but all others" in {
+        Network.clear
+        StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+        aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+        FbAgent.load()
 
-        Accounting.getOwnCoins(aps(0)) shouldBe originalCoins(0)
-        Accounting.getCoins(ns(0), FbAgent.pointer) shouldBe originalCoins(0)
-        Accounting.getCoins(ns(0), aps(1)) shouldBe originalCoins(0)
+        div("6")
 
-        Accounting.getOwnCoins(aps(1)) shouldBe originalCoins(1)
-        Accounting.getCoins(ns(1), FbAgent.pointer) shouldBe originalCoins(1)
-        Accounting.getCoins(ns(1), aps(0)) shouldBe originalCoins(1)
-
+        (aps :+ FbAgent.pointer) foreach { ap ⇒
+          ap.agentInLastState.state.nodes should not contain FbAgent.node
+          ap.agentInLastState.state.nodes should not contain all(ns.toSet - ap.node)
+        }
       }
     }
   }

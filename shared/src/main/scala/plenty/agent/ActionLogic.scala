@@ -23,7 +23,7 @@ object ActionLogic {
 
   def applyDemurage(implicit a: Agent): Unit = {
     val ts = Accounting.produceDemurageTransactions(a)
-    if (ts.isEmpty) log.warning("Could not send out demurage")
+    if (ts.isEmpty) log.warning(s"Could not send out demurage (${a.id})")
     else {
       ts foreach { t ⇒
         log.fine(s"Applied demurrage ${t.from} -> ${t.to} of ${t.coins.size}")

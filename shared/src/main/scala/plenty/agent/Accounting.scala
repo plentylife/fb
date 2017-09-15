@@ -37,7 +37,7 @@ object Accounting {
     val lastDemurageTime = getLastDemurageTime(a)
     val rate = calculateDemurageRate(a)
 
-    val perCoin = coins.toIterator map { c ⇒
+    val perCoin = coins.toList map { c ⇒
       // dumurage accrue start time
       lastDemurageTime getOrElse c.lastTransactionTime
     } map { st ⇒

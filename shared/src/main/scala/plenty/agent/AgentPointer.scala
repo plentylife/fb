@@ -4,13 +4,15 @@ import plenty.agent.model.Agent
 import plenty.network.PayloadIdentifier
 
 import scala.collection.immutable.Queue
-import scala.concurrent.Promise
+import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
 
 /**
   * Allows safe parallel modification and retrieval of [[plenty.agent.model.Agent]]s
   */
-class AgentPointer(private var agent: Agent) {
+class AgentPointer(private val originalAgent: Agent) {
+  private var agent = originalAgent
+
   private var queue: Queue[Promise[Agent]] = Queue.empty
 
   private var agentAvailable = true
@@ -18,9 +20,17 @@ class AgentPointer(private var agent: Agent) {
   def id = agent.id
   val node = AgentManager.agentAsNode(agent)
 
+  @deprecated
   def getAgentToModify(promise: Promise[Agent]) = synchronized {
     queue = queue.enqueue(promise)
     giveAgent()
+  }
+
+  def getAgentToModify(): Future[Agent] = synchronized {
+    val p = Promise[Agent]()
+    queue = queue.enqueue(p)
+    giveAgent()
+    p.future
   }
 
   def agentInLastState = agent

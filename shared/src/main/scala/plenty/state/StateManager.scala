@@ -93,8 +93,8 @@ object StateManager {
     current.close()
   }
 
-  def load(agentId: String): Agent = {
-    val filename = s"./data-stores/current/$agentId.plenty"
+  def load(agentId: String, subFolder: String ="current/"): Agent = {
+    val filename = s"./data-stores/$subFolder$agentId.plenty"
     loadFromFile(filename)
   }
 
@@ -103,8 +103,8 @@ object StateManager {
     decode[Agent](source).toOption.get
   }
 
-  def loadAll(): Set[Agent] = {
-    val currentDir = new File("./data-stores/current/")
+  def loadAll(subFolder: String = "current/"): Set[Agent] = {
+    val currentDir = new File(s"./data-stores/$subFolder")
     val allAgentFiles = currentDir.listFiles()
     val agents = allAgentFiles map { f => loadFromFile(f.getAbsolutePath) }
     val agentSet = agents.toSet

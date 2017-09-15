@@ -9,7 +9,7 @@ import akka.util.ByteString
 import com.restfb.types.webhook.messaging.MessagingItem
 import plenty.agent.{AgentManager, AgentPointer}
 import plenty.executionContext
-import plenty.network.{BidAction, Network}
+import plenty.network.{ActionIdentifiers, BidAction, Network}
 import plenty.state.StateManager
 import plenty.state.model.{Donation, Node}
 
@@ -27,6 +27,7 @@ object Utility {
 
     FbAgent.registerNode(n)
     val p = Network.registerAgent(a, FbSendReceiveInterface)
+    Network.notifyAllAgents(n, ActionIdentifiers.REGISTER_NODE, FbAgent.node)
     CoinDistributor.give(p) map { _ ⇒ p }
   }
 

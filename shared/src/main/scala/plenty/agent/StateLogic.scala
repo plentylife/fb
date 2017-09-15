@@ -16,11 +16,13 @@ object StateLogic {
   logger.setLevel(Level.ALL)
 
   def registerNode(node: Node, agent: Agent): Agent = {
-    var s = agent.state
-    s = s.copy(nodes = s.nodes + node)
-    val a = agent.copy(state = s)
-    StateManager.save(a)
-    a
+    if (node != agent.node) {
+      var s = agent.state
+      s = s.copy(nodes = s.nodes + node)
+      val a = agent.copy(state = s)
+      StateManager.save(a)
+      a
+    } else agent
   }
 
   def registerCoins(coins: Set[Coin], agent: Agent): Agent = {
@@ -79,9 +81,10 @@ object StateLogic {
 
   /** Changes the ownership of the coins
     * The transaction must be verified by this point */
-  def finishTransaction(t: Transaction, agent: Agent): Agent = {
-    val coins = Accounting.transferCoins(t)
-    registerCoins(coins, agent).modify(_.state.chains.transactions).using(list ⇒ t +: list)
+  def registerTransaction(t: Transaction, agent: Agent): Agent = {
+    val a = agent.modify(_.state.chains.transactions).using(list ⇒ t +: list)
+    StateManager.save(a)
+    a
   }
 
   def donationRegistration(donation: Donation)(implicit agent: Agent): Agent = {

@@ -3,8 +3,8 @@ package plenty.network
 import plenty.agent.model.Agent
 import plenty.agent.{AgentManager, AgentPointer}
 import plenty.state.model.Node
-
 import plenty.executionContext
+
 import scala.concurrent.{Future, Promise}
 import scala.util.Failure
 
