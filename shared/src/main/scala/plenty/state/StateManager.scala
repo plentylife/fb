@@ -73,17 +73,13 @@ object StateManager {
 
   /* disk IO */
 
-  def save(agent: Agent): Unit = {
-    val archiveFilename = s"./data-stores/archive/${agent.id}-${new Date().getTime}.plenty"
-    val currentFilename = s"./data-stores/current/${agent.id}.plenty"
+  def save(agent: Agent, subfolder: String = "current/"): Unit = {
+    val currentFilename = s"./data-stores/$subfolder${agent.id}.plenty"
 
-    //    val archive = new BufferedOutputStream(new FileOutputStream(archiveFilename))
     val current = new BufferedOutputStream(new FileOutputStream(currentFilename))
 
     val pickle = agent.asJson.noSpaces
 
-    // fixme. archive should be functional as well
-    //    new PrintWriter(archive).write(pickle)
     val w = new PrintWriter(current)
     w.write(pickle)
     w.flush()

@@ -24,10 +24,10 @@ object TestUtilities {
   }
 
   def pprint(t: Transaction) = {
-    println(s"${t.from.id} -> ${t.to.id} ${t.coins.size} \t${new Date(t.timestamp)}")
+    println(s"${t.from.id} -> ${t.to.id} ${t.coins.size}\t ${t.transactionType} \t${new Date(t.timestamp)}")
   }
 
-  def div(mark: String = "") = println(s"\n===$mark\n")
+  def div(mark: String = "") = println(s"\n\n===\t$mark\n")
 }
 
 object MockSendReceiveInterface extends SendReceiveInterface {

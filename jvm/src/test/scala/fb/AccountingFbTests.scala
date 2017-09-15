@@ -6,15 +6,14 @@ import java.util.Date
 import com.softwaremill.quicklens._
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.TestUtilities._
-import plenty.agent.model.Agent
 import plenty.agent.{Accounting, ActionLogic, AgentPointer}
 import plenty.executionContext
 import plenty.network.{MintPress, Network}
 import plenty.state.StateManager
 import plenty.state.model.{Coin, DemurageTransaction, Node, TransactionType}
 
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Promise}
 import scala.language.postfixOps
 
 class AccountingFbTests extends FreeSpec with Matchers {
@@ -24,18 +23,36 @@ class AccountingFbTests extends FreeSpec with Matchers {
     var aps = Seq[AgentPointer]()
     var originalCoins = Seq[Set[Coin]]()
 
-    ns.foreach {n ⇒
-      val f = new File(s"./data-stores/current/${n.id}.plenty")
+    val deleteUsers = true
+    if (deleteUsers) {
+      ns.foreach { n ⇒
+        val f = new File(s"./data-stores/current/${n.id}.plenty")
+        if (f.exists()) f.delete()
+      }
+      val f = new File(s"./data-stores/current/facebook_agent.plenty")
       if (f.exists()) f.delete()
     }
-    // fixme do not delete facebook, this should all still work even with accumilating tests
-    val f = new File(s"./data-stores/current/facebook_agent.plenty")
-    if (f.exists()) f.delete()
 
+    "old coins should be remembered" in {
+      if (!deleteUsers) {
+        Network.clear
+        StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+        aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+
+        aps.foreach(ap ⇒ {
+          ns foreach { n ⇒
+            Accounting.getBalance(n)(ap) should not be 0
+          }
+        })
+      }
+    }
 
     "new user coins should belong to that user" in {
+      Network.clear
+      StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+      aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
       FbAgent.load()
-      val newAgent = Await.result(Utility.createAgent(ns(0)),Duration.Inf)
+      val newAgent = Await.result(Utility.createAgent(ns(0)), Duration.Inf)
       waitClearQueue()
 
       Accounting.getOwnCoins(newAgent) should have size (7)
@@ -49,7 +66,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
     "both users should have same amounts of coins after another user is created" in {
       Network.clear
       StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
-      aps = ns.collect {case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+      aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
       FbAgent.load()
 
       div("1")
@@ -74,11 +91,19 @@ class AccountingFbTests extends FreeSpec with Matchers {
       originalCoins = originalCoins :+ Accounting.getOwnCoins(newAgent)
     }
 
+    "agent should be loaded even if not present in the network " in {
+      Network.clear
+      ns foreach { n ⇒
+        ReceiverFlow.getAgent(n.id).get
+      }
+    }
+
+
     "coins belonging to users should not be distributed again" in {
       div("2")
       Network.clear
       StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
-      aps = ns.collect {case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+      aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
       FbAgent.load()
 
       val usedCoins = aps flatMap { a ⇒ Accounting.getOwnCoins(a) } toSet;
@@ -95,7 +120,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
         "Users should still have 7 coins" in {
           Network.clear
           StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
-          aps = ns.collect {case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+          aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
           FbAgent.load()
 
           div("3")
@@ -125,7 +150,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
         "users should have less coins" in {
           Network.clear
           StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
-          aps = ns.collect {case n ⇒ Network.getAgents.find(_.node == n) } flatten;
+          aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
           FbAgent.load()
 
           div("4")
@@ -150,16 +175,16 @@ class AccountingFbTests extends FreeSpec with Matchers {
 
           val bal = 6
 
-          Accounting.getOwnCoins(aps(0)) intersect originalCoins(0) should have size(bal)
-          Accounting.getCoins(ns(0), FbAgent.pointer) intersect originalCoins(0) should have size(bal)
-          Accounting.getCoins(ns(0), aps(1)) intersect originalCoins(0) should have size(bal)
+          Accounting.getOwnCoins(aps(0)) intersect originalCoins(0) should have size (bal)
+          Accounting.getCoins(ns(0), FbAgent.pointer) intersect originalCoins(0) should have size (bal)
+          Accounting.getCoins(ns(0), aps(1)) intersect originalCoins(0) should have size (bal)
 
-          Accounting.getOwnCoins(aps(1)) intersect originalCoins(1) should have size(bal)
-          Accounting.getCoins(ns(1), FbAgent.pointer) intersect originalCoins(1) should have size(bal)
-          Accounting.getCoins(ns(1), aps(0)) intersect originalCoins(1) should have size(bal)
+          Accounting.getOwnCoins(aps(1)) intersect originalCoins(1) should have size (bal)
+          Accounting.getCoins(ns(1), FbAgent.pointer) intersect originalCoins(1) should have size (bal)
+          Accounting.getCoins(ns(1), aps(0)) intersect originalCoins(1) should have size (bal)
 
           val fbPerspect = Accounting.getCoins(ns(0), FbAgent.pointer) ++ Accounting.getCoins(ns(1), FbAgent.pointer)
-          fbPerspect should have size(14)
+          fbPerspect should have size (14)
           fbPerspect intersect originalCoins.flatten.toSet should have size 14
         }
       }

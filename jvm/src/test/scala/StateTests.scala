@@ -18,7 +18,7 @@ class StateTests extends FreeSpec {
     }
 
     "can_be_loaded" in {
-      val agentLoaded = StateManager.load(agent.id)
+      val agentLoaded = StateManager.load(agent.id).get
       println(agentLoaded)
       assert(agentLoaded.state == agent.state)
     }

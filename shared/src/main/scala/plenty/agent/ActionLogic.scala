@@ -102,20 +102,23 @@ object ActionLogic {
     * @param hardAuctionClose disregard the one day wait time
     **/
   def takeBids(agent: Agent, hardAuctionClose: Boolean = false): Unit = {
-    println(s"agent ${agent.id} looking to accept bids from ${agent.state.bids}")
     val now = new Date().getTime
-    val takenBids = takeBidForDonation(now, hardAuctionClose) _
+    /** function that selects 0 or 1 bids from a list of bids based on time or prompt*/
+    val takingBidsWith = takeBidForDonation(now, hardAuctionClose) _
     // bids on donations by the agent
     val bids = agent.state.bids filter {
       _.donation.by == agentAsNode(agent)
     }
+    if (bids.isEmpty) return
+
+    log.fine(s"agent ${agent.id} looking to accept bids from $bids")
     val bidsByDonation = bids.groupBy(_.donation.id)
     val accepted = bidsByDonation.flatMap(kv => {
       val (_, bids) = kv
-      takenBids(bids)
+      takingBidsWith(bids)
     })
 
-    //    println(s"agent ${agent.id} has accepted ${accepted}")
+    log.fine(s"agent ${agent.id} has accepted $accepted")
     val self = AgentManager.agentAsNode(agent)
     for (acceptedBid <- accepted) {
       Network.notifyAllAgents(acceptedBid, ActionIdentifiers.BID_TAKE_ACTION, from = self)

@@ -1,8 +1,6 @@
-import java.util.concurrent.ForkJoinPool
+import java.util.logging.{Level, LogManager}
 
 import com.restfb.{DefaultFacebookClient, Version}
-
-import scala.concurrent.ExecutionContext
 
 /**
   * Created by anton on 8/11/17.

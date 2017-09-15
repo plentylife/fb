@@ -1,5 +1,7 @@
 package fb
 
+import java.util.logging.{Level, LogManager}
+
 import plenty.agent.Scheduler
 import plenty.network.Network
 import plenty.state.StateManager
@@ -9,6 +11,7 @@ import plenty.state.StateManager
   */
 object FbMain {
   def main(args: Array[String]): Unit = {
+    LogManager.getLogManager.readConfiguration(FbMain.getClass.getResourceAsStream("/logging.properties"))
 
     // loading network
     StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
