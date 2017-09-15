@@ -24,15 +24,8 @@ object FbAgent {
 
   /** gets or creates a fb agent
     * sets coins */
-  def load(): Future[Any] = {
+  def load(): Unit = {
     _pointer = Network.getAgents.find(_.id == id).getOrElse(create)
-    val p = Promise[Agent]()
-    pointer.getAgentToModify(p)
-    p.future map { a ⇒
-      val filledCoins = MintPress.fillCoinSet(a.state.coins, node)
-      val s = a.state.copy(coins = filledCoins)
-      pointer.set(a.copy(state = s))
-    }
   }
 
   private def create: AgentPointer = {

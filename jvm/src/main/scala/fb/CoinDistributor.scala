@@ -31,6 +31,7 @@ object CoinDistributor {
       f = promise.future.map { a ⇒
         p.set {
           StateLogic.registerCoins(cs, a)
+          // fixme add StateLogic.registerCoins(cs, FbAgent.
         }
       }
       Network.notifyAllAgents(t, ActionIdentifiers.TRANSACTION, FbAgent.node)

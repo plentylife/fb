@@ -27,7 +27,7 @@ object TestUtilities {
     println(s"${t.from.id} -> ${t.to.id} ${t.coins.size} \t${new Date(t.timestamp)}")
   }
 
-  def div = println("\n===\n")
+  def div(mark: String = "") = println(s"\n===$mark\n")
 }
 
 object MockSendReceiveInterface extends SendReceiveInterface {

@@ -22,13 +22,13 @@ object ActionLogic {
   /* Demurage */
 
   def applyDemurage(implicit a: Agent): Unit = {
-    Accounting.produceDemurageTransaction(a) match {
-      case None ⇒ log.warning("Could not send out demurage")
-      case Some(t) ⇒
-        if (t.coins.nonEmpty) {
-          log.fine(s"Applied demurrage ${t.from} -> ${t.to} of ${t.coins.size}")
-          Network.notifyAllAgents(t, ActionIdentifiers.TRANSACTION, a.node)
-        }
+    val ts = Accounting.produceDemurageTransactions(a)
+    if (ts.isEmpty) log.warning("Could not send out demurage")
+    else {
+      ts foreach { t ⇒
+        log.fine(s"Applied demurrage ${t.from} -> ${t.to} of ${t.coins.size}")
+        Network.notifyAllAgents(t, ActionIdentifiers.TRANSACTION, a.node)
+      }
     }
   }
 

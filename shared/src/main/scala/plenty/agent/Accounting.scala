@@ -19,15 +19,17 @@ object Accounting {
   val demuragePeriod: Long = 24 * 60 * 60 * 1000L
 
   /** Figures out if the agents should give away coins, and gives them away */
-  def produceDemurageTransaction(agent: Agent): Option[DemurageTransaction] = {
+  def produceDemurageTransactions(agent: Agent): Set[DemurageTransaction] = {
     val howMuch = Math.floor(calculateDemurage(agent))
     val cs = getOwnCoins(agent).take(howMuch.toInt)
-    selectNodeForDemurage(agent) map { to ⇒ StateManager.createTransaction(cs, from = agent.node, to = to)
-    } map {StateManager.asDemurage}
+    cs flatMap { c ⇒
+      selectNodeForDemurage(agent) map { to ⇒ StateManager.createTransaction(Set(c), from = agent.node, to = to)
+      } map {StateManager.asDemurage}
+    }
   }
 
   def selectNodeForDemurage(agent: Agent): Option[Node] = {
-    Random.shuffle(agent.state.nodes).headOption
+    Random.shuffle(agent.state.nodes.toSeq).headOption
   }
 
   def calculateDemurage(a: Agent, atTime: Long = new Date().getTime): Double = {
@@ -92,6 +94,9 @@ object Accounting {
   def getSelfBalance(agent: Agent): Int = getBalance(AgentManager.agentAsNode(agent))(agent)
 
   def getOwnCoins(a: Agent): Set[Coin] = a.state.coins.filter(c ⇒ c.belongsTo.id == a.id)
+
+  def getCoins(of: Node, inStateOf: Agent): Set[Coin] =
+    inStateOf.state.coins.filter(c ⇒ c.belongsTo.id == of.id)
 
   /* Transactions */
 
