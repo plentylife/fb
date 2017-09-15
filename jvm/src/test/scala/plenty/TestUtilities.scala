@@ -1,5 +1,10 @@
+package plenty
+
+import java.util.Date
+
 import plenty.agent.model.Agent
 import plenty.network.{Message, Network, SendReceiveInterface}
+import plenty.state.model.Transaction
 
 object TestUtilities {
   def getAgents: Iterable[Agent] = {
@@ -17,6 +22,12 @@ object TestUtilities {
         println(s"non-completes (loop): ${Network.nonCompletes.mkString("\n")}")
     }
   }
+
+  def pprint(t: Transaction) = {
+    println(s"${t.from.id} -> ${t.to.id} ${t.coins.size} \t${new Date(t.timestamp)}")
+  }
+
+  def div = println("\n===\n")
 }
 
 object MockSendReceiveInterface extends SendReceiveInterface {

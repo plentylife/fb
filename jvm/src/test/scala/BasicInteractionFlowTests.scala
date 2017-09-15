@@ -8,8 +8,9 @@ import plenty.state.model.{Coin, Node, State}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import TestUtilities._
+import plenty.TestUtilities._
 import com.softwaremill.quicklens._
+import plenty.MockSendReceiveInterface
 
 import scala.language.postfixOps
 /**

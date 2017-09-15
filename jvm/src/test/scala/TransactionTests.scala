@@ -1,4 +1,4 @@
-import TestUtilities._
+import plenty.TestUtilities._
 import plenty.agent.model.Agent
 import plenty.agent.{Accounting, ActionLogic, AgentManager, AgentPointer}
 import plenty.network.{BidAction, _}

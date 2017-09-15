@@ -1,6 +1,6 @@
 import java.util.Date
 
-import TestUtilities._
+import plenty.TestUtilities._
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.agent.{Accounting, ActionLogic, AgentPointer}
 import plenty.agent.model.Agent
@@ -11,7 +11,7 @@ import plenty.state.model.{Coin, DemurageTransaction, Node, State}
 import scala.collection.immutable
 import scala.concurrent.Promise
 import scala.language.postfixOps
-import plenty.executionContext
+import plenty.{MockSendReceiveInterface, TestUtilities, executionContext}
 
 class DemurageTests extends FreeSpec with Matchers {
   "Demurrage" - {
