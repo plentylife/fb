@@ -89,7 +89,10 @@ object DonationResponses {
     val shareButton = new ShareButton()
 
     // images
-    donation.attachments.headOption foreach bubble.setImageUrl
+    // fixme the images come from a CDN and are temporary
+    // that means that they soon disappear from the bubble
+    // for now, removing
+//    donation.attachments.headOption foreach bubble.setImageUrl
     // view link
     postId foreach {pid =>
       bubble.addButton(donationLinkButton(pid))
