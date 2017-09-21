@@ -1,6 +1,7 @@
 package plenty.agent
 
 import java.util.Date
+import java.util.logging.Logger
 
 import plenty.agent.AgentManager.agentAsNode
 import plenty.agent.model.Agent
@@ -13,6 +14,7 @@ import scala.util.Random
   * Functions related to accounting, such as getting a coin balance for a node, or minting coins
   */
 object Accounting {
+  private val logger = Logger.getLogger("Accounting")
 
   val demurageRateCalculatePeriod: Long = 30 * 24 * 60 * 60 * 1000L
 
@@ -21,6 +23,7 @@ object Accounting {
   /** Figures out if the agents should give away coins, and gives them away */
   def produceDemurageTransactions(agent: Agent): Set[DemurageTransaction] = {
     val howMuch = Math.floor(calculateDemurage(agent))
+    if (howMuch == 0) logger.finer(s"Agent ${agent.id} demurrage is 0")
     val cs = getOwnCoins(agent).take(howMuch.toInt)
     cs flatMap { c ⇒
       selectNodeForDemurage(agent) map { to ⇒ StateManager.createTransaction(Set(c), from = agent.node, to = to)
@@ -114,7 +117,7 @@ object Accounting {
 
   /** checks if the coins actually belong to the sender and that the amount is correct */
   def verifyTransaction(transaction: Transaction, agent: Agent): Either[CoinsDoNotBelongToSender, Unit] = {
-//    val coinIds = transaction.coins.map {_.id}
+    //    val coinIds = transaction.coins.map {_.id}
     val verifiedCoins = agent.state.coins intersect transaction.coins
     if (verifiedCoins.nonEmpty && verifiedCoins.forall(_.belongsTo == transaction.from))
       Right(Unit)
