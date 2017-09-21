@@ -1,18 +1,19 @@
 package fb
 
+import java.util.logging.Logger
+
 import fb.donation.{DonationResponses, ExternalDonationUtils}
-import plenty.agent.AgentManager.onApproveSettleBid
-import plenty.agent.StateLogic
 import plenty.network._
-import plenty.state.StateManager
-import plenty.state.model.{Bid, RejectedBid, Transaction}
+import plenty.state.model.{Bid, RejectedBid}
 
 
 /** for interacting with Plenty by intercepting messages in the network */
 object FbSendReceiveInterface extends SendReceiveInterface {
+  private val logger = Logger.getLogger("Network [fb]")
+
   override def send(msg: Message[_]): Unit = {
     implicit val impMsg = msg
-    println(s"FB NET: $msg")
+    logger.fine(s"$msg")
 
     // fixme. for now just passing on all traffic
 

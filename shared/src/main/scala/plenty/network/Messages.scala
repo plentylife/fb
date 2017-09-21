@@ -21,7 +21,7 @@ abstract class Message[P] {
 
   override def toString: String = {
     val fromStr = if (from != null) from.id else "???"
-    fromStr + " -> " + to.id + "  " + payloadId.typeOfMsg + " @ " + timestamp
+    fromStr + " -> " + to.id + "  " + payloadId.typeOfMsg + " @ " + new Date(timestamp)
   }
 }
 
