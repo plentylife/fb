@@ -1,6 +1,6 @@
 import sbt.Keys.{libraryDependencies, mainClass, scalaVersion}
 
-lazy val root = project.
+lazy val plenty = project.
   enablePlugins(ScalaJSPlugin)
   .in(file(".")).
   aggregate(coreJS, coreJVM).
@@ -41,14 +41,14 @@ lazy val core = crossProject.in(file(".")).
     mainClass in assembly := Some("fb.FbMain"),
     assemblyJarName in assembly := "plenty.jar",
     test in assembly := {}
-//    ,
-//    scalacOptions += "-feature"
+    //    ,
+    //    scalacOptions += "-feature"
   ).
   jsSettings(
     libraryDependencies ++= Seq(),
     test in assembly := {}
     //    ,
-//    scalacOptions += "-feature"
+    //    scalacOptions += "-feature"
   )
 
 lazy val coreJVM = core.jvm
