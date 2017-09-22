@@ -1,10 +1,8 @@
 package plenty.agent
 
-import plenty.agent.StateLogic.registerCoins
 import plenty.agent.model.Agent
 import plenty.network.Message
 import plenty.state.model._
-import sun.management.resources.agent
 
 import scala.language.implicitConversions
 
@@ -92,6 +90,12 @@ object AgentManager {
 
   /* Bids */
 
+  def acceptBid(a: Agent)(msg: Message[Bid]): Agent = {
+    if (msg.from == msg.payload.donation.by) {
+      StateLogic.registerBid(msg.payload)(a)
+    } else a
+  }
+
   def verifyBid(msg: Message[Bid], agent: Agent): Agent = {
     val bid = msg.payload
 
@@ -123,8 +127,6 @@ object AgentManager {
     Agent(node, state = copyState)
 
 
-  implicit def agentAsNode(agent: Agent): Node = {
-    agent.node
-  }
+  implicit def agentAsNode(agent: Agent): Node = agent.node
 
 }

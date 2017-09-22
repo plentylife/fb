@@ -1,8 +1,8 @@
 package plenty.network
 
 import plenty.agent.AgentManager._
-import plenty.agent.{ActionLogic, AgentManager, StateLogic}
 import plenty.agent.model.Agent
+import plenty.agent.{ActionLogic, AgentManager}
 import plenty.state.model._
 
 /**
@@ -11,7 +11,7 @@ import plenty.state.model._
 object Receiver {
 
   // fixme this can be rewritten to match directly on incomingMessage.payload
-  def receive(incomingMessage: Message[_])(implicit toAgent: Agent): Agent = incomingMessage match {
+  def receive(incomingMessage: Message[Any])(implicit toAgent: Agent): Agent = incomingMessage match {
     case m if m.payloadId == ActionIdentifiers.REGISTER_NODE =>
     registerNode(m.payload.asInstanceOf[Node], toAgent)
 
@@ -40,10 +40,6 @@ object Receiver {
       (m.payloadId == RelayIdentifiers.BID_RELAY) =>
     verifyBid(m.asInstanceOf[Message[Bid]], toAgent)
 
-    case m if m.payloadId == ActionIdentifiers.ACCEPT_BID_ACTION =>
-//      println(s"agent ${toAgent.id} accepting bid ${m.payload}")
-      StateLogic.registerBid(m.payload.asInstanceOf[Bid])
-
     case m if m.payloadId == ActionIdentifiers.REJECT_BID_ACTION =>
       /* nothing happens */
       toAgent
@@ -64,9 +60,17 @@ object Receiver {
   }
 
   /** this is how the matching function should have been written from the beginning*/
-  private def properMatchingFunction(incomingMessage: Message[_])(implicit toAgent: Agent): Agent = {
-    val m = incomingMessage
+  private def properMatchingFunction(incomingMessage: Message[Any])(implicit toAgent: Agent): Agent = {
+    implicit val m: Message[Any] = incomingMessage
     incomingMessage.payloadId match {
+
+      /* Bids */
+
+      case ActionIdentifiers.ACCEPT_BID_ACTION =>
+        ActionIdentifiers.ACCEPT_BID_ACTION.run[Agent](AgentManager.acceptBid(toAgent))
+
+      /* Transactions */
+
       case ActionIdentifiers.TRANSACTION ⇒
         val p = ActionIdentifiers.TRANSACTION.cast(m.payload)
         ActionLogic.verifyTransaction(p, toAgent)
