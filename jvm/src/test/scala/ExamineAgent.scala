@@ -1,14 +1,14 @@
+import com.softwaremill.quicklens._
+import fb.donation.DonationResponses
 import fb.{FbSettings, UserInfo}
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.TestUtilities._
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.network.MintPress
 import plenty.state.StateManager
-import plenty.state.model.{BidTransaction, Node, TransactionType}
+import plenty.state.model.{BidTransaction, Node}
 
 import scala.language.postfixOps
-import com.softwaremill.quicklens._
-import fb.donation.DonationResponses
 
 class ExamineAgent extends FreeSpec with Matchers {
 
@@ -62,18 +62,31 @@ class ExamineAgent extends FreeSpec with Matchers {
         val balanceFb = Accounting.getBalance(a.node)(fbAgent)
 
         div()
-        println(s"${a.id} \t ${ui.name} ${balanceSelf} $balanceFb")
+        println(s"${a.id} \t ${ui.name} $balanceSelf $balanceFb")
 
         transactionsInvloving(a) foreach pprint
-//        transactionsInvloving(a) filterNot (_.transactionType == TransactionType.DEMURAGE) foreach pprint
+        //        transactionsInvloving(a) filterNot (_.transactionType == TransactionType.DEMURAGE) foreach pprint
       }
 
       div("donations")
-      as flatMap {_.state.donations} foreach {d ⇒
+      as flatMap {_.state.donations} foreach { d ⇒
         println(d.title)
-        println(d.attachments mkString("\n"))
+        println(d.attachments mkString ("\n"))
       }
     }
+  }
+
+  "See all bids" in {
+    val as = StateManager.loadAll("onserver/")
+
+    as filterNot (_.id == "facebook_agent") foreach { a ⇒
+      val ui = UserInfo.get(a.id)
+      println(ui.name, a.id)
+    }
+
+    val bids = as flatMap {_.state.bids}
+
+    bids foreach println
   }
 
   "Using server agents" - {
@@ -82,9 +95,10 @@ class ExamineAgent extends FreeSpec with Matchers {
       val as = StateManager.loadAll("onserver/")
       val antonNode = Node("767613720030082")
 
-      as find (_.node == antonNode) foreach {a ⇒
+      as find (_.node == antonNode) foreach { a ⇒
         val p = new AgentPointer(a)
-        a.state.donations foreach {d ⇒
+        a.state.donations find {_.title.get contains "clay"} foreach { d ⇒
+          println(d)
           DonationResponses.showDonationBubble(p, d, Some(d.id))
         }
       }
@@ -130,7 +144,7 @@ class ExamineAgent extends FreeSpec with Matchers {
         }
       }
 
-      Accounting.getSelfBalance({check find(_.id == "facebook_agent") get}) should be (0)
+      Accounting.getSelfBalance({check find (_.id == "facebook_agent") get}) should be(0)
     }
 
 
@@ -164,7 +178,7 @@ class ExamineAgent extends FreeSpec with Matchers {
       div("coin update")
       as foreach { a ⇒
         println("modifying", a.id)
-        var upd = a.modify(_.state.coins).using {c ⇒
+        var upd = a.modify(_.state.coins).using { c ⇒
           val stage1 = c diff antonsCoins
           stage1 ++ antonsCoins
         }
@@ -175,15 +189,18 @@ class ExamineAgent extends FreeSpec with Matchers {
       var asCheck = StateManager.loadAll("onserver/")
       asCheck forall { a ⇒
         println(a.id, Accounting.getBalance(antonNode)(a))
-        Accounting.getBalance(antonNode)(a) == 10 } shouldBe true
+        Accounting.getBalance(antonNode)(a) == 10
+      } shouldBe true
       asCheck forall { a ⇒ Accounting.getBalance(sarahNode)(a) == 4 } shouldBe true
       val others = asCheck filterNot { a ⇒ a.node == antonNode || a.node == sarahNode || a.id == "facebook_agent" }
       others forall {
         a ⇒ Accounting.getSelfBalance(a) == 7
       } shouldBe true
-      asCheck forall {_.state.chains.transactions.exists {t ⇒
-        t.from == sarahNode && t.to == antonNode && t.coins.size == 3
-      }} shouldBe true
-  }
+      asCheck forall {
+        _.state.chains.transactions.exists { t ⇒
+          t.from == sarahNode && t.to == antonNode && t.coins.size == 3
+        }
+      } shouldBe true
+    }
   }
 }
