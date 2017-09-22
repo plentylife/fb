@@ -8,7 +8,7 @@ import plenty.state.model._
 /**
   * Various messaging formats
   */
-abstract class Message[P] {
+abstract class Message[+P] {
   val from: Node
   val to: Node
   val payloadId: PayloadIdentifier[P]
@@ -21,14 +21,17 @@ abstract class Message[P] {
 
   override def toString: String = {
     val fromStr = if (from != null) from.id else "???"
-    fromStr + " -> " + to.id + "  " + payloadId.typeOfMsg + " @ " + new Date(timestamp)
+    fromStr.formatted("%18s") + " -> " + to.id.formatted("%18s") + " " + payloadId.typeOfMsg.formatted("%25s") + " @ " +
+      new Date(timestamp)
   }
 }
 
-trait PayloadIdentifier[P] {
+trait PayloadIdentifier[+P] {
   val typeOfMsg: String
 
   def cast(o: Any): P = o.asInstanceOf[P]
+
+  def run[R](f: (Message[P]) ⇒ R)(implicit m: Message[Any]): R = f(m.asInstanceOf[Message[P]])
 
   override def toString: String = typeOfMsg
 
@@ -42,34 +45,34 @@ trait MessagePrototype[P] extends Function1[Node, Message[P]]
 
 
 object RelayIdentifiers {
-  val DONATION_RELAY = Message.createAction[Donation]("DONATION_RELAY")
-  val BID_RELAY = Message.createAction[Bid]("BID_RELAY")
+  final val DONATION_RELAY = Message.createAction[Donation]("DONATION_RELAY")
+  final val BID_RELAY = Message.createAction[Bid]("BID_RELAY")
 }
 
 object ActionIdentifiers {
-  val REGISTER_NODE = Message.createAction[Node]("REGISTER_NODE")
+  final val REGISTER_NODE = Message.createAction[Node]("REGISTER_NODE")
 
   /* coin management */
-  val COINS_MINTED = Message.createAction[Set[Coin]]("COINS_MINTED")
+  final val COINS_MINTED = Message.createAction[Set[Coin]]("COINS_MINTED")
 
   /* transaction */
-  val TRANSACTION = Message.createAction[Transaction]("TRANSACTION")
-  val ACCEPT_TRANSACTION = Message.createAction[Transaction]("ACCEPT_TRANSACTION")
-  val REJECT_TRANSACTION = Message.createAction[RejectedTransaction[Transaction]]("REJECT_TRANSACTION")
+  final val TRANSACTION = Message.createAction[Transaction]("TRANSACTION")
+  final val ACCEPT_TRANSACTION = Message.createAction[Transaction]("ACCEPT_TRANSACTION")
+  final val REJECT_TRANSACTION = Message.createAction[RejectedTransaction[Transaction]]("REJECT_TRANSACTION")
 
   /* bid to transfer */
-  val BID_TAKE_ACTION = Message.createAction[Bid]("BID_TAKE_ACTION")
-  val SETTLE_BID_ACTION = Message.createAction[BidTransaction]("SETTLE_BID_ACTION")
-  val DENY_SETTLE_BID_ACTION = Message.createAction[RejectedTransaction[BidTransaction]]("DENY_SETTLE_BID_ACTION")
-  val APPROVE_SETTLE_BID_ACTION = Message.createAction[BidTransaction]("APPROVE_SETTLE_BID_ACTION")
+  final val BID_TAKE_ACTION = Message.createAction[Bid]("BID_TAKE_ACTION")
+  final val SETTLE_BID_ACTION = Message.createAction[BidTransaction]("SETTLE_BID_ACTION")
+  final val DENY_SETTLE_BID_ACTION = Message.createAction[RejectedTransaction[BidTransaction]]("DENY_SETTLE_BID_ACTION")
+  final val APPROVE_SETTLE_BID_ACTION = Message.createAction[BidTransaction]("APPROVE_SETTLE_BID_ACTION")
 
   /* bidding */
   /** a message back signifying that a bid has been accepted for consideration */
-  val ACCEPT_BID_ACTION = Message.createAction[Bid]("ACCEPT_BID_ACTION")
+  final val ACCEPT_BID_ACTION = Message.createAction[Bid]("ACCEPT_BID_ACTION")
   /** the bid has NOT been accepted for consideration for some reason such as low balance */
-  val REJECT_BID_ACTION = Message.createAction[RejectedBid]("REJECT_BID_ACTION")
+  final val REJECT_BID_ACTION = Message.createAction[RejectedBid]("REJECT_BID_ACTION")
   /** retracting a bid */
-  val RETRACT_BID_ACTION = Message.createAction[Bid]("RETRACT_BID_ACTION")
+  final val RETRACT_BID_ACTION = Message.createAction[Bid]("RETRACT_BID_ACTION")
 }
 
 object DonateAction extends PayloadIdentifier[Donation] {
@@ -98,8 +101,8 @@ object Message {
     new Message[Type] {
       override val payloadId: PayloadIdentifier[Type] = msgPayloadId
       override val payload: Type = msgPayload
-      override val from = fromNode
-      override val to = toNode
+      override val from: Node = fromNode
+      override val to: Node = toNode
       override val id: String = msgId
       override val timestamp: Long = now
     }

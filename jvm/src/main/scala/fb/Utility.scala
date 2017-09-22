@@ -1,8 +1,6 @@
 package fb
 
-import javax.mail.Message.RecipientType
-import javax.mail.{Session, Transport, internet}
-import javax.mail.internet.{InternetAddress, MimeMessage}
+import java.util.logging.Logger
 
 import akka.http.scaladsl.model._
 import akka.util.ByteString
@@ -22,6 +20,8 @@ import scala.util.parsing.json.{JSON, JSONObject}
   * Created by anton on 8/15/17.
   */
 object Utility {
+  private val logger = Logger.getLogger("Fb Utility")
+
   def createAgent(n: Node): Future[AgentPointer] = {
     val a = AgentManager.createAgent(n, FbAgent.lastState)
 
@@ -59,7 +59,7 @@ object Utility {
 
         val amount = amountStr.toInt
         val bid = StateManager.createBid(donation, amount, a.node)
-        println(s"bid $bid")
+        logger.finer(s"Created bid $bid")
         Network.notifyAllAgents(bid, BidAction, from = a.node)
         true
       case _ =>
