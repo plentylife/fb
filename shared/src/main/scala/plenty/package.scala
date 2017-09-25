@@ -4,14 +4,14 @@ import java.util.logging.Level
 import scala.concurrent.ExecutionContext
 
 package object plenty {
-  val cores: Set[Int] = Set(Runtime.getRuntime.availableProcessors, 2)
+  //  val cores: Set[Int] = Set(Runtime.getRuntime.availableProcessors, 2)
+  val cores: Set[Int] = Set(2)
   val pool = new ForkJoinPool(cores.max)
   implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
   println(s"Pool set to ${cores.max} threads")
 
-  import java.util.logging.LogManager
-  import java.util.logging.Logger
+  import java.util.logging.{LogManager, Logger}
 
   val rootLogger: Logger = LogManager.getLogManager.getLogger("")
   rootLogger.setLevel(Level.FINER)
