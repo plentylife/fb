@@ -3,7 +3,7 @@ package plenty.state.model
 /**
   * Representation of a node in a network (such as a friend)
   */
-case class Node(id: String)
+case class Node(id: String) extends HasId[String]
 
 /**
   * Representation of a coin (aka Thanks). Each coin has the same value as any other coin.
@@ -23,17 +23,17 @@ case class Coin(id: Long, belongsTo: Node, mintTime: Long, lastTransactionTime: 
 case class Donation(id: String, title: Option[String] = None,
                     who: Option[String] = None, what: Option[String] = None, where: Option[String] = None,
                     when: Option[String] = None, how: Option[String] = None, why: Option[String] = None,
-                    attachments: Seq[String] = Seq(), by: Node, timestamp: Long)
+                    attachments: Seq[String] = Seq(), by: Node, timestamp: Long) extends HasId[String]
 
 /**
   * Represents a bid for a donation
   *
   * @param amount can be anything >= 0
   **/
-case class Bid(id: String, donation: Donation, amount: Int, by: Node, timestamp: Long)
+case class Bid(id: String, donation: Donation, amount: Int, by: Node, timestamp: Long) extends HasId[String]
 
 
-trait Transaction {
+trait Transaction extends HasId[String] {
   val transactionType: TransactionType.Value
 
   val id: String

@@ -11,7 +11,7 @@ import plenty.state.model._
 object Receiver {
 
   // fixme this can be rewritten to match directly on incomingMessage.payload
-  def receive(incomingMessage: Message[Any])(implicit toAgent: Agent): Agent = incomingMessage match {
+  def receive[T](incomingMessage: Message[T])(implicit toAgent: Agent): Agent = incomingMessage match {
     case m if m.payloadId == ActionIdentifiers.REGISTER_NODE =>
     registerNode(m.payload.asInstanceOf[Node], toAgent)
 
@@ -60,8 +60,8 @@ object Receiver {
   }
 
   /** this is how the matching function should have been written from the beginning*/
-  private def properMatchingFunction(incomingMessage: Message[Any])(implicit toAgent: Agent): Agent = {
-    implicit val m: Message[Any] = incomingMessage
+  private def properMatchingFunction[T](incomingMessage: Message[T])(implicit toAgent: Agent): Agent = {
+    implicit val m: Message[T] = incomingMessage
     incomingMessage.payloadId match {
 
       /* Bids */

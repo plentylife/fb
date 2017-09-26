@@ -8,7 +8,7 @@ import plenty.state.model._
 /**
   * Various messaging formats
   */
-abstract class Message[+P] {
+abstract class Message[P] {
   val from: Node
   val to: Node
   val payloadId: PayloadIdentifier[P]
@@ -22,19 +22,28 @@ abstract class Message[+P] {
   override def toString: String = {
     val fromStr = if (from != null) from.id else "???"
     fromStr.formatted("%18s") + " -> " + to.id.formatted("%18s") + " " + payloadId.typeOfMsg.formatted("%25s") + " @ " +
-      new Date(timestamp)
+      "\n\t" + payloadId.displayPayload(payload)
   }
 }
 
-trait PayloadIdentifier[+P] {
+trait PayloadIdentifier[P] {
   val typeOfMsg: String
+
+  private var loggingFunction: (P) ⇒ String = { _ ⇒ "" }
 
   def cast(o: Any): P = o.asInstanceOf[P]
 
-  def run[R](f: (Message[P]) ⇒ R)(implicit m: Message[Any]): R = f(m.asInstanceOf[Message[P]])
+  def run[R](f: (Message[P]) ⇒ R)(implicit m: Message[_]): R = f(m.asInstanceOf[Message[P]])
 
   override def toString: String = typeOfMsg
 
+  def displayPayload(payload: P): String = payload match {
+    case p: HasId[_] ⇒ p.id.toString + loggingFunction(payload)
+    case p ⇒ loggingFunction(p)
+  }
+
+  def setLoggingFunction(f: (P) ⇒ String): Unit = loggingFunction = f
+  
   override def equals(o: scala.Any): Boolean = o match {
     case pid: PayloadIdentifier[_] => pid.typeOfMsg == this.typeOfMsg
     case _ => false
