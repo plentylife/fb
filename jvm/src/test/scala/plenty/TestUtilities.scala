@@ -1,6 +1,7 @@
 package plenty
 
 import java.util.Date
+import java.util.logging.Logger
 
 import fb.UserInfo
 import plenty.agent.model.Agent
@@ -45,6 +46,7 @@ object TestUtilities {
 
 object MockSendReceiveInterface extends SendReceiveInterface {
   var logging = true
+  private val logger = Logger.getLogger("Network [fb]")
 
   var log = List[Message[_]]()
 
@@ -53,7 +55,7 @@ object MockSendReceiveInterface extends SendReceiveInterface {
   }
 
   override def send(msg: Message[_]): Unit = {
-    if (logging) println(msg)
+    if (logging) logger.fine(s"$msg")
     addToLog(msg)
     Network.receive(msg)
   }
