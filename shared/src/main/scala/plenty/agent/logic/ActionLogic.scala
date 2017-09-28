@@ -1,11 +1,11 @@
-package plenty.agent
+package plenty.agent.logic
 
 import java.util.Date
 import java.util.logging.Logger
 
-import plenty.agent.AgentManager.agentAsNode
 import plenty.agent.model.Agent
-import plenty.network.{ActionIdentifiers, Network}
+import plenty.agent.{Accounting, TransactionException, WrongTransactionAmount, agentAsNode}
+import plenty.network.{ActionIdentifiers, Network, PayloadIdentifier}
 import plenty.state.StateManager
 import plenty.state.model._
 
@@ -15,55 +15,39 @@ import scala.language.postfixOps
   * Logic of agent's actions such as accepting bids, accepting coins, etc
   */
 object ActionLogic {
-  private val log = Logger.getLogger("ActionLogic")
+  private val logger = Logger.getLogger("ActionLogic")
 
   private val periodBeforeBidAcceptance: Long = plenty.daysToMillis(2)
 
   /* Demurage */
-
-  def applyDemurage(implicit a: Agent): Unit = {
-    val ts = Accounting.produceDemurageTransactions(a)
-    if (ts.isEmpty) log.warning(s"Could not send out demurage (${a.id})")
-    else {
-      ts foreach { t ⇒
-        log.fine(s"Applied demurrage ${t.from} -> ${t.to} of ${t.coins.size}")
-        Network.notifyAllAgents(t, ActionIdentifiers.TRANSACTION, a.node)
-      }
-    }
-  }
-
-  /* Transacting */
-
-  def transactOnPromisedBids(implicit agent: Agent): Unit = {
-    for (bid <- agent.state.nonSettledBids) {
-      if (bid.by.id == AgentManager.agentAsNode(agent).id) {
-        transactBid(bid)
-      }
-    }
-  }
-
-  def transactBid(bid: Bid)(implicit agent: Agent): Option[WrongTransactionAmount] = {
+  def transactBid(bid: Bid)(implicit agent: Agent): Either[WrongTransactionAmount, Transaction] = {
+    // fixme verify that this is the agents bid
     Accounting.createTransaction(bid.donation.by, bid.amount) match {
       case Left(e) =>
         e match {
           case _: WrongTransactionAmount =>
             // if transaction fails, retracting bid
             Network.notifyAllAgents(bid, ActionIdentifiers.RETRACT_BID_ACTION, agent)
-          case _ => Unit
+          case _ =>
+            logger.info("While tyring to transact a bid, an unknown exception has occurred")
         }
-        Option(e)
+        Left(e)
       case Right(_t: Transaction) =>
         val t = StateManager.transformTransaction(_t, bid = bid)
-        Network.notifyAllAgents(t, ActionIdentifiers.SETTLE_BID_ACTION, agent)
-        None
+        sendTransaction(t, ActionIdentifiers.SETTLE_BID_ACTION, agent)
+        Right(t)
     }
   }
 
+  /* Transacting */
   /**
     * Makes sure that a transaction that settles a bid is valid and issues an [[ActionIdentifiers.APPROVE_SETTLE_BID_ACTION]]
+    * A transaction is verified if all the coins belong to the sender, and if the transaction amount is at least the
+    * bid amount
+    *
     * */
   def verifyTransactionForBid(t: BidTransaction, agent: Agent): Unit = {
-    agent.state.nonSettledBids.find(_ == t.bid) match {
+    agent.state.bidsPendingSettle.find(_ == t.bid) match {
       case Some(trustedBid) =>
         var v: Either[TransactionException, Unit] = Accounting.verifyTransaction(t, agent)
         v = v.flatMap(_ ⇒ Accounting.verifyTransactionAmount(t, trustedBid.amount))
@@ -77,7 +61,6 @@ object ActionLogic {
         .DENY_SETTLE_BID_ACTION, agent)
     }
   }
-
   /**
     * Verifies that the transaction advertises coins that indeed belong to the sender of the transaction
     * Issues an [[ActionIdentifiers.ACCEPT_TRANSACTION]] or [[ActionIdentifiers.REJECT_TRANSACTION]]
@@ -87,14 +70,11 @@ object ActionLogic {
     Accounting.verifyTransaction(t, a) match {
       case _: Right[_,_] => Network.notifyAllAgents(t, ActionIdentifiers.ACCEPT_TRANSACTION, a)
       case _: Left[_,_] =>
-        log.info(s"transaction ${t.from} -> ${t.to} failed on verify (agent ${a.id}) | ${t.id}")
+        logger.info(s"transaction ${t.from} -> ${t.to} failed on verify (agent ${a.id}) | ${t.id}")
         Network.notifyAllAgents(RejectedTransaction("coins do not belong to the sender", t),
         ActionIdentifiers.REJECT_TRANSACTION, a)
     }
   }
-
-  /* Bidding */
-
   /**
     * Checks all open bids that can be accepted, and makes a decision whether any of them should be.
     * The current criteria for accepting a bid is that no additional bids were placed on the same donation within the
@@ -104,25 +84,54 @@ object ActionLogic {
   def takeBids(agent: Agent, hardAuctionClose: Boolean = false): Unit = {
     val now = new Date().getTime
     /** function that selects 0 or 1 bids from a list of bids based on time or prompt*/
-    val takingBidsWith = takeBidForDonation(now, hardAuctionClose) _
+    val takingBidsWith = takeBestBidFromSet(now, hardAuctionClose) _
     // bids on donations by the agent
     val bids = agent.state.bids filter {
       _.donation.by == agentAsNode(agent)
     }
     if (bids.isEmpty) return
 
-    log.fine(s"agent ${agent.id} looking to accept bids from $bids")
+    logger.fine(s"agent ${agent.id} looking to accept bids from $bids")
     val bidsByDonation = bids.groupBy(_.donation.id)
     val accepted = bidsByDonation.flatMap(kv => {
       val (_, bids) = kv
       takingBidsWith(bids)
     })
 
-    log.fine(s"agent ${agent.id} has accepted $accepted")
-    val self = AgentManager.agentAsNode(agent)
+    logger.fine(s"agent ${agent.id} has accepted $accepted")
+    val self = agent.node
     for (acceptedBid <- accepted) {
       Network.notifyAllAgents(acceptedBid, ActionIdentifiers.BID_TAKE_ACTION, from = self)
     }
+  }
+  /** hard auction close to disregard the one day wait time */
+  private def takeBestBidFromSet(now: Long, hardAuctionClose: Boolean)(bids: Iterable[Bid]): Option[Bid] = {
+    if (bids.isEmpty) return None
+
+    // has any new bids been submitted in the last day
+    val isAuctionClosed = hardAuctionClose || bids.forall(_.timestamp < now - periodBeforeBidAcceptance)
+    if (isAuctionClosed) {
+      val maxBid = bids.map(_.amount).max
+      val highestBids = bids.filter(_.amount >= maxBid)
+      val earliestTimestamp = highestBids.map(_.timestamp).min
+      highestBids.find(_.timestamp <= earliestTimestamp)
+    } else {
+      None
+    }
+  }
+
+  /* Bidding */
+  private[logic] def applyDemurage(implicit a: Agent): Set[DemurageTransaction] = {
+    val ts = Accounting.produceDemurageTransactions(a)
+    if (ts.isEmpty) {
+      logger.warning(s"Could not send out demurage (${a.id})")
+    } else {
+      ts foreach { t ⇒
+        logger.fine(s"Applied demurrage ${t.from} -> ${t.to} of ${t.coins.size}")
+        sendTransaction(t, ActionIdentifiers.TRANSACTION, a)
+      }
+    }
+    ts
   }
 
   /** is the bid valid, does the bidder have enough coins?
@@ -149,21 +158,8 @@ object ActionLogic {
       Network.notifyAllAgents(rejection, ActionIdentifiers.REJECT_BID_ACTION, a)
     }
   }
-
-  /** hard auction close to disregard the one day wait time */
-  private def takeBidForDonation(now: Long, hardAuctionClose: Boolean)(bids: Iterable[Bid]): Option[Bid] = {
-    if (bids.isEmpty) return None
-
-    // has any new bids been submitted in the last day
-    val isAuctionClosed = hardAuctionClose || bids.forall(_.timestamp < now - periodBeforeBidAcceptance)
-    if (isAuctionClosed) {
-      val maxBid = bids.map(_.amount).max
-      val highestBids = bids.filter(_.amount >= maxBid)
-      val earliestTimestamp = highestBids.map(_.timestamp).min
-      highestBids.find(_.timestamp <= earliestTimestamp)
-    } else {
-      None
-    }
+  def sendTransaction[P <: Transaction](t: P, payloadId: PayloadIdentifier[P], a: Agent): Unit = {
+    Network.notifyAllAgents(t, payloadId, a.node)
   }
 
   /* Relays */

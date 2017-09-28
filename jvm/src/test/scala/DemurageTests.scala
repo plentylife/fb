@@ -1,17 +1,18 @@
 import java.util.Date
 
-import plenty.TestUtilities._
 import org.scalatest.{FreeSpec, Matchers}
-import plenty.agent.{Accounting, ActionLogic, AgentPointer}
+import plenty.TestUtilities._
+import plenty.agent.Accounting
+import plenty.agent.logic.AgentManager
 import plenty.agent.model.Agent
 import plenty.network.{ActionIdentifiers, MintPress, Network}
 import plenty.state.StateManager
 import plenty.state.model.{Coin, DemurageTransaction, Node, State}
+import plenty.{MockSendReceiveInterface, TestUtilities, executionContext}
 
 import scala.collection.immutable
 import scala.concurrent.Promise
 import scala.language.postfixOps
-import plenty.{MockSendReceiveInterface, TestUtilities, executionContext}
 
 class DemurageTests extends FreeSpec with Matchers {
   "Demurrage" - {
@@ -75,7 +76,7 @@ class DemurageTests extends FreeSpec with Matchers {
         )
       }
 
-      ActionLogic.applyDemurage(ap(2))
+      AgentManager.applyDemurrage(ap(2))
       TestUtilities.waitClearQueue()
 
       ap(2).agentInLastState.state.chains.transactions.collectFirst {

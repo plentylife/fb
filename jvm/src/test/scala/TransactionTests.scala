@@ -1,8 +1,4 @@
-import plenty.TestUtilities._
-import plenty.agent.model.Agent
-import plenty.agent.{Accounting, ActionLogic, AgentManager, AgentPointer}
-import plenty.network.{BidAction, _}
-import plenty.state.StateManager
+import plenty.network._
 import plenty.state.model._
 
 
@@ -265,7 +261,7 @@ object InternalSendReceiveInterface extends SendReceiveInterface {
     log :+= msg
 
     msg.payload match {
-      case rejection: Rejection ⇒
+      case rejection: Rejection[_] ⇒
         println(s"rejection reason: ${rejection.reason} ${rejection.getClass}")
       case _ ⇒
     }

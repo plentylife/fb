@@ -4,13 +4,9 @@ import java.io._
 import java.security.{MessageDigest, SecureRandom}
 import java.util.{Base64, Date}
 
-import io.circe.Decoder.Result
-import io.circe._
 import io.circe.generic.auto._
-import io.circe.generic.semiauto.deriveEncoder
 import io.circe.parser._
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, HCursor}
 import plenty.agent.model.Agent
 import plenty.state.model._
 
@@ -19,7 +15,6 @@ import plenty.state.model._
   *
   */
 object StateManager {
-  import Codecs._
 
   private val random = new SecureRandom()
   private val hasher = MessageDigest.getInstance("SHA-512")
@@ -65,7 +60,7 @@ object StateManager {
 
   /** @return bids that have the donation (of the given bid) in common.
     *         takes into account bids and non-settled bids */
-  def getRelatedBids(state: State, bid: Bid): Set[Bid] = (state.bids ++ state.nonSettledBids) filter {
+  def getRelatedBids(state: State, bid: Bid): Set[Bid] = (state.bids ++ state.bidsPendingSettle) filter {
     _.donation == bid.donation
   }
 
@@ -115,7 +110,9 @@ object StateManager {
 }
 
 object Codecs {
-  import io.circe._, io.circe.generic.semiauto._
+
+  import io.circe._
+  import io.circe.generic.semiauto._
 
   implicit val ttypeEnc: Encoder[TransactionType.Value] = Encoder.forProduct1("type")(u ⇒ u.toString)
   implicit val nodeEnc: Encoder[Node] = deriveEncoder[Node]

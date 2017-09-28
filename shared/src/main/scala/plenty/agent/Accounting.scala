@@ -3,7 +3,6 @@ package plenty.agent
 import java.util.Date
 import java.util.logging.Logger
 
-import plenty.agent.AgentManager.agentAsNode
 import plenty.agent.model.Agent
 import plenty.state.StateManager
 import plenty.state.model._
@@ -94,7 +93,7 @@ object Accounting {
   }
 
   /** @return the balance that the given agent believes they have */
-  def getSelfBalance(agent: Agent): Int = getBalance(AgentManager.agentAsNode(agent))(agent)
+  def getSelfBalance(agent: Agent): Int = getBalance(agent.node)(agent)
 
   def getOwnCoins(a: Agent): Set[Coin] = a.state.coins.filter(c ⇒ c.belongsTo.id == a.id)
 
@@ -141,7 +140,7 @@ object Accounting {
   }
 
   private def canTransactAmount(amount: Int)(implicit agent: Agent): Boolean = {
-    canTransactAmount(AgentManager.agentAsNode(agent), agent, amount)
+    canTransactAmount(agent.node, agent, amount)
   }
 
   def canTransactAmount(node: Node, agent: Agent, amount: Int): Boolean = {

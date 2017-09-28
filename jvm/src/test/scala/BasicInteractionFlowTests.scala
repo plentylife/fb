@@ -1,16 +1,11 @@
 import org.scalatest.{FreeSpec, Matchers}
+import plenty.MockSendReceiveInterface
+import plenty.TestUtilities._
 import plenty.agent._
 import plenty.agent.model.Agent
-import plenty.network.BidAction
-import plenty.network._
+import plenty.network.{BidAction, _}
 import plenty.state.StateManager
 import plenty.state.model.{Coin, Node, State}
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
-import plenty.TestUtilities._
-import com.softwaremill.quicklens._
-import plenty.MockSendReceiveInterface
 
 import scala.language.postfixOps
 /**
@@ -94,7 +89,7 @@ class BasicInteractionFlowTests extends FreeSpec with Matchers {
         for (a <- getAgents) {
           assert(!a.state.bids.contains(bid))
           assert(!a.state.donations.contains(donation))
-          assert(!a.state.nonSettledBids.contains(bid))
+          assert(!a.state.bidsPendingSettle.contains(bid))
           a.state.chains.transactions should have size(1)
           a.state.coins shouldBe coinState
         }

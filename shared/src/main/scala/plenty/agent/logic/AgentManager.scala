@@ -1,6 +1,10 @@
-package plenty.agent
+package plenty.agent.logic
 
+import java.util.logging.Logger
+
+import plenty.agent.Accounting
 import plenty.agent.model.Agent
+import plenty.network.ActionIdentifiers._
 import plenty.network.Message
 import plenty.state.model._
 
@@ -10,6 +14,15 @@ import scala.language.implicitConversions
   * The access point to the agent module
   */
 object AgentManager {
+  private val logger = Logger.getLogger("AgentManager")
+
+  /* Demurrage */
+  def applyDemurrage(a: Agent): Agent = {
+    ActionLogic.applyDemurage(a).foldLeft(a)({ (ua, t) ⇒
+      StateLogic.onTransact(t, ua)
+    })
+  }
+
   /* Misc registrations */
 
   def registerNode(node: Node, agent: Agent): Agent = {
@@ -46,7 +59,7 @@ object AgentManager {
   private def finishTransaction(t: Transaction, a: Agent): Agent = {
     val coins = Accounting.transferCoins(t)  // fixme adding to transactions should be followed by save
     val au = StateLogic.registerCoins(coins, a)
-    StateLogic.registerTransaction(t, au)
+    StateLogic.onTransactionFinish(t, au)
   }
 
   /**
@@ -63,8 +76,7 @@ object AgentManager {
       return a
     }
 
-
-    if (a.state.nonSettledBids contains bid) {
+    if (a.state.bidsPendingSettle contains bid) {
       var agentUpd = StateLogic.registerApprovedBidSettle(t, a)
       agentUpd = finishTransaction(t, agentUpd)
       agentUpd
@@ -82,7 +94,8 @@ object AgentManager {
 
     val a = StateLogic.removeBid(bid, agent)
     // fixme needs to be verified that the transaction and bid match
-    if (t.to == agentAsNode(a)) {
+    // todo change to bid.donation.by
+    if (t.to == a.node) {
       AgentManager.takeBids(a)
     }
     a
@@ -105,28 +118,55 @@ object AgentManager {
     //    ActionLogic.relayBid(bid)
   }
 
-  def registerTakenBid(bid: Bid, agent: Agent): Agent = {
-    var a = StateLogic.registerTakenBid(bid, agent)
-    ActionLogic.transactOnPromisedBids(a)
-    a
+  /**
+    * Called after a donor decides to take a bid for a donation and issues [[BID_TAKE_ACTION]]
+    * That bid is then transferred into the registry of bids that are not yet settled
+    * If the bid is made by this agent, they should settle it, or retract it
+    **/
+  def onBidTake(a: Agent)(msg: Message[Bid]): Agent = {
+    a.state.bids find (_ == msg.payload) match {
+      case Some(bid) ⇒
+        // is taken bid coming from donor
+        if (msg.from != bid.donation.by) {
+          return a
+        }
+        // already being settled
+        val pendingTransactions = a.state.transactionsPendingSettle collect {
+          case t: BidTransaction if t.bid == bid ⇒ t
+        }
+        if (pendingTransactions.nonEmpty) {
+          return a
+        }
+        // agent update
+        var ua = StateLogic.registerTakenBid(bid, a)
+        // if this is the agent's bid, then this is the time to settle it
+        if (bid.by == a.node) {
+          ua.state.bidsPendingSettle find {_ == bid} orElse {
+            logger.info(s"OnBidTake failed to find the bid: $bid");
+            None
+          } foreach { b ⇒
+            ActionLogic.transactBid(b)(a) match {
+              // if transaction is successful, adding to pending
+              case Right(t) ⇒ ua = StateLogic.onTransact(t, ua) // agent update
+              case _ ⇒
+            }
+          }
+        }
+        ua
+      case None ⇒
+        logger.info(s"onBidTake message did not contain a valid bid: $msg")
+        a
+    }
   }
 
   def retractBid(bid: Bid, agent: Agent): Agent = {
-    val isBidBeingSettled = agent.state.nonSettledBids contains bid
+    val isBidBeingSettled = agent.state.bidsPendingSettle contains bid
     val a = StateLogic.removeBid(bid, agent)
 
-    if (isBidBeingSettled && bid.donation.by == agentAsNode(a)) {
+    if (isBidBeingSettled && bid.donation.by == a.node) {
       takeBids(a)
     }
     a
   }
-
-  /* Utils */
-
-  def createAgent(node: Node, copyState: State = State()): Agent =
-    Agent(node, state = copyState)
-
-
-  implicit def agentAsNode(agent: Agent): Node = agent.node
 
 }

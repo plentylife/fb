@@ -6,7 +6,8 @@ import java.util.Date
 import com.softwaremill.quicklens._
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.TestUtilities._
-import plenty.agent.{Accounting, ActionLogic, AgentPointer}
+import plenty.agent.logic.AgentManager
+import plenty.agent.{Accounting, AgentPointer}
 import plenty.executionContext
 import plenty.network.{MintPress, Network}
 import plenty.state.StateManager
@@ -126,7 +127,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
           div("3")
 
           Network.getAgents foreach { a ⇒
-            ActionLogic.applyDemurage(a)
+            AgentManager.applyDemurrage(a)
           }
           waitClearQueue()
 
@@ -169,7 +170,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
           waitClearQueue()
 
           Network.getAgents foreach { a ⇒
-            ActionLogic.applyDemurage(a)
+            AgentManager.applyDemurrage(a)
           }
           waitClearQueue()
 

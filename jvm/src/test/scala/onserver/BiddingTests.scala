@@ -7,8 +7,8 @@ import fb.{FbAgent, FbSettings, UserInfo}
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.MockSendReceiveInterface
 import plenty.TestUtilities._
-import plenty.agent.ActionLogic
-import plenty.agent.AgentManager.agentAsNode
+import plenty.agent.agentAsNode
+import plenty.agent.logic.ActionLogic
 import plenty.agent.model.Agent
 import plenty.network._
 import plenty.state.StateManager
@@ -46,7 +46,8 @@ class BiddingTests extends FreeSpec with Matchers {
     waitClearQueue()
 
     val reasons = MockSendReceiveInterface.log.toSet.collect({
-      case m: Message[RejectedBid] if m.payloadId == ActionIdentifiers.REJECT_BID_ACTION ⇒ m.payload.reason
+      case m: Message[_] if m.payloadId == ActionIdentifiers.REJECT_BID_ACTION ⇒
+        ActionIdentifiers.REJECT_BID_ACTION.cast(m.payload).reason
     }: PartialFunction[Message[_], String])
 
     div("Reasons")
@@ -116,22 +117,41 @@ class BiddingTests extends FreeSpec with Matchers {
     val countAsba = MockSendReceiveInterface.log filter {
       _.payloadId == ActionIdentifiers.APPROVE_SETTLE_BID_ACTION
     } groupBy { l ⇒ l.from.id + " -> " + l.to.id }
-    val countSba = MockSendReceiveInterface.log filter {
+    val countSbaTo = MockSendReceiveInterface.log filter {
       _.payloadId == ActionIdentifiers.SETTLE_BID_ACTION
-    } groupBy { l ⇒ l.from.id + " -> " + l.to.id }
+    } groupBy { l ⇒ l.to.id }
+    val countBtaTo = MockSendReceiveInterface.log filter {
+      _.payloadId == ActionIdentifiers.BID_TAKE_ACTION
+    } groupBy { l ⇒ l.to.id }
 
-    printGrouped(countSba)
+    //    printGrouped(countSba)
     //    printGrouped(countAsba)
 
-    countAsba.keys.size should be(as.size * as.size)
-    MockSendReceiveInterface.log.count { l ⇒
-      l.payloadId == RETRACT_BID_ACTION || l.payloadId == REJECT_BID_ACTION
-    } should be(0)
-    logger.info(s"Total messages exchanged ${MockSendReceiveInterface.log.size}")
-    //    count should be (1)
 
-    //    l.from == modBid.donation.by && l.to == FbAgent.node && l.payloadId == ActionIdentifiers
-    // .APPROVE_SETTLE_BID_ACTION
+    val asbaAnton = countAsba("767613720030082 -> facebook_agent")
+    val sbaAnton = countSbaTo("767613720030082")
+    val btaSaladSpinner = countBtaTo("1665771990162012")
+    logger.info(s"Total messages exchanged ${MockSendReceiveInterface.log.size}")
+    logger.info(s"Messages from Anton to FB ${asbaAnton.size} of type ${APPROVE_SETTLE_BID_ACTION}")
+    Thread.sleep(100)
+    asbaAnton foreach {println}
+    logger.info(s"Messages to Anton ${sbaAnton.size} of type ${SETTLE_BID_ACTION}")
+    Thread.sleep(100)
+    SETTLE_BID_ACTION.setLoggingFunction((t) ⇒ s"\n\t${t.bid.donation.title.get}")
+    sbaAnton foreach {println}
+    logger.info(s"Messages to 1665771990162012 ${btaSaladSpinner.size} of type $BID_TAKE_ACTION")
+    Thread.sleep(100)
+    btaSaladSpinner foreach println
+
+
+    countAsba.keys.size should be(as.size * as.size)
+    countSbaTo forall {_._2.size == bids.size} shouldBe true
+    countBtaTo forall {_._2.size == bids.size} shouldBe true
+    countAsba filterNot {_._2.size == bids.size} shouldBe empty
+
+    MockSendReceiveInterface.log.count { l ⇒
+      l.payloadId == RETRACT_BID_ACTION || l.payloadId == REJECT_BID_ACTION || l.payloadId == DENY_SETTLE_BID_ACTION
+    } should be(0)
   }
 
   def printGrouped(what: Map[_, Iterable[_]]) = what foreach { g ⇒

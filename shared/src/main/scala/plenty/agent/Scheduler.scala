@@ -1,5 +1,6 @@
 package plenty.agent
 
+import plenty.agent.logic.AgentManager
 import plenty.executionContext
 import plenty.network.Network
 
@@ -31,9 +32,12 @@ trait Scheduler {
 
   def execute() = {
     Network.getAgents.foreach(ap => {
-      val agent = ap.agentInLastState
-      AgentManager.takeBids(agent)
-      ActionLogic.applyDemurage(agent)
+      ap.getAgentToModify() foreach { a ⇒
+        var ua = a
+        AgentManager.takeBids(ua)
+        ua = AgentManager.applyDemurrage(ua)
+        ap.set(ua)
+      }
     })
   }
 }

@@ -1,11 +1,5 @@
 package fb.donation
 
-import org.scalatest.FreeSpec
-import plenty.agent.{AgentManager, AgentPointer}
-import plenty.agent.model.Agent
-import plenty.state.StateManager
-import plenty.state.model.{Node, State}
-
 //class DonationTests extends FreeSpec {
 //  // dev
 ////  val anton = "1783146675033183"

@@ -1,8 +1,8 @@
 package plenty.network
 
-import plenty.agent.AgentManager._
+import plenty.agent.logic.AgentManager._
+import plenty.agent.logic.{ActionLogic, AgentManager}
 import plenty.agent.model.Agent
-import plenty.agent.{ActionLogic, AgentManager}
 import plenty.state.model._
 
 /**
@@ -44,9 +44,6 @@ object Receiver {
       /* nothing happens */
       toAgent
 
-    case m if m.payloadId == ActionIdentifiers.BID_TAKE_ACTION =>
-      registerTakenBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
-
     case m if m.payloadId == ActionIdentifiers.RETRACT_BID_ACTION =>
       retractBid(m.asInstanceOf[Message[Bid]].payload, toAgent)
 
@@ -68,6 +65,10 @@ object Receiver {
 
       case ActionIdentifiers.ACCEPT_BID_ACTION =>
         ActionIdentifiers.ACCEPT_BID_ACTION.run[Agent](AgentManager.acceptBid(toAgent))
+
+      case ActionIdentifiers.BID_TAKE_ACTION =>
+        ActionIdentifiers.BID_TAKE_ACTION.run(onBidTake(toAgent))
+
 
       /* Transactions */
 

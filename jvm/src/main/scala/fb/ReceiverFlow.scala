@@ -4,14 +4,13 @@ import com.restfb.types.send.{IdMessageRecipient, Message, SendResponse}
 import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem, QuickReplyItem}
 import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMessages_zh_TW
 import fb.donation.{DonationFlow, DonationResponses}
-import plenty.agent.model.Agent
-import plenty.agent.{AgentManager, AgentPointer}
-import plenty.network.Network
-import plenty.state.model.Node
+import plenty.agent.AgentPointer
+import plenty.agent.logic.AgentManager
 import plenty.executionContext
+import plenty.network.Network
 import plenty.state.StateManager
+import plenty.state.model.Node
 
 import scala.concurrent.Future
 

@@ -1,11 +1,5 @@
 package fb
 
-import plenty.agent.model.Agent
-import plenty.state.StateManager
-import plenty.agent.AgentManager._
-import plenty.network.{ActionIdentifiers, Network}
-import plenty.state.model.{Node, RejectedBid}
-
 
 /**
   * Saving state, modifying state by agents

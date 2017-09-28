@@ -22,7 +22,7 @@ abstract class Message[P] {
   override def toString: String = {
     val fromStr = if (from != null) from.id else "???"
     fromStr.formatted("%18s") + " -> " + to.id.formatted("%18s") + " " + payloadId.typeOfMsg.formatted("%25s") + " @ " +
-      "\n\t" + payloadId.displayPayload(payload)
+      payloadId.displayPayload(payload)
   }
 }
 
@@ -38,11 +38,14 @@ trait PayloadIdentifier[P] {
   override def toString: String = typeOfMsg
 
   def displayPayload(payload: P): String = payload match {
-    case p: HasId[_] ⇒ p.id.toString + loggingFunction(payload)
+    case p: HasId[_] ⇒ "\n\t" + p.id.toString + loggingFunction(payload)
     case p ⇒ loggingFunction(p)
   }
 
-  def setLoggingFunction(f: (P) ⇒ String): Unit = loggingFunction = f
+  def setLoggingFunction(f: (P) ⇒ String): PayloadIdentifier[P] = {
+    this.loggingFunction = f
+    return this
+  }
   
   override def equals(o: scala.Any): Boolean = o match {
     case pid: PayloadIdentifier[_] => pid.typeOfMsg == this.typeOfMsg
@@ -71,9 +74,13 @@ object ActionIdentifiers {
 
   /* bid to transfer */
   final val BID_TAKE_ACTION = Message.createAction[Bid]("BID_TAKE_ACTION")
+    .setLoggingFunction(LoggerFunctions.donationTitle)
   final val SETTLE_BID_ACTION = Message.createAction[BidTransaction]("SETTLE_BID_ACTION")
+    .setLoggingFunction(LoggerFunctions.donationTitle)
   final val DENY_SETTLE_BID_ACTION = Message.createAction[RejectedTransaction[BidTransaction]]("DENY_SETTLE_BID_ACTION")
+    .setLoggingFunction(LoggerFunctions.rejectionWithReasonAndId)
   final val APPROVE_SETTLE_BID_ACTION = Message.createAction[BidTransaction]("APPROVE_SETTLE_BID_ACTION")
+    .setLoggingFunction(LoggerFunctions.donationTitle)
 
   /* bidding */
   /** a message back signifying that a bid has been accepted for consideration */
@@ -82,6 +89,17 @@ object ActionIdentifiers {
   final val REJECT_BID_ACTION = Message.createAction[RejectedBid]("REJECT_BID_ACTION")
   /** retracting a bid */
   final val RETRACT_BID_ACTION = Message.createAction[Bid]("RETRACT_BID_ACTION")
+}
+
+private object LoggerFunctions {
+  def donationTitle(t: BidTransaction): String = s"\n\t${t.bid.donation.title.getOrElse("missing title")}"
+  def donationTitle(b: Bid): String = s"\n\t${b.donation.title.getOrElse("missing title")}"
+  def rejectionWithReasonAndId(r: Rejection[_]): String = s"\n\t${r.reason}" + {
+    r.payload match {
+      case p: HasId[_] ⇒ "\n\t" + p.id.toString
+      case p ⇒ ""
+    }
+  }
 }
 
 object DonateAction extends PayloadIdentifier[Donation] {

@@ -1,9 +1,11 @@
 package plenty.network
 
+import java.util.logging.Logger
+
+import plenty.agent.AgentPointer
 import plenty.agent.model.Agent
-import plenty.agent.{AgentManager, AgentPointer}
-import plenty.state.model.Node
 import plenty.executionContext
+import plenty.state.model.Node
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Failure
@@ -12,6 +14,7 @@ import scala.util.Failure
   * Created by anton on 8/8/17.
   */
 object Network {
+  private val logger = Logger.getLogger("Network")
 
   /* basic functions */
 
@@ -57,13 +60,20 @@ object Network {
 
   /* utility functions */
 
+  /** Notifies the sender first, always. Fails critically if the sender is not one of the agents */
   def notifyAllAgents[P](payload: P, payloadId: PayloadIdentifier[P], from: Node) = {
     val buildMessage = (to: Node) => Message.createMessage(fromNode = from, toNode = to, msgPayloadId = payloadId,
       msgPayload = payload)
-    for (ap <- getAgents) {
-      val msg = buildMessage(AgentManager.agentAsNode(ap.agentInLastState))
-      send(msg)
+
+    val msgs = getAgents map { ap ⇒
+      buildMessage(ap.node)
     }
+
+    msgs find {_.to == from} match {
+      case Some(m) ⇒ send(m)
+      case None ⇒ logger.severe("Could not find self in Network agents")
+    }
+    msgs filterNot {_.to == from} foreach send
   }
 
   /* agent registration */

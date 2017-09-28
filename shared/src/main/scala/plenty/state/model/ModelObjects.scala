@@ -64,10 +64,15 @@ object TransactionType extends Enumeration {
 
 // Supplementary
 
-trait Rejection {
+trait Rejection[T] {
   val reason: String
+  val payload: T
 }
 
-case class RejectedBid(reason: String, bid: Bid) extends Rejection
+case class RejectedBid(reason: String, @deprecated bid: Bid) extends Rejection[Bid] {
+  override val payload: Bid = bid
+}
 
-case class RejectedTransaction[T <: Transaction](reason: String, transaction: T) extends Rejection
+case class RejectedTransaction[T <: Transaction](reason: String, @deprecated transaction: T) extends Rejection[T] {
+  override val payload: T = transaction
+}

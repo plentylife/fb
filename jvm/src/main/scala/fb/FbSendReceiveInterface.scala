@@ -60,6 +60,8 @@ object FbSendReceiveInterface extends SendReceiveInterface {
         }
         Network.receive(msg)
 
+      // fixme add ondenysettlebid
+
       case _ => Network.receive(msg)
     }
   }

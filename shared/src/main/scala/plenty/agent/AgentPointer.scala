@@ -1,7 +1,6 @@
 package plenty.agent
 
 import plenty.agent.model.Agent
-import plenty.network.PayloadIdentifier
 
 import scala.collection.immutable.Queue
 import scala.concurrent.{Future, Promise}
@@ -18,7 +17,7 @@ class AgentPointer(private val originalAgent: Agent) {
   private var agentAvailable = true
 
   def id = agent.id
-  val node = AgentManager.agentAsNode(agent)
+  val node = agent.node
 
   @deprecated
   def getAgentToModify(promise: Promise[Agent]) = synchronized {
@@ -35,6 +34,7 @@ class AgentPointer(private val originalAgent: Agent) {
 
   def agentInLastState = agent
 
+  /** Used to set the agent in a new state. Once set, the next requesting operation is given access to the agent. */
   def set(a: Agent) = synchronized {
     agentAvailable = true
     agent = a

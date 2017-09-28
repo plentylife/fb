@@ -5,11 +5,11 @@ import java.util.logging.Logger
 import akka.http.scaladsl.model._
 import akka.util.ByteString
 import com.restfb.types.webhook.messaging.MessagingItem
-import plenty.agent.{AgentManager, AgentPointer}
-import plenty.executionContext
+import plenty.agent.AgentPointer
 import plenty.network.{ActionIdentifiers, BidAction, Network}
 import plenty.state.StateManager
 import plenty.state.model.{Donation, Node}
+import plenty.{agent, executionContext}
 
 import scala.concurrent.Future
 import scala.language.postfixOps
@@ -23,7 +23,7 @@ object Utility {
   private val logger = Logger.getLogger("Fb Utility")
 
   def createAgent(n: Node): Future[AgentPointer] = {
-    val a = AgentManager.createAgent(n, FbAgent.lastState)
+    val a = agent.createAgent(n, FbAgent.lastState)
 
     FbAgent.registerNode(n)
     val p = Network.registerAgent(a, FbSendReceiveInterface)

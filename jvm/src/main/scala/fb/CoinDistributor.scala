@@ -1,12 +1,12 @@
 package fb
 
+import plenty.agent.AgentPointer
+import plenty.agent.logic.StateLogic
 import plenty.agent.model.Agent
-import plenty.agent.{Accounting, AgentPointer, StateLogic}
 import plenty.executionContext
-import plenty.network.{ActionIdentifiers, MintPress, Network}
-import plenty.state.StateManager
+import plenty.network.{MintPress, Network}
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 /**
   * Helps transact coins from [[FbAgent]] to another [[Agent]]
