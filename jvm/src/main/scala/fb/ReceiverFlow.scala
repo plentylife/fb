@@ -6,7 +6,7 @@ import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
 import fb.donation.{DonationFlow, DonationResponses}
 import plenty.agent.AgentPointer
-import plenty.agent.logic.AgentManager
+import plenty.agent.logic.AgentActions
 import plenty.executionContext
 import plenty.network.Network
 import plenty.state.StateIO
@@ -118,7 +118,7 @@ object ReceiverFlow {
           val bidPossible = Utility.startBidding(p, a)
           if (bidPossible) Responses.bidStart(a)
         case p: String if p.startsWith("BID_ACCEPT_POSTBACK_") =>
-          AgentManager.takeBids(a.agentInLastState, hardAuctionClose = true)
+          AgentActions.takeBids(a.agentInLastState, hardAuctionClose = true)
 
       }
 

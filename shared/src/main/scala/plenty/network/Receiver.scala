@@ -1,7 +1,7 @@
 package plenty.network
 
-import plenty.agent.logic.AgentManager._
-import plenty.agent.logic.{ActionLogic, AgentManager}
+import plenty.agent.logic.AgentActions._
+import plenty.agent.logic.{ActionLogic, AgentActions}
 import plenty.agent.model.Agent
 import plenty.state.model._
 
@@ -64,7 +64,7 @@ object Receiver {
       /* Bids */
 
       case ActionIdentifiers.ACCEPT_BID_ACTION =>
-        ActionIdentifiers.ACCEPT_BID_ACTION.run[Agent](AgentManager.acceptBid(toAgent))
+        ActionIdentifiers.ACCEPT_BID_ACTION.run[Agent](AgentActions.acceptBid(toAgent))
 
       case ActionIdentifiers.BID_TAKE_ACTION =>
         ActionIdentifiers.BID_TAKE_ACTION.run(onBidTake(toAgent))
@@ -79,7 +79,7 @@ object Receiver {
 
       case ActionIdentifiers.ACCEPT_TRANSACTION ⇒
         val p = ActionIdentifiers.ACCEPT_TRANSACTION.cast(m.payload)
-        AgentManager.onAcceptTransaction(p, toAgent, m)
+        AgentActions.onAcceptTransaction(p, toAgent, m)
       case ActionIdentifiers.REJECT_TRANSACTION ⇒
         toAgent
     }

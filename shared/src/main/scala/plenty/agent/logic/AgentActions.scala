@@ -13,7 +13,7 @@ import scala.language.implicitConversions
 /**
   * The access point to the agent module
   */
-object AgentManager {
+object AgentActions {
   private val logger = Logger.getLogger("AgentManager")
 
   /* Demurrage */
@@ -96,7 +96,7 @@ object AgentManager {
     // fixme needs to be verified that the transaction and bid match
     // todo change to bid.donation.by
     if (t.to == a.node) {
-      AgentManager.takeBids(a)
+      AgentActions.takeBids(a)
     }
     a
   }

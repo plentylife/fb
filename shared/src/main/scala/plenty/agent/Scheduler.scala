@@ -1,6 +1,6 @@
 package plenty.agent
 
-import plenty.agent.logic.AgentManager
+import plenty.agent.logic.AgentActions
 import plenty.executionContext
 import plenty.network.Network
 
@@ -34,8 +34,8 @@ trait Scheduler {
     Network.getAgents.foreach(ap => {
       ap.getAgentToModify() foreach { a ⇒
         var ua = a
-        AgentManager.takeBids(ua)
-        ua = AgentManager.applyDemurrage(ua)
+        AgentActions.takeBids(ua)
+        ua = AgentActions.applyDemurrage(ua)
         ap.set(ua)
       }
     })

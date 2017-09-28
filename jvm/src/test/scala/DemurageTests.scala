@@ -3,7 +3,7 @@ import java.util.Date
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.TestUtilities._
 import plenty.agent.Accounting
-import plenty.agent.logic.AgentManager
+import plenty.agent.logic.AgentActions
 import plenty.agent.model.Agent
 import plenty.network.{ActionIdentifiers, MintPress, Network}
 import plenty.state.StateManager
@@ -76,7 +76,7 @@ class DemurageTests extends FreeSpec with Matchers {
         )
       }
 
-      AgentManager.applyDemurrage(ap(2))
+      AgentActions.applyDemurrage(ap(2))
       TestUtilities.waitClearQueue()
 
       ap(2).agentInLastState.state.chains.transactions.collectFirst {
