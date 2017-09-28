@@ -7,12 +7,12 @@ import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
 import plenty.agent.model.Agent
+import plenty.state.Codecs._
 import plenty.state.model._
 
 /** Loading and saving of [[plenty.agent.model.Agent]] and [[plenty.state.model.State]] */
 trait StateIO[LoadType] {
   implicit val decoder: Decoder[LoadType]
-
   /* disk IO */
 
   def save(agent: Agent, subfolder: String = "current/"): Unit = {
