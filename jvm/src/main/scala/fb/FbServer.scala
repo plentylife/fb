@@ -3,9 +3,11 @@ package fb
 import java.io.{FileInputStream, InputStream}
 import java.security.{KeyStore, SecureRandom}
 import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.HttpHeader.ParsingResult
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -15,13 +17,14 @@ import akka.util.ByteString
 import plenty.network.Network
 import sun.misc.{Signal, SignalHandler}
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.io.{Source, StdIn}
 import scala.language.postfixOps
 import scala.util.Failure
 
 object FbServer {
+  private val logger = Logger.getLogger("FbServer")
   private var bindingFuture: Future[Http.ServerBinding] = null
   private implicit val system = ActorSystem.apply("my-system")
   private implicit val materializer = ActorMaterializer()
@@ -31,6 +34,11 @@ object FbServer {
   private val httpClient = Http(system)
 
   def start() = {
+    val webviewHeaders: Map[String, HttpHeader] = Seq("facebook.com", "messenger.com") map {
+      host ⇒ host → HttpHeader.parse("X-Frame-Options", s"ALLOW-FROM https://www.$host/")
+    } collect {
+      case (host, h: ParsingResult.Ok) ⇒ host → h.header
+    } toMap
 
     val route: Route =
       pathPrefix("backend") {
@@ -54,6 +62,22 @@ object FbServer {
           }
       } ~ path("privacy-policy") {
         getFromFile(FbSettings.privacyPolicyFile)
+      } ~ {
+        optionalHeaderValueByName("Referer") { optRef ⇒
+          val hostHeaders = optRef map { ref ⇒
+            logger.finest(s"referrer is $ref")
+            webviewHeaders.filter(h ⇒ ref.contains(h._1)).values.toSeq
+          } getOrElse {logger.finer("no referrer"); Seq()}
+          respondWithHeaders(hostHeaders: _*) {
+            pathEndOrSingleSlash {
+              logger.finest("serving index")
+              getFromFile(FbSettings.indexFile)
+            } ~ {
+              logger.finest("serving directory")
+              getFromDirectory(FbSettings.webviewFolderPath)
+            }
+          }
+        }
       }
 
     val password = Source.fromFile("private/pass.txt").mkString.trim.toCharArray
