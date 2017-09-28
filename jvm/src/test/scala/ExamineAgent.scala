@@ -5,7 +5,7 @@ import org.scalatest.{FreeSpec, Matchers}
 import plenty.TestUtilities._
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.network.MintPress
-import plenty.state.StateManager
+import plenty.state.StateIO
 import plenty.state.model.{BidTransaction, Node}
 
 import scala.language.postfixOps
@@ -14,8 +14,8 @@ class ExamineAgent extends FreeSpec with Matchers {
 
   "Analyzing agents" - {
     "Single agent" in {
-      //    val agent = StateManager.load("1495520050542318", "onserver/") // gyorgy
-      val agent = StateManager.load("1624828950901835", "onserver/").get
+      //    val agent = StateIO.load("1495520050542318", "onserver/") // gyorgy
+      val agent = StateIO.load("1624828950901835", "onserver/").get
 
       println(s"all coins count ${agent.state.coins.size}")
       println(s"my coin coint is ${Accounting.getOwnCoins(agent)}")
@@ -37,7 +37,7 @@ class ExamineAgent extends FreeSpec with Matchers {
 
     "FB Agent" in {
       println("\n\n")
-      val agent = StateManager.load("facebook_agent").get
+      val agent = StateIO.load("facebook_agent").get
 
       println("coins that do not belong to fb agent")
       val notMine = agent.state.coins.filterNot(_.belongsTo == agent.node)
@@ -50,7 +50,7 @@ class ExamineAgent extends FreeSpec with Matchers {
     "All server agents" in {
       FbSettings.prod = true
 
-      val as = StateManager.loadAll("onserver/")
+      val as = StateIO.loadAll("onserver/")
       val fbAgent = as find (_.id == "facebook_agent") get;
 
       println(s"Fb agent has ${Accounting.getSelfBalance(fbAgent)}")
@@ -77,7 +77,7 @@ class ExamineAgent extends FreeSpec with Matchers {
   }
 
   "See all bids" in {
-    val as = StateManager.loadAll("onserver/")
+    val as = StateIO.loadAll("onserver/")
 
     as filterNot (_.id == "facebook_agent") foreach { a ⇒
       val ui = UserInfo.get(a.id)
@@ -92,7 +92,7 @@ class ExamineAgent extends FreeSpec with Matchers {
   "Using server agents" - {
     "Send bubbles" in {
       FbSettings.prod = true
-      val as = StateManager.loadAll("onserver/")
+      val as = StateIO.loadAll("onserver/")
       val antonNode = Node("767613720030082")
 
       as find (_.node == antonNode) foreach { a ⇒
@@ -107,7 +107,7 @@ class ExamineAgent extends FreeSpec with Matchers {
 
   "Modifying server agents" - {
     FbSettings.prod = true
-    var as = StateManager.loadAll("onserver/")
+    var as = StateIO.loadAll("onserver/")
 
     "Outputting basic info" in {
       as filterNot (_.id == "facebook_agent") foreach { a ⇒
@@ -128,14 +128,14 @@ class ExamineAgent extends FreeSpec with Matchers {
 
       as foreach { a ⇒
         val u = a.modify(_.state.coins).using(_ ⇒ distributedCoins)
-        StateManager.save(u, "onserver/")
+        StateIO.save(u, "onserver/")
       }
 
     }
 
     "Checking coins" in {
       div("coin check")
-      val check = StateManager.loadAll("onserver/")
+      val check = StateIO.loadAll("onserver/")
 
       check filterNot (_.id == "facebook_agent") foreach { a1 ⇒
         check foreach { a2 ⇒
@@ -149,7 +149,7 @@ class ExamineAgent extends FreeSpec with Matchers {
 
 
     "making sure that the correct transactions are kept" in {
-      as = StateManager.loadAll("onserver/")
+      as = StateIO.loadAll("onserver/")
 
       val antonNode = Node("767613720030082")
       val sarahNode = Node("1843592592335659")
@@ -183,10 +183,10 @@ class ExamineAgent extends FreeSpec with Matchers {
           stage1 ++ antonsCoins
         }
         upd = upd.modify(_.state.chains.transactions).using(_ ⇒ List(transactionToKeep))
-        StateManager.save(upd, "onserver/")
+        StateIO.save(upd, "onserver/")
       }
 
-      var asCheck = StateManager.loadAll("onserver/")
+      var asCheck = StateIO.loadAll("onserver/")
       asCheck forall { a ⇒
         println(a.id, Accounting.getBalance(antonNode)(a))
         Accounting.getBalance(antonNode)(a) == 10

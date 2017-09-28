@@ -10,7 +10,7 @@ import plenty.agent.logic.AgentManager
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.executionContext
 import plenty.network.{MintPress, Network}
-import plenty.state.StateManager
+import plenty.state.StateIO
 import plenty.state.model.{Coin, DemurageTransaction, Node, TransactionType}
 
 import scala.concurrent.Await
@@ -37,7 +37,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
     "old coins should be remembered" in {
       if (!deleteUsers) {
         Network.clear
-        StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+        StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
         aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
 
         aps.foreach(ap ⇒ {
@@ -50,7 +50,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
 
     "new user coins should belong to that user" in {
       Network.clear
-      StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+      StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
       aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
       FbAgent.load()
       val newAgent = Await.result(Utility.createAgent(ns(0)), Duration.Inf)
@@ -66,7 +66,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
 
     "both users should have same amounts of coins after another user is created" in {
       Network.clear
-      StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+      StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
       aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
       FbAgent.load()
 
@@ -103,7 +103,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
     "coins belonging to users should not be distributed again" in {
       div("2")
       Network.clear
-      StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+      StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
       aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
       FbAgent.load()
 
@@ -120,7 +120,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
       "After a short time" - {
         "Users should still have 7 coins" in {
           Network.clear
-          StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+          StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
           aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
           FbAgent.load()
 
@@ -150,7 +150,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
       "After a long time" - {
         "users should have less coins" in {
           Network.clear
-          StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+          StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
           aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
           FbAgent.load()
 
@@ -194,7 +194,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
     "Transaction tracking" - {
       "Demurrage transactions shoud be present for all" in {
         Network.clear
-        StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+        StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
         aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
         FbAgent.load()
 
@@ -213,7 +213,7 @@ class AccountingFbTests extends FreeSpec with Matchers {
     "Agent states" - {
       "Should not contain fb_agent but all others" in {
         Network.clear
-        StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+        StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
         aps = ns.collect { case n ⇒ Network.getAgents.find(_.node == n) } flatten;
         FbAgent.load()
 

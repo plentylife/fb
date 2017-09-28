@@ -4,7 +4,7 @@ import java.util.logging.Level
 
 import com.softwaremill.quicklens._
 import plenty.agent.model._
-import plenty.state.StateManager
+import plenty.state.StateIO
 import plenty.state.model._
 
 /**
@@ -19,7 +19,7 @@ object StateLogic {
       var s = agent.state
       s = s.copy(nodes = s.nodes + node)
       val a = agent.copy(state = s)
-      StateManager.save(a)
+      StateIO.save(a)
       a
     } else agent
   }
@@ -33,7 +33,7 @@ object StateLogic {
 
     s = s.copy(coins = stateCoins)
     val a = agent.copy(state = s)
-    StateManager.save(a)
+    StateIO.save(a)
     a
   }
 
@@ -46,7 +46,7 @@ object StateLogic {
       )
       val agentUpdated = agent.copy(state = stateUpdated)
 
-      StateManager.save(agentUpdated)
+      StateIO.save(agentUpdated)
       agentUpdated
     } getOrElse {
       logger.info(s"Bid not found. $bid")
@@ -60,7 +60,7 @@ object StateLogic {
     )
     val agentUpd = agent.copy(state = stateUpdated)
 
-    StateManager.save(agentUpd)
+    StateIO.save(agentUpd)
 
     agentUpd
   }
@@ -92,14 +92,14 @@ object StateLogic {
   def onTransactionFinish(t: Transaction, agent: Agent): Agent = {
     val a = agent.modify(_.state.chains.transactions).using(list ⇒ t +: list)
       .modify(_.state.transactionsPendingSettle).using(pts ⇒ pts - t)
-    StateManager.save(a)
+    StateIO.save(a)
     a
   }
 
   /** Used when a transaction is sent out; keeps track of it as pending. */
   def onTransact(t: Transaction, a: Agent): Agent = {
     val ua = a.modify(_.state.transactionsPendingSettle).using(pts ⇒ pts + t)
-    StateManager.save(ua)
+    StateIO.save(ua)
     a
   }
 
@@ -110,7 +110,7 @@ object StateLogic {
     )
     val agentUpd = agent.copy(state = stateUpdated)
 
-    StateManager.save(agentUpd)
+    StateIO.save(agentUpd)
 
     agentUpd
   }

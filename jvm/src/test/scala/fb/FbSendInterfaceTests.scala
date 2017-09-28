@@ -6,7 +6,7 @@ package fb
   */
 //class FbSendInterfaceTests extends TestSuite {
 //
-//  StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface$) }
+//  StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface$) }
 //  FbAgent.load()
 //
 //

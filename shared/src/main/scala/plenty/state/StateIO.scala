@@ -8,10 +8,10 @@ import io.circe.parser.decode
 import io.circe.syntax._
 import plenty.agent.model.Agent
 import plenty.state.model._
-import Codecs._
 
 /** Loading and saving of [[plenty.agent.model.Agent]] and [[plenty.state.model.State]] */
-trait StateIO[LT] {
+trait StateIO[LoadType] {
+  implicit val decoder: Decoder[LoadType]
 
   /* disk IO */
 
@@ -31,23 +31,24 @@ trait StateIO[LT] {
     current.close()
   }
 
-  def load[LoadType : Decoder](agentId: String, subFolder: String = "current/"): Option[LoadType] = {
+  def load(agentId: String, subFolder: String = "current/"):
+  Option[LoadType] = {
     val filename = s"./data-stores/$subFolder$agentId.plenty"
     if (new File(filename).exists())
       loadFromFile(filename)
     else None
   }
 
-  private def loadFromFile[LoadType: Decoder](filename: String): Option[LoadType] = {
+  private def loadFromFile(filename: String): Option[LoadType] = {
     val source = scala.io.Source.fromFile(filename).mkString
     val decoderRes = decode[LoadType](source)
     decoderRes.toOption
   }
 
-  def loadAll[LoadType: Decoder](subFolder: String = "current/"): Set[LoadType] = {
+  def loadAll(subFolder: String = "current/"): Set[LoadType] = {
     val currentDir = new File(s"./data-stores/$subFolder")
     val allAgentFiles = currentDir.listFiles()
-    val agents = allAgentFiles flatMap { f => loadFromFile[LoadType](f.getAbsolutePath) }
+    val agents = allAgentFiles flatMap { f => loadFromFile(f.getAbsolutePath) }
     val agentSet = agents.toSet
     // making sure there isn't something wrong with saving
     require(agents.length == allAgentFiles.length, "Wrong file formatting. Could not load some agents")
@@ -57,12 +58,14 @@ trait StateIO[LT] {
 
 }
 
-object StateIO extends StateIO
+import io.circe._
+import io.circe.generic.semiauto._
+
+object StateIO extends StateIO[Agent] {
+  override implicit val decoder: Decoder[Agent] = deriveDecoder[Agent]
+}
 
 private[state] object Codecs {
-
-  import io.circe._
-  import io.circe.generic.semiauto._
 
   implicit val ttypeEnc: Encoder[TransactionType.Value] = Encoder.forProduct1("type")(u ⇒ u.toString)
   implicit val nodeEnc: Encoder[Node] = deriveEncoder[Node]

@@ -2,13 +2,9 @@ package fb
 
 import fb.donation.DonationResponses
 import org.scalatest.{FreeSpec, Matchers}
-import plenty.agent.model.Agent
 import plenty.network.Network
-import plenty.state.StateManager
+import plenty.state.StateIO
 import plenty.state.model.{Donation, Node}
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Promise}
 
 class MiscFbTests extends FreeSpec with Matchers {
 
@@ -36,10 +32,10 @@ class MiscFbTests extends FreeSpec with Matchers {
 
   "Clear bids" in {
     import com.softwaremill.quicklens._
-    StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+    StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
     Network.getAgents.foreach {ap ⇒
         val upd = ap.agentInLastState.modify(_.state.bids).using(_ ⇒ Set())
-        StateManager.save(upd)
+      StateIO.save(upd)
     }
   }
 

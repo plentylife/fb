@@ -1,10 +1,10 @@
 package fb
 
-import java.util.logging.{Level, LogManager}
+import java.util.logging.LogManager
 
 import plenty.agent.Scheduler
 import plenty.network.Network
-import plenty.state.StateManager
+import plenty.state.StateIO
 
 /**
   * The main entry for FB code
@@ -14,7 +14,7 @@ object FbMain {
     LogManager.getLogManager.readConfiguration(FbMain.getClass.getResourceAsStream("/logging.properties"))
 
     // loading network
-    StateManager.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
+    StateIO.loadAll() foreach { a => Network.registerAgent(a, FbSendReceiveInterface) }
 
     Scheduler.start()
 

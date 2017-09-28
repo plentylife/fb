@@ -9,7 +9,7 @@ import plenty.agent.AgentPointer
 import plenty.agent.logic.AgentManager
 import plenty.executionContext
 import plenty.network.Network
-import plenty.state.StateManager
+import plenty.state.StateIO
 import plenty.state.model.Node
 
 import scala.concurrent.Future
@@ -201,7 +201,7 @@ object ReceiverFlow {
 
   def getAgent(id: String): Option[AgentPointer] = {
     Network.getAgents.find(_.id == id) orElse {
-      StateManager.load(id) map {a ⇒ Network.registerAgent(a, FbSendReceiveInterface)}
+      StateIO.load(id) map { a ⇒ Network.registerAgent(a, FbSendReceiveInterface) }
     }
   }
 

@@ -1,6 +1,6 @@
 import org.scalatest.FreeSpec
 import plenty.agent.model.Agent
-import plenty.state.StateManager
+import plenty.state.StateIO
 import plenty.state.model.{Coin, DemurageTransaction, Node, State}
 
 /**
@@ -14,11 +14,11 @@ class StateTests extends FreeSpec {
     val agent = Agent(Node("agent_id"), state = state)
 
     "can_be_saved" in {
-      StateManager.save(agent)
+      StateIO.save(agent)
     }
 
     "can_be_loaded" in {
-      val agentLoaded = StateManager.load(agent.id).get
+      val agentLoaded = StateIO.load(agent.id).get
       println(agentLoaded)
       assert(agentLoaded.state == agent.state)
     }

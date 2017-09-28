@@ -11,7 +11,7 @@ import plenty.agent.agentAsNode
 import plenty.agent.logic.ActionLogic
 import plenty.agent.model.Agent
 import plenty.network._
-import plenty.state.StateManager
+import plenty.state.StateIO
 import plenty.state.model._
 
 import scala.language.postfixOps
@@ -20,7 +20,7 @@ class BiddingTests extends FreeSpec with Matchers {
   private val logger = Logger.getAnonymousLogger()
 
   FbSettings.prod = true
-  val as: Set[Agent] = StateManager.loadAll("onserver/")
+  val as: Set[Agent] = StateIO.loadAll("onserver/")
   as filterNot (_.id == "facebook_agent") foreach { a ⇒
     val ui = UserInfo.get(a.id)
     println(ui.name, a.id)
