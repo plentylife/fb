@@ -49,7 +49,7 @@ object StateLogic {
       StateIO.save(agentUpdated)
       agentUpdated
     } getOrElse {
-      logger.info(s"Bid not found. $bid")
+      logger.fine(s"Bid not found. $bid")
       agent
     }
   }

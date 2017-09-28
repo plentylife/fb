@@ -57,7 +57,7 @@ object AgentActions {
   }
 
   private def finishTransaction(t: Transaction, a: Agent): Agent = {
-    val coins = Accounting.transferCoins(t)  // fixme adding to transactions should be followed by save
+    val coins = Accounting.transferCoins(t) // fixme adding to transactions should be followed by save
     val au = StateLogic.registerCoins(coins, a)
     StateLogic.onTransactionFinish(t, au)
   }
@@ -121,36 +121,22 @@ object AgentActions {
   /**
     * Called after a donor decides to take a bid for a donation and issues [[BID_TAKE_ACTION]]
     * That bid is then transferred into the registry of bids that are not yet settled
-    * If the bid is made by this agent, they should settle it, or retract it
+    * If the bid is made by this agent, they settle it, or retract it
     **/
   def onBidTake(a: Agent)(msg: Message[Bid]): Agent = {
     a.state.bids find (_ == msg.payload) match {
       case Some(bid) ⇒
-        // is taken bid coming from donor
+        // is taken bid coming from donor? If not nothing to execute
         if (msg.from != bid.donation.by) {
           return a
         }
-        // already being settled
-        val pendingTransactions = a.state.transactionsPendingSettle collect {
-          case t: BidTransaction if t.bid == bid ⇒ t
-        }
-        if (pendingTransactions.nonEmpty) {
-          return a
-        }
         // agent update
-        var ua = StateLogic.registerTakenBid(bid, a)
+        implicit var ua: Agent = StateLogic.registerTakenBid(bid, a)
         // if this is the agent's bid, then this is the time to settle it
-        if (bid.by == a.node) {
-          ua.state.bidsPendingSettle find {_ == bid} orElse {
-            logger.info(s"OnBidTake failed to find the bid: $bid");
-            None
-          } foreach { b ⇒
-            ActionLogic.transactBid(b)(a) match {
-              // if transaction is successful, adding to pending
-              case Right(t) ⇒ ua = StateLogic.onTransact(t, ua) // agent update
-              case _ ⇒
-            }
-          }
+        // tsansactBid checks for that
+        ActionLogic.transactBid(bid) foreach { t ⇒
+          // if transaction is successful, adding to pending
+          ua = StateLogic.onTransact(t, ua) // agent update
         }
         ua
       case None ⇒

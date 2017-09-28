@@ -19,24 +19,46 @@ object ActionLogic {
 
   private val periodBeforeBidAcceptance: Long = plenty.daysToMillis(2)
 
-  /* Demurage */
-  def transactBid(bid: Bid)(implicit agent: Agent): Either[WrongTransactionAmount, Transaction] = {
-    // fixme verify that this is the agents bid
-    Accounting.createTransaction(bid.donation.by, bid.amount) match {
-      case Left(e) =>
-        e match {
-          case _: WrongTransactionAmount =>
-            // if transaction fails, retracting bid
-            Network.notifyAllAgents(bid, ActionIdentifiers.RETRACT_BID_ACTION, agent)
-          case _ =>
-            logger.info("While tyring to transact a bid, an unknown exception has occurred")
-        }
-        Left(e)
-      case Right(_t: Transaction) =>
-        val t = StateManager.transformTransaction(_t, bid = bid)
-        sendTransaction(t, ActionIdentifiers.SETTLE_BID_ACTION, agent)
-        Right(t)
+  /**
+    * Sends out a transaction, after several conditions are met:
+    * - This bid cannot be in the process of being settled
+    * - The bid must be by the acting agent
+    * - A valid transaction can be made
+    **/
+  def transactBid(bid: Bid)(implicit a: Agent): Option[Transaction] = {
+    // already being settled?
+    val pendingTransactions = a.state.transactionsPendingSettle collect {
+      case t: BidTransaction if t.bid == bid ⇒ t
     }
+    // if yes, do not settle again
+    if (pendingTransactions.nonEmpty) {
+      return None
+    }
+
+    if (bid.by == a.node) {
+      a.state.bidsPendingSettle find {_ == bid} orElse {
+        logger.info(s"transactBid: agent ${a.id} failed to find the bid: $bid")
+        None
+      } flatMap { b ⇒
+
+        Accounting.createTransaction(bid.donation.by, bid.amount) match {
+          case Left(e) =>
+            e match {
+              case _: WrongTransactionAmount =>
+                // if transaction fails, retracting bid
+                Network.notifyAllAgents(bid, ActionIdentifiers.RETRACT_BID_ACTION, a)
+                logger.info(s"Agent ${a.id} did not have the required ${bid.amount} coins")
+              case _ =>
+                logger.info("While tyring to transact a bid, an unknown exception has occurred")
+            }
+            None
+          case Right(_t: Transaction) =>
+            val t = StateManager.transformTransaction(_t, bid = bid)
+            sendTransaction(t, ActionIdentifiers.SETTLE_BID_ACTION, a)
+            Option(t)
+        }
+      }
+    } else None
   }
 
   /* Transacting */

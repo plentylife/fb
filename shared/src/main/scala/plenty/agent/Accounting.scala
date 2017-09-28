@@ -109,7 +109,7 @@ object Accounting {
   def createTransaction(to: Node, amount: Int)(implicit agent: Agent): Either[WrongTransactionAmount, Transaction] = {
     val coins = getOwnCoins(agent)
     if (!canTransactAmount(amount)) {
-      logger.info(s"Not enough funds. ${agent.id} does not have $amount to send to ${to.id}")
+      logger.fine(s"Not enough funds. ${agent.id} does not have $amount to send to ${to.id}")
       return Left(new WrongTransactionAmount)
     }
     val transCoins = coins.take(amount)
