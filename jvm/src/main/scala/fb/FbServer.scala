@@ -18,22 +18,27 @@ import plenty.network.Network
 import sun.misc.{Signal, SignalHandler}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.io.{Source, StdIn}
 import scala.language.postfixOps
 import scala.util.Failure
 
 object FbServer {
   private val logger = Logger.getLogger("FbServer")
-  private var bindingFuture: Future[Http.ServerBinding] = null
-  private implicit val system = ActorSystem.apply("my-system")
-  private implicit val materializer = ActorMaterializer()
+  private var bindingFuture: Future[Http.ServerBinding] = _
+  private implicit val system: ActorSystem = ActorSystem.apply("my-system")
+  private implicit val materializer: ActorMaterializer = ActorMaterializer()
   // needed for the future flatMap/onComplete in the end
-  private implicit val executionContext = system.dispatcher
+  private implicit val executionContext: ExecutionContextExecutor = system.dispatcher
   /** for making http requests */
   private val httpClient = Http(system)
-
-  def start() = {
+  def startAndWait(): Unit = {
+    start()
+    println(s"Server online\nPress RETURN to stop...")
+    StdIn.readLine() // let it run until user presses return
+    stop(() ⇒ ())
+  }
+  def start(): SignalHandler = {
     val webviewHeaders: Map[String, HttpHeader] = Seq("facebook.com", "messenger.com") map {
       host ⇒ host → HttpHeader.parse("X-Frame-Options", s"ALLOW-FROM https://www.$host/")
     } collect {
@@ -69,12 +74,16 @@ object FbServer {
             webviewHeaders.filter(h ⇒ ref.contains(h._1)).values.toSeq
           } getOrElse {logger.finer("no referrer"); Seq()}
           respondWithHeaders(hostHeaders: _*) {
-            pathEndOrSingleSlash {
-              logger.finest("serving index")
-              getFromFile(FbSettings.indexFile)
-            } ~ {
+            pathPrefix("resources") {
               logger.finest("serving directory")
-              getFromDirectory(FbSettings.webviewFolderPath)
+              getFromDirectory(FbSettings.webviewResourceDir)
+            } ~ {
+              logger.finest("serving index")
+              val index = Source.fromFile(FbSettings.indexFile)
+              val modIndex = index.mkString
+                .replace("[BASE_PATH]", FbSettings.webviewBasePath)
+                .replace("[APP_ID]", FbSettings.appId)
+              complete(HttpEntity(modIndex).withContentType(ContentTypes.`text/html(UTF-8)`))
             }
           }
         }
@@ -101,8 +110,7 @@ object FbServer {
     bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080, connectionContext = https)
     handleSigTerm
   }
-
-  def handleSigTerm = {
+  def handleSigTerm: SignalHandler = {
     val handler = new SignalHandler {
       override def handle(signal: Signal): Unit = {
         println("=== TERMINATING ===")
@@ -115,15 +123,7 @@ object FbServer {
     Signal.handle(new Signal("TERM"), handler)
     Signal.handle(new Signal("INT"), handler)
   }
-
-  def startAndWait() = {
-    start()
-    println(s"Server online\nPress RETURN to stop...")
-    StdIn.readLine() // let it run until user presses return
-    stop(() ⇒ ())
-  }
-
-  def stop(beforeTerminate: () ⇒ Unit) = {
+  def stop(beforeTerminate: () ⇒ Unit): Unit = {
     bindingFuture
       .flatMap(_.unbind()) // trigger unbinding from the port
       .onComplete { _ =>
