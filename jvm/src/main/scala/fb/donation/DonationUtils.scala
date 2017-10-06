@@ -4,7 +4,7 @@ import java.util
 import java.util.logging._
 
 import com.restfb.Parameter
-import com.restfb.types.{GraphResponse, Photo, Post}
+import com.restfb.types.{GraphResponse, Post}
 import fb._
 import plenty.agent.AgentPointer
 import plenty.state.DonationStateUtils._
@@ -43,12 +43,13 @@ private[donation] object DonationUtils {
     *
     * @return None if there is no image url in the message, otherwise copy of the donation */
   private def addPictures(d: Donation, msg: DonationMessage): Option[Donation] = {
-    val attachments = msg.attachments
-    val pictures = attachments filter (_.getType == "image") map (_.getPayload.getUrl)
-
-    if (pictures.nonEmpty)
-      Option(d.copy(attachments = d.attachments ++ pictures))
-    else None
+    ???
+    //    val attachments = msg.attachments
+    //    val pictures = attachments filter (_.getType == "image") map (_.getPayload.getUrl)
+    //
+    //    if (pictures.nonEmpty)
+    //      Option(d.copy(attachments = d.attachments ++ pictures))
+    //    else None
   }
 
   /**
@@ -58,14 +59,14 @@ private[donation] object DonationUtils {
     **/
   def publishDonation(donation: Donation, a: AgentPointer): Option[(Donation, String)] = {
     val attachments = new util.ArrayList[String]()
-    donation.attachments map { url =>
-      val id = fbClient.publish(s"${FbSettings.pageId}/photos",
-        classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
-      ).getId
-      s"{'media_fbid':'$id'}"
-    } foreach {
-      attachments.add
-    }
+    //    donation.attachments map { url =>
+    //      val id = fbClient.publish(s"${FbSettings.pageId}/photos",
+    //        classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
+    //      ).getId
+    //      s"{'media_fbid':'$id'}"
+    //    } foreach {
+    //      attachments.add
+    //    }
     try {
       val msg = producePostBody(donation)
       val publishMessageResponse = fbClient.publish(s"${FbSettings.pageId}/feed",
@@ -117,7 +118,10 @@ private[donation] object DonationUtils {
 
   /** @return a string with the questions and answers -- the bulk of the donation description in a post */
   private def producePostBody(d: Donation): String = {
-    val title = s"Open auction\n${d.title.getOrElse("title is missing")}\n-----\n"
+    //    val title = s"Open auction\n${d.title.getOrElse("title is missing")}\n-----\n"
+    ???
+    // fixme
+    val title = ""
     val qAndA = DonationFlow.fieldsInPostOrder map { f ⇒ publishTextField(d, f) } mkString "\n\n"
     title + qAndA
   }

@@ -10,12 +10,12 @@ import org.scalatest.FeatureSpec
   * Saving state, modifying state by agents
   */
 class FbWebButtonTest extends FeatureSpec {
-  FbSettings.prod = true
+  //  FbSettings.prod = true
   // test
-//  val antonId  = "1783146675033183"
+  val anton = "1783146675033183"
   // prod
-  val anton = "767613720030082"
-  val andrey = "1624828950901835"
+  //  val anton = "767613720030082"
+  //  val andrey = "1624828950901835"
   val toId = anton
 
   info("The webview should be shareable")
@@ -25,8 +25,8 @@ class FbWebButtonTest extends FeatureSpec {
       val recipient = new IdMessageRecipient(toId)
       val template = new GenericTemplatePayload()
       val bubble = new Bubble(s"webview share ${new Date().getTime}")
-      val url = "https://plenty.life/"
-      val button = new WebButton(s"test", url)
+      val url = s"https://plenty.life/test/donation/create"
+      val button = new WebButton(s"donation", url)
       val mmeButton = new WebButton("m.me", s"m.me/${FbSettings.pageId}")
 
       val share = new ShareButton()

@@ -92,8 +92,9 @@ object ActionIdentifiers {
 }
 
 private object LoggerFunctions {
-  def donationTitle(t: BidTransaction): String = s"\n\t${t.bid.donation.title.getOrElse("missing title")}"
-  def donationTitle(b: Bid): String = s"\n\t${b.donation.title.getOrElse("missing title")}"
+  def donationTitle(t: BidTransaction): String = s"\n\t${donationTitle(t.bid.donation)}"
+  def donationTitle(d: Donation): String = s"${d.description.filter(_.isTagged).map(_.token).mkString}"
+  def donationTitle(b: Bid): String = s"\n\t${donationTitle(b.donation)}"
   def rejectionWithReasonAndId(r: Rejection[_]): String = s"\n\t${r.reason}" + {
     r.payload match {
       case p: HasId[_] ⇒ "\n\t" + p.id.toString

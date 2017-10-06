@@ -21,26 +21,28 @@ object DonationStateUtils {
   }
 
   /** gets a text field value by name from a donation */
-  def getTextFieldByName(d: Donation, name: String): Option[String] = name match {
-    case "title" ⇒ d.title
-    case "who" ⇒ d.who
-    case "when" ⇒ d.when
-    case "what" ⇒ d.what
-    case "where" ⇒ d.where
-    case "why" ⇒ d.why
-    case "how" ⇒ d.how
-    case "first_picture" ⇒ d.attachments.headOption
-  }
+  def getTextFieldByName(d: Donation, name: String): Option[String] = ???
+  //  name match {
+  //    case "title" ⇒ d.title
+  //    case "who" ⇒ d.who
+  //    case "when" ⇒ d.when
+  //    case "what" ⇒ d.what
+  //    case "where" ⇒ d.where
+  //    case "why" ⇒ d.why
+  //    case "how" ⇒ d.how
+  //    case "first_picture" ⇒ d.attachments.headOption
+  //  }
 
   /** replaces the value with given value in donation field with given name
     * @return copy of donation */
-  def updateField(d: Donation, name: String, value: Option[String]): Donation = name match {
-    case "title" ⇒ d.copy(title = value)
-    case "who" ⇒ d.copy(who = value)
-    case "when" ⇒ d.copy(when = value)
-    case "what" ⇒ d.copy(what = value)
-    case "where" ⇒ d.copy(where = value)
-    case "why" ⇒ d.copy(why = value)
-    case "how" ⇒ d.copy(how = value)
-  }
+  def updateField(d: Donation, name: String, value: Option[String]): Donation = ???
+  //    name match {
+  //    case "title" ⇒ d.copy(title = value)
+  //    case "who" ⇒ d.copy(who = value)
+  //    case "when" ⇒ d.copy(when = value)
+  //    case "what" ⇒ d.copy(what = value)
+  //    case "where" ⇒ d.copy(where = value)
+  //    case "why" ⇒ d.copy(why = value)
+  //    case "how" ⇒ d.copy(how = value)
+  //  }
 }

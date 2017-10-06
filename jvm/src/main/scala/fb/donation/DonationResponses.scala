@@ -6,8 +6,7 @@ import fb.Responses.{createBidButton, sendSimpleMessage}
 import fb._
 import plenty.agent.AgentPointer
 import plenty.state.StateManager
-import plenty.state.model.{BidTransaction, Donation, Transaction}
-import Responses._
+import plenty.state.model.{BidTransaction, Donation}
 
 object DonationResponses {
 
@@ -82,8 +81,9 @@ object DonationResponses {
 
   def showDonationBubble(a: AgentPointer, donation: Donation, postId: Option[String],
                          biddingMode: Boolean = false) = {
+    ???
     val payload = new GenericTemplatePayload
-    val bubble = new Bubble(s"Bid and Share: ${donation.title.getOrElse("missing title")}")
+    val bubble = new Bubble(s"Bid and Share: missing title")
     val localBidButton = createBidButton(donation)
     val remoteBidButton = new WebButton("Bid", s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}")
     val shareButton = new ShareButton()
@@ -105,12 +105,14 @@ object DonationResponses {
     if (postId.nonEmpty) bubble.addButton(shareButton)
     payload.addBubble(bubble)
 
-    var subtitle = donation.what.getOrElse("")
+    //    var subtitle = donation.what.getOrElse("")
+    var subtitle = ""
     if (subtitle.length > subtitleWhatMaxLength) subtitle = subtitle.take(subtitleWhatMaxLength) + "..."
-    donation.where foreach {where ⇒
-      val subWhere = if (where.length > subtitleWhereMaxLength) where.take(subtitleWhereMaxLength) + "..." else where
-      subtitle += s"\n$subWhere"
-    }
+    //    donation.where foreach {where ⇒
+    //      val subWhere = if (where.length > subtitleWhereMaxLength) where.take(subtitleWhereMaxLength) + "..." else
+    // where
+    //      subtitle += s"\n$subWhere"
+    //    }
 
     bubble.setSubtitle(subtitle)
 
@@ -134,11 +136,14 @@ object DonationResponses {
 
   /** sends a message to all bidders, and the donor when a bid wins */
   def donationSettled(fromTransaction: BidTransaction) = {
+    // fixme
+    ???
     val fromBid = fromTransaction.bid
     val relatedBids = StateManager.getRelatedBids(FbAgent.lastState, fromBid)
     relatedBids foreach { relBid ⇒
       val ui = UserInfo.get(relBid.by.id)
-      val title = fromBid.donation.title.getOrElse("missing title")
+      //      val title = fromBid.donation.title.getOrElse("missing title")
+      val title = "fixme"
       if (relBid.by == fromTransaction.from) {
         sendSimpleMessage(ui.id, s"You have WON the auction for `$title`!")
         askToLeaveContact(ui, fromBid.donation, "This will allow the donor to contact you")
@@ -149,7 +154,10 @@ object DonationResponses {
     // notifying the donor
     val donation = fromBid.donation
     val donor = donation.by.id
-    sendSimpleMessage(donor, s"The auction for '${donation.title.getOrElse("missing title")}' has closed with the " +
+    // fixme
+    //    sendSimpleMessage(donor, s"The auction for '${donation.title.getOrElse("missing title")}' has closed with
+    // the " +
+    sendSimpleMessage(donor, s"The auction for has closed with the " +
       s"highest bid of ${fromTransaction.coins.size}")
     askToLeaveContact(UserInfo.get(donor), fromBid.donation, "This will allow the auction winner to contact you")
   }

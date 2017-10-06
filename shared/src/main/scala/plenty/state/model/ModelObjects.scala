@@ -12,18 +12,20 @@ case class Node(id: String) extends HasId[String]
   * @param mintTime            the Unix epoch instant
   * @param lastTransactionTime Unix epoch instant of the last transaction
   **/
-case class Coin(id: Long, belongsTo: Node, mintTime: Long, lastTransactionTime: Long) extends EquatableById[Long] {
-//  override def equals(o: Any): Boolean = super.equals(o)
-}
+case class Coin(id: Long, belongsTo: Node, mintTime: Long, lastTransactionTime: Long) extends EquatableById[Long]
 
 /**
   * Represents a donation made by a node
   * Currently has no privacy constraints
   **/
-case class Donation(id: String, title: Option[String] = None,
-                    who: Option[String] = None, what: Option[String] = None, where: Option[String] = None,
-                    when: Option[String] = None, how: Option[String] = None, why: Option[String] = None,
-                    attachments: Seq[String] = Seq(), by: Node, timestamp: Long) extends HasId[String]
+case class Donation(id: String, description: Array[DescriptionToken] = Array(), by: Node, timestamp: Long) extends
+  HasId[String]
+
+/**
+  * Represents a chuck of a description (usually a word, or periods, or commas) that optionally can be highlighted
+  **/
+case class DescriptionToken(token: String, isTagged: Boolean)
+
 
 /**
   * Represents a bid for a donation

@@ -1,7 +1,6 @@
 package fb
 
 import java.text.SimpleDateFormat
-import java.util.Date
 
 import com.restfb.Parameter
 import com.restfb.types.GraphResponse
@@ -44,6 +43,7 @@ object Responses {
   }
 
   def bidEntered(bid: Bid) = {
+    ???
     // since this bid is not yet in the state
     val relatedBids = (FbAgent.lastState.bids + bid).filter(_.donation == bid.donation)
     val nodesToNotify = relatedBids map {_.by}
@@ -55,8 +55,9 @@ object Responses {
         // notify all other interested nodes
       val ui = UserInfo.get(n.id)
       val recipient = new IdMessageRecipient(n.id)
-      val template = new ButtonTemplatePayload(s"A new bid of ${bid.amount}$thanksSymbol has been entered " +
-        s"for ${bid.donation.title.getOrElse("missing title")}. Up your bid to win")
+        val template = new ButtonTemplatePayload(s"A new bid of ${bid.amount}$thanksSymbol has been entered" +
+          s". Up your bid to win")
+        //        s"for ${bid.donation.title.getOrElse("missing title")}. Up your bid to win")
       val button = createBidButton(bid.donation)
       template.addButton(button)
       fbClientPublish(ui, "me/messages", Parameter.`with`("recipient", recipient),
@@ -71,7 +72,8 @@ object Responses {
     val ui = UserInfo.get(donor)
     val recipient = new IdMessageRecipient(donor)
     val template = new ButtonTemplatePayload(s"A new bid of ${bid.amount}$thanksSymbol has been entered " +
-      s"for '${bid.donation.title.getOrElse("missing title")}'. The highest bid is ${maxBid}${thanksSymbol}. You can " +
+      s". You can " +
+      //      s"for '${bid.donation.title.getOrElse("missing title")}'. The highest bid is ${maxBid}${thanksSymbol}. You can " +
         "close the auction now or wait until it closes automatically")
     val button = new PostbackButton("Close auction", s"BID_ACCEPT_POSTBACK_${donation.id}")
     template.addButton(button)

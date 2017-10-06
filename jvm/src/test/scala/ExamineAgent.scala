@@ -1,5 +1,4 @@
 import com.softwaremill.quicklens._
-import fb.donation.DonationResponses
 import fb.{FbSettings, UserInfo}
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.TestUtilities._
@@ -70,8 +69,8 @@ class ExamineAgent extends FreeSpec with Matchers {
 
       div("donations")
       as flatMap {_.state.donations} foreach { d ⇒
-        println(d.title)
-        println(d.attachments mkString ("\n"))
+        //        println(d.title)
+        //        println(d.attachments mkString ("\n"))
       }
     }
   }
@@ -97,10 +96,10 @@ class ExamineAgent extends FreeSpec with Matchers {
 
       as find (_.node == antonNode) foreach { a ⇒
         val p = new AgentPointer(a)
-        a.state.donations find {_.title.get contains "clay"} foreach { d ⇒
-          println(d)
-          DonationResponses.showDonationBubble(p, d, Some(d.id))
-        }
+        //        a.state.donations find {_.title.get contains "clay"} foreach { d ⇒
+        //          println(d)
+        //          DonationResponses.showDonationBubble(p, d, Some(d.id))
+        //        }
       }
     }
   }
