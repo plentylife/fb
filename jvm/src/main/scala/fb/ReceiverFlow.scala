@@ -5,6 +5,7 @@ import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem, QuickRepl
 import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
 import fb.donation.{DonationFlow, DonationResponses}
+import fb.network.FbSendReceiveInterface
 import plenty.agent.AgentPointer
 import plenty.agent.logic.AgentActions
 import plenty.executionContext

@@ -1,4 +1,4 @@
-package fb
+package fb.network
 
 import java.io.{FileInputStream, InputStream}
 import java.security.{KeyStore, SecureRandom}
@@ -14,6 +14,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
+import fb.{FbSettings, ReceiverFlow}
 import plenty.network.Network
 import sun.misc.{Signal, SignalHandler}
 

@@ -1,8 +1,9 @@
-package fb
+package fb.network
 
 import java.util.logging.Logger
 
 import fb.donation.{DonationResponses, ExternalDonationUtils}
+import fb.{FbAgent, FbState, Responses, UserInfo}
 import plenty.network._
 import plenty.state.model.{Bid, RejectedBid}
 

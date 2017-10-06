@@ -1,12 +1,10 @@
 package fb
 
+import fb.network.FbSendReceiveInterface
 import plenty.agent.AgentPointer
 import plenty.agent.model.Agent
-import plenty.executionContext
-import plenty.network.{ActionIdentifiers, Message, MintPress, Network}
+import plenty.network.{ActionIdentifiers, Network}
 import plenty.state.model.{Node, State}
-
-import scala.concurrent.{Future, Promise}
 
 /**
   * Object wrapping a regular [[Agent]], representing the god-like (in ways) agent responsible for all accounts

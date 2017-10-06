@@ -4,6 +4,7 @@ import java.io.File
 import java.util.Date
 
 import com.softwaremill.quicklens._
+import fb.network.FbSendReceiveInterface
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.TestUtilities._
 import plenty.agent.logic.AgentActions

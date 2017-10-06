@@ -1,6 +1,7 @@
 package fb
 
 import fb.donation.DonationResponses
+import fb.network.FbSendReceiveInterface
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.network.Network
 import plenty.state.StateIO

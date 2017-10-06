@@ -2,6 +2,7 @@ package fb
 
 import java.util.logging.LogManager
 
+import fb.network.{FbSendReceiveInterface, FbServer}
 import plenty.agent.Scheduler
 import plenty.network.Network
 import plenty.state.StateIO
