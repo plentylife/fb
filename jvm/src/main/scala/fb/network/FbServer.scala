@@ -48,27 +48,31 @@ object FbServer {
 
     val route: Route =
       pathPrefix("backend") {
-        get {
-          parameterMap { params =>
-            // fixme implement this properly
-            println("challenge", params.getOrElse("hub.challenge", "no-challenge"))
-            val challenge: String = params.getOrElse("hub.challenge", "no-challenge")
-            complete(challenge)
-          }
-        } ~
-          post {
-            entity(as[String]) { webhookMsg =>
-              Future(ReceiverFlow.receive(webhookMsg)).onComplete({
-                case Failure(e) =>
-                  println(s"ERROR in webhook ${e.getMessage}\n${e.getStackTrace.mkString("\n")}")
-                case _ => null
-              })
-              complete(StatusCodes.OK)
+        // two paths, either from the webview or the webhook
+        WebviewReceiver.route ~ pathPrefix("webhook") {
+          get {
+            parameterMap { params =>
+              // fixme implement this properly
+              println("challenge", params.getOrElse("hub.challenge", "no-challenge"))
+              val challenge: String = params.getOrElse("hub.challenge", "no-challenge")
+              complete(challenge)
             }
-          }
+          } ~
+            post {
+              entity(as[String]) { webhookMsg =>
+                Future(ReceiverFlow.receive(webhookMsg)).onComplete({
+                  case Failure(e) =>
+                    println(s"ERROR in webhook ${e.getMessage}\n${e.getStackTrace.mkString("\n")}")
+                  case _ => null
+                })
+                complete(StatusCodes.OK)
+              }
+            }
+        }
       } ~ path("privacy-policy") {
         getFromFile(FbSettings.privacyPolicyFile)
-      } ~ {
+        // fixme should not be open
+      } ~ pathPrefix("webview") {
         optionalHeaderValueByName("Referer") { optRef ⇒
           val hostHeaders = optRef map { ref ⇒
             logger.finest(s"referrer is $ref")
@@ -82,7 +86,8 @@ object FbServer {
               logger.finest("serving index")
               val index = Source.fromFile(FbSettings.indexFile)
               val modIndex = index.mkString
-                .replace("[BASE_PATH]", FbSettings.webviewBasePath)
+                .replace("[VIEW_PATH]", FbSettings.webviewViewPath)
+                .replace("[BACK_PATH]", FbSettings.webviewBackendPath)
                 .replace("[APP_ID]", FbSettings.appId)
               complete(HttpEntity(modIndex).withContentType(ContentTypes.`text/html(UTF-8)`))
             }
