@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import com.restfb.Parameter
 import com.restfb.types.GraphResponse
 import com.restfb.types.send._
+import plenty.agent.model.Agent
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.state.model.{Bid, Donation, RejectedBid}
 
@@ -120,7 +121,9 @@ object Responses {
       Parameter.`with`("message", new Message(new TemplateAttachment(template))))
   }
 
-  def errorPersonal(a: AgentPointer, errorTag: String = ""): Unit = {
+  def errorPersonal(a: AgentPointer, errorTag: String): Unit =
+    errorPersonal(a.agentInLastState, errorTag)
+  def errorPersonal(a: Agent, errorTag: String = ""): Unit = {
     val ui = UserInfo.get(a.id)
     errorPersonal(ui, errorTag)
   }

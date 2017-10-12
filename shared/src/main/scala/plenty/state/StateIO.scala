@@ -7,7 +7,6 @@ import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
 import plenty.agent.model.Agent
-import plenty.state.Codecs._
 import plenty.state.model._
 
 /** Loading and saving of [[plenty.agent.model.Agent]] and [[plenty.state.model.State]] */
@@ -65,7 +64,7 @@ object StateIO extends StateIO[Agent] {
   override implicit val decoder: Decoder[Agent] = deriveDecoder[Agent]
 }
 
-private[state] object Codecs {
+object StateCodecs {
 
   implicit val ttypeEnc: Encoder[TransactionType.Value] = Encoder.forProduct1("type")(u ⇒ u.toString)
   implicit val nodeEnc: Encoder[Node] = deriveEncoder[Node]

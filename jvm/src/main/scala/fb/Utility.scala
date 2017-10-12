@@ -8,8 +8,8 @@ import com.restfb.types.webhook.messaging.MessagingItem
 import fb.network.{FbSendReceiveInterface, FbServer}
 import plenty.agent.AgentPointer
 import plenty.network.{ActionIdentifiers, BidAction, Network}
-import plenty.state.StateManager
 import plenty.state.model.{Donation, Node}
+import plenty.state.{StateIO, StateManager}
 import plenty.{agent, executionContext}
 
 import scala.concurrent.Future
@@ -22,6 +22,12 @@ import scala.util.parsing.json.{JSON, JSONObject}
   */
 object Utility {
   private val logger = Logger.getLogger("Fb Utility")
+
+  def getAgent(id: String): Option[AgentPointer] = {
+    Network.getAgents.find(_.id == id) orElse {
+      StateIO.load(id) map { a ⇒ Network.registerAgent(a, FbSendReceiveInterface) }
+    }
+  }
 
   def createAgent(n: Node): Future[AgentPointer] = {
     val a = agent.createAgent(n, FbAgent.lastState)

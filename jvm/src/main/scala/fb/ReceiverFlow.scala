@@ -5,12 +5,9 @@ import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem, QuickRepl
 import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
 import fb.donation.{DonationFlow, DonationResponses}
-import fb.network.FbSendReceiveInterface
 import plenty.agent.AgentPointer
 import plenty.agent.logic.AgentActions
 import plenty.executionContext
-import plenty.network.Network
-import plenty.state.StateIO
 import plenty.state.model.Node
 
 import scala.concurrent.Future
@@ -200,11 +197,7 @@ object ReceiverFlow {
   //    messageTree()
   //  }
 
-  def getAgent(id: String): Option[AgentPointer] = {
-    Network.getAgents.find(_.id == id) orElse {
-      StateIO.load(id) map { a ⇒ Network.registerAgent(a, FbSendReceiveInterface) }
-    }
-  }
+  def getAgent(id: String): Option[AgentPointer] = Utility.getAgent(id)
 
 
 }

@@ -30,6 +30,10 @@ object StateManager {
     Donation(id = id, by = by, timestamp = now)
   }
 
+  def createDonation(descr: Iterable[DescriptionToken], by: Node): Donation = {
+    createEmptyDonation(by).copy(description = descr)
+  }
+
   def createBid(donation: Donation, amount: Int, by: Node): Bid = {
     val now = new Date().getTime
     val id = idGenerator(now, amount + by.id)

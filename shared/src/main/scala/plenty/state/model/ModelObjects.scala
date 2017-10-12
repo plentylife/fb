@@ -18,7 +18,7 @@ case class Coin(id: Long, belongsTo: Node, mintTime: Long, lastTransactionTime: 
   * Represents a donation made by a node
   * Currently has no privacy constraints
   **/
-case class Donation(id: String, description: Array[DescriptionToken] = Array(), by: Node, timestamp: Long) extends
+case class Donation(id: String, description: Iterable[DescriptionToken] = Iterable(), by: Node, timestamp: Long) extends
   HasId[String]
 
 /**

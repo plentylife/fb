@@ -1,13 +1,14 @@
 package fb.donation
 
-import plenty.state.model.Donation
-import plenty.state.DonationStateUtils._
-import DonationUtils._
-import com.restfb.types.send.QuickReply
 import com.restfb.types.webhook.messaging._
-import fb.{FbAgent, FbState, Responses, Utility}
+import fb.donation.DonationUtils._
+import fb.{FbAgent, FbState, Responses}
 import plenty.agent.AgentPointer
+import plenty.agent.model.Agent
 import plenty.network.{DonateAction, Network}
+import plenty.state.DonationStateUtils._
+import plenty.state.StateManager
+import plenty.state.model.{DescriptionToken, Donation}
 
 object DonationFlow {
 
@@ -80,6 +81,20 @@ object DonationFlow {
         }
         true
       case _ ⇒ false
+    }
+  }
+
+  def processDonationCreateRequest(description: Array[DescriptionToken], agent: Agent): Option[Donation] = {
+    val d = StateManager.createDonation(description, agent.node)
+    publishDonation(d, agent) match {
+      case Some((pubDonation, postId)) =>
+        println(s"published donation with post id $postId")
+        val donationWithPostId = pubDonation.copy(id = postId)
+        Network.notifyAllAgents(donationWithPostId, DonateAction, FbAgent.node)
+        DonationUtils.finalizeDonationPost(donationWithPostId)
+        Option(donationWithPostId)
+
+      case _ => Responses.errorPersonal(agent, "processDonationCreateRequest"); None
     }
   }
 

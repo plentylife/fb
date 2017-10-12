@@ -4,13 +4,14 @@ import java.util.Base64
 import java.util.logging.Logger
 
 import akka.http.scaladsl.server.Directives.{as, entity, reject}
-import akka.http.scaladsl.server.directives.BasicDirectives.provide
-import akka.http.scaladsl.server.{Directive1, ValidationRejection}
-import fb.FbSettings
+import akka.http.scaladsl.server.directives.BasicDirectives.{provide, tprovide}
+import akka.http.scaladsl.server.{Directive, Directive1, ValidationRejection}
+import fb.{FbSettings, Utility}
 import io.circe.Decoder
 import io.circe.generic.auto._
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.parser.decode
+import plenty.agent.AgentPointer
 
 private[network] trait SecureMessage {
 
@@ -76,6 +77,16 @@ private[network] object WebviewSecurity {
           reject(ValidationRejection("Message is not secure", None)).toDirective[Tuple1[BaseMessage]]
         }
       })
+    }
+  }
+
+  def extractWithAgent(): Directive[Tuple2[BaseMessage, Option[AgentPointer]]] = {
+    extractMessage() flatMap { msg ⇒
+      msg.userId match {
+        case Some(id) ⇒
+          tprovide((msg, Utility.getAgent(id)))
+        case None ⇒ reject(ValidationRejection("Could not get agent", None))
+      }
     }
   }
 }

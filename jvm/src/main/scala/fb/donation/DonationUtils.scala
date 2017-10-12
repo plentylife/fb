@@ -7,6 +7,7 @@ import com.restfb.Parameter
 import com.restfb.types.{GraphResponse, Post}
 import fb._
 import plenty.agent.AgentPointer
+import plenty.agent.model.Agent
 import plenty.state.DonationStateUtils._
 import plenty.state.StateManager
 import plenty.state.model.{Bid, Donation}
@@ -57,7 +58,7 @@ private[donation] object DonationUtils {
     *
     * @return donation with post id
     **/
-  def publishDonation(donation: Donation, a: AgentPointer): Option[(Donation, String)] = {
+  def publishDonation(donation: Donation, a: Agent): Option[(Donation, String)] = {
     val attachments = new util.ArrayList[String]()
     //    donation.attachments map { url =>
     //      val id = fbClient.publish(s"${FbSettings.pageId}/photos",
@@ -102,28 +103,21 @@ private[donation] object DonationUtils {
         throw e
     }
   }
-
+  /** @return a string with the questions and answers -- the bulk of the donation description in a post */
+  private def producePostBody(d: Donation): String = {
+    d.description map { t ⇒
+      if (t.isTagged) s"\t__${t.token}__\t" else t.token
+    } mkString " "
+  }
   /** updates donation post with action links */
   def finalizeDonationPost(donation: Donation): Unit = {
     val updater = (oldMessage: String, d: Donation) ⇒ {
-      val bidLink = s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}"
+      val openLink = s"m.me/${FbSettings.pageId}?ref=OPEN_${donation.id}"
 //      val shortBidLink = Utility.getShortLink(bidLink)
-      val bidBlock = s"\n===\n This is an open auction. \nTo enter your bid follow $bidLink\nThis link opens " +
-        s"messenger " +
-        s"and allows you to talk to Plenty bot"
+val bidBlock = s"\n===\nTo bid (buy) follow $openLink\nThis link opens Facebook messenger"
       oldMessage + bidBlock
     }
     updateDonation(donation, updater)
-  }
-
-  /** @return a string with the questions and answers -- the bulk of the donation description in a post */
-  private def producePostBody(d: Donation): String = {
-    //    val title = s"Open auction\n${d.title.getOrElse("title is missing")}\n-----\n"
-    ???
-    // fixme
-    val title = ""
-    val qAndA = DonationFlow.fieldsInPostOrder map { f ⇒ publishTextField(d, f) } mkString "\n\n"
-    title + qAndA
   }
 
   private def publishTextField(d: Donation, f: String): String = {

@@ -13,11 +13,13 @@ object FbSettings {
   lazy val pageToken = s(1)
   lazy val pageId = s(3)
   lazy val appId = s(5)
+  lazy val appSecret = s(15)
   lazy val indexFile: String = webviewFolderPath + "index.html"
   lazy val uri = s(7)
   lazy val webviewFolderPath = s(9)
   lazy val webviewResourceDir: String = webviewFolderPath + "/resources"
-  lazy val webviewBasePath: String = if (prod) "" else "/test"
+  lazy val webviewViewPath: String = if (prod) "/webview" else "/test/webview"
+  lazy val webviewBackendPath: String = if (prod) "/backend/webview" else "/test/backend/webview"
   var prod: Boolean = Source.fromFile("./private/mode.txt").mkString.trim == "prod"
   lazy val googleShortnerApiKey = s(11)
   lazy val privacyPolicyFile = s(13)
