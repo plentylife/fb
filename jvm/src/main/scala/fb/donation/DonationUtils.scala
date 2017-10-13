@@ -59,21 +59,11 @@ private[donation] object DonationUtils {
     * @return donation with post id
     **/
   def publishDonation(donation: Donation, a: Agent): Option[(Donation, String)] = {
-    val attachments = new util.ArrayList[String]()
-    //    donation.attachments map { url =>
-    //      val id = fbClient.publish(s"${FbSettings.pageId}/photos",
-    //        classOf[Photo], Parameter.`with`("url", url), Parameter.`with`("published", false)
-    //      ).getId
-    //      s"{'media_fbid':'$id'}"
-    //    } foreach {
-    //      attachments.add
-    //    }
     try {
       val msg = producePostBody(donation)
       val publishMessageResponse = fbClient.publish(s"${FbSettings.pageId}/feed",
         classOf[Post],
-        Parameter.`with`("message", msg),
-        Parameter.`with`("attached_media", attachments)
+        Parameter.`with`("message", msg)
       )
       Some(donation -> publishMessageResponse.getId)
     } catch {
@@ -114,7 +104,7 @@ private[donation] object DonationUtils {
     val updater = (oldMessage: String, d: Donation) ⇒ {
       val openLink = s"m.me/${FbSettings.pageId}?ref=OPEN_${donation.id}"
 //      val shortBidLink = Utility.getShortLink(bidLink)
-val bidBlock = s"\n===\nTo bid (buy) follow $openLink\nThis link opens Facebook messenger"
+val bidBlock = s"\n===\nTo bid (buy) follow $openLink\nOpens in Facebook messenger"
       oldMessage + bidBlock
     }
     updateDonation(donation, updater)

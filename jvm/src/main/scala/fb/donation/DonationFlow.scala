@@ -84,7 +84,7 @@ object DonationFlow {
     }
   }
 
-  def processDonationCreateRequest(description: Array[DescriptionToken], agent: Agent): Option[Donation] = {
+  def processDonationCreateRequest(description: Iterable[DescriptionToken], agent: Agent): Option[Donation] = {
     val d = StateManager.createDonation(description, agent.node)
     publishDonation(d, agent) match {
       case Some((pubDonation, postId)) =>
