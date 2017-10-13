@@ -71,7 +71,6 @@ object FbServer {
         }
       } ~ path("privacy-policy") {
         getFromFile(FbSettings.privacyPolicyFile)
-        // fixme should not be open
       } ~ pathPrefix("webview") {
         optionalHeaderValueByName("Referer") { optRef ⇒
           val hostHeaders = optRef map { ref ⇒

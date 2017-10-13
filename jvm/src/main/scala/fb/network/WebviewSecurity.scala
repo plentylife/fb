@@ -32,7 +32,7 @@ private[network] trait SecureMessage {
 
   def isSecure: Boolean = {
     val (sig64, payload) = splitSignedRequest
-    val sig = Base64.getDecoder.decode(sig64).toList
+    val sig = Base64.getUrlDecoder.decode(sig64).toList
     val expected = mac.doFinal(payload.getBytes()).toList
     sig == expected
   }
@@ -52,8 +52,8 @@ private[network] trait SecureMessage {
 
   private def splitAndDecodeSignedRequest = {
     val (sig64, p64) = splitSignedRequest
-    val sig = Base64.getDecoder.decode(sig64)
-    val p = Base64.getDecoder.decode(p64)
+    val sig = Base64.getUrlDecoder.decode(sig64)
+    val p = Base64.getUrlDecoder.decode(p64)
     (sig, p)
   }
 }

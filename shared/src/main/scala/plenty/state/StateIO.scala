@@ -7,6 +7,7 @@ import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
 import plenty.agent.model.Agent
+import plenty.state.StateCodecs._
 import plenty.state.model._
 
 /** Loading and saving of [[plenty.agent.model.Agent]] and [[plenty.state.model.State]] */
