@@ -5,21 +5,31 @@ import java.util.logging.Logger
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.{MalformedQueryParamRejection, Rejection, Route}
 import fb.Utility
 import fb.donation.DonationFlow
-import io.circe.Encoder
+import fb.network.FbWebviewUtils._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
+import io.circe.{Encoder, ObjectEncoder}
 import plenty.agent.AgentPointer
 import plenty.state.StateCodecs._
 import plenty.state.model.Node
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.language.postfixOps
 
 private[network] object WebviewReceiver {
-  val route = pathPrefix("webview") {
-    WebviewSecurity.extractWithAgent() { case (msg, agentPointer) ⇒
+  val route: Route = pathPrefix("webview") {
+    path("donation" / "fb" / Remaining) { id ⇒
+      getPost(id) match {
+        case Some(post) ⇒ complete(respond(post) toResponse)
+        case None ⇒
+          val rej: Rejection = MalformedQueryParamRejection("post id", "Failed to get the post data from FB")
+          reject(rej)
+      }
+    } ~ WebviewSecurity.extractWithAgent() { case (msg, agentPointer) ⇒
       val agentIsNew = agentPointer.isEmpty
 
       if (agentIsNew) {
@@ -58,7 +68,7 @@ private[network] object WebviewReceiver {
 
 private case class Response[T: Encoder](isError: Boolean, payload: T) {
 
-  implicit private val encoder = deriveEncoder[Response[T]]
+  implicit private val encoder: ObjectEncoder[Response[T]] = deriveEncoder[Response[T]]
 
   implicit def toResponse: HttpResponse = {
     val s = if (isError) 400 else 200
