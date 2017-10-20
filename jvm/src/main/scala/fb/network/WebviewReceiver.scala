@@ -62,7 +62,7 @@ private[network] object WebviewReceiver {
   }
 
   private def respond[T: Encoder](payload: T): Response[T] = Response(isError = false, payload)
-  private def error(reason: String): Response[String] = Response(isError = true, "")
+  private def error(reason: String): Response[String] = Response(isError = true, reason)
 
 }
 

@@ -3,14 +3,16 @@ package fb.network
 import java.util
 
 import com.restfb.Parameter
-import com.restfb.types.{Comment, Post}
+import com.restfb.types.{Comment, Photo, Post, StoryAttachment}
 import io.circe.Encoder
 
 import scala.language.{implicitConversions, postfixOps}
 
 object FbWebviewUtils {
   private val commentFields = new util.ArrayList[String]()
+  private val pictureFields = new util.ArrayList[String]()
   Array("attachment", "message", "created_time", "from", "comments") foreach commentFields.add
+  pictureFields.add("picture")
 
   def getPost(postId: String): Option[FbPost] = {
     getPostBody(postId) map { body ⇒
@@ -37,18 +39,31 @@ object FbWebviewUtils {
         val replies = Option(c.getComments).map {_.getData}.map {_.toArray()}.map { rarr: Array[AnyRef] ⇒
           rarr.collect { case r: Comment ⇒ r: FbComment } toList
         } getOrElse {List[FbComment]()}
-        res = fbc.copy(replies = replies) :: res
+        res = fbc.copy(comments = replies) :: res
       }
     }
     res
+  }
+
+  def getPictureUrl(fbid: String): Option[String] = {
+    val p = fb.fbClient.fetchObject(fbid, classOf[Photo], Parameter.`with`("fields", pictureFields))
+    Option(p).map(_.getPicture)
   }
 
   private implicit def commentConv(c: Comment): FbComment = {
     val body = c.getMessage
     val date = c.getCreatedTime
     val attch = c.getAttachment
+    val picture = Option(attch) flatMap extractPicture
     val from = c.getFrom.getName
-    FbComment(body, from, attachments = Option(attch).map(_.getUrl()), date = date.getTime)
+    FbComment(body, from, attachments = picture, date = date.getTime)
+  }
+
+  private def extractPicture(s: StoryAttachment): Option[String] = {
+    Option(s.getId) match {
+      case Some(id) ⇒ getPictureUrl(id)
+      case None ⇒ Option(s.getMedia) flatMap { m ⇒ Option(m.getImage) } map {_.getSrc}
+    }
   }
 
   import io.circe.generic.semiauto._
@@ -57,7 +72,7 @@ object FbWebviewUtils {
   implicit val encoderComment: Encoder[FbComment] = deriveEncoder[FbComment]
 }
 
-case class FbComment(body: String, from: String, replies: List[FbComment] = List(), attachments: Option[String],
+case class FbComment(body: String, from: String, comments: List[FbComment] = List(), attachments: Option[String],
                      date: Long)
 
 case class FbPost(body: String, comments: List[FbComment])

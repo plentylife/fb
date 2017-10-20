@@ -12,6 +12,8 @@ import plenty.state.DonationStateUtils._
 import plenty.state.StateManager
 import plenty.state.model.{Bid, Donation}
 
+import scala.language.postfixOps
+
 private[donation] object DonationUtils {
   private val logger = Logger.getLogger("DonationUtils")
 
@@ -97,7 +99,7 @@ private[donation] object DonationUtils {
   private def producePostBody(d: Donation): String = {
     d.description map { t ⇒
       if (t.isTagged) s"\t__${t.token}__\t" else t.token
-    } mkString " "
+    } mkString
   }
   /** updates donation post with action links */
   def finalizeDonationPost(donation: Donation): Unit = {
