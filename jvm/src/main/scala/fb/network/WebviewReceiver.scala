@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.{MalformedQueryParamRejection, Rejection, Route
 import fb.Utility
 import fb.donation.DonationFlow
 import fb.network.FbWebviewUtils._
+import fb.network.PlentyWebviewUtils._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.circe.{Encoder, ObjectEncoder}
@@ -47,16 +48,24 @@ private[network] object WebviewReceiver {
   private def routeWithAgent(msg: BaseMessage, apf: Future[AgentPointer]): server.Route = {
     pathPrefix("donation") {
       post {
-        val r: Future[Response[_]] =
-          apf map { ap ⇒
-            msg.toTokens flatMap { tokenMsg ⇒
-              DonationFlow.processDonationCreateRequest(tokenMsg.payload, ap.agentInLastState) map {
-                d ⇒ respond(d)
-              }
-            } getOrElse error("")
+        path(Segment / "highest_bid") { id ⇒
+          val r: Future[Response[_]] = apf map { ap ⇒
+            respond(highestCurrentBid(ap, id))
           }
 
-        complete(r map {_.toResponse})
+          complete(r map {_.toResponse})
+        } ~ pathEndOrSingleSlash {
+          val r: Future[Response[_]] =
+            apf map { ap ⇒
+              msg.toTokens flatMap { tokenMsg ⇒
+                DonationFlow.processDonationCreateRequest(tokenMsg.payload, ap.agentInLastState) map {
+                  d ⇒ respond(d)
+                }
+              } getOrElse error("")
+            }
+
+          complete(r map {_.toResponse})
+        }
       }
     }
   }

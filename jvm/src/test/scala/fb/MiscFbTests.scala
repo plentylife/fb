@@ -40,6 +40,11 @@ class MiscFbTests extends FreeSpec with Matchers {
     }
   }
 
+  "Get user name" in {
+    FbSettings.prod = true
+    println(UserInfo.get("1655394271201727"))
+  }
+
 //  "Future is returned when network has no more messages" in {
 //    import plenty.executionContext
 //    val rid = Network.addNonComplete(null)

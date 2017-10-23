@@ -85,7 +85,8 @@ private[network] object WebviewSecurity {
       msg.userId match {
         case Some(id) ⇒
           tprovide((msg, Utility.getAgent(id)))
-        case None ⇒ reject(ValidationRejection("Could not get agent", None))
+        case None ⇒
+          reject(ValidationRejection("Could not get agent", None))
       }
     }
   }

@@ -25,8 +25,8 @@ class FbWebButtonTest extends FeatureSpec {
       val recipient = new IdMessageRecipient(toId)
       val template = new GenericTemplatePayload()
       val bubble = new Bubble(s"webview share ${new Date().getTime}")
-      val url = s"https://plenty.life/test/donation/create"
-      val button = new WebButton(s"donation", url)
+      val url = s"https://plenty.life/test/webview/donation/1420741541308144_1474369319278699"
+      val button = new WebButton(s"donation view", url)
       val mmeButton = new WebButton("m.me", s"m.me/${FbSettings.pageId}")
 
       val share = new ShareButton()
