@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import com.restfb.Parameter
 import com.restfb.types.GraphResponse
 import com.restfb.types.send._
+import fb.network.FbWebviewUtils
 import plenty.agent.model.Agent
 import plenty.agent.{Accounting, AgentPointer}
 import plenty.state.model.{Bid, Donation, RejectedBid}
@@ -35,23 +36,15 @@ object Responses {
     sendSimpleMessage(agent.id, msg)
   }
 
-  def createBidButton(donation: Donation) = new PostbackButton("Bid", s"BID_POSTBACK_${donation.id}")
-
-  def bidStart(a: AgentPointer) = {
-    accountStatus(a)
-    sendWithCancelOption(a, s"How many ${thanksSymbol}hanks would you like to bid? (a round number)",
-      "CANCEL_BID_POSTBACK")
-  }
-
   def bidEntered(bid: Bid) = {
-    ???
     // since this bid is not yet in the state
     val relatedBids = (FbAgent.lastState.bids + bid).filter(_.donation == bid.donation)
     val nodesToNotify = relatedBids map {_.by}
     nodesToNotify foreach {n =>
       // if the one who made the bid
+      // todo no need to send this anymore
       if (n == bid.by) {
-        sendSimpleMessage(n.id, "Your bid has been entered. You'll be notified when the auction closes.")
+        // sendSimpleMessage(n.id, "Your bid has been entered. You'll be notified when the auction closes.")
       } else {
         // notify all other interested nodes
       val ui = UserInfo.get(n.id)
@@ -69,7 +62,6 @@ object Responses {
     // allowing the donor to accept a bid early
     val donation = bid.donation
     val donor = donation.by.id
-    val maxBid = relatedBids.map(_.amount).max
     val ui = UserInfo.get(donor)
     val recipient = new IdMessageRecipient(donor)
     val template = new ButtonTemplatePayload(s"A new bid of ${bid.amount}$thanksSymbol has been entered " +
@@ -80,6 +72,16 @@ object Responses {
     template.addButton(button)
     fbClientPublish(ui, "me/messages", Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", new Message(new TemplateAttachment(template))))
+  }
+  def createBidButton(donation: Donation) = {
+    val b = new WebButton("up your Bid", FbWebviewUtils.viewDonationUrl(donation))
+    b.setMessengerExtensions(true, FbWebviewUtils.fallbackPageUrl)
+    b
+  }
+  def bidStart(a: AgentPointer) = {
+    accountStatus(a)
+    sendWithCancelOption(a, s"How many ${thanksSymbol}hanks would you like to bid? (a round number)",
+      "CANCEL_BID_POSTBACK")
   }
 
   def bidRejected(rejection: RejectedBid, ui: UserInfo) = {

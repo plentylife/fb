@@ -4,7 +4,9 @@ import java.util
 
 import com.restfb.Parameter
 import com.restfb.types.{Comment, Photo, Post, StoryAttachment}
+import fb.FbSettings
 import io.circe.Encoder
+import plenty.state.model.Donation
 
 import scala.language.{implicitConversions, postfixOps}
 
@@ -49,6 +51,10 @@ object FbWebviewUtils {
     val p = fb.fbClient.fetchObject(fbid, classOf[Photo], Parameter.`with`("fields", pictureFields))
     Option(p).map(_.getPicture)
   }
+
+  def viewDonationUrl(d: Donation) = s"${FbSettings.webviewViewPath}/donation/${d.id}"
+
+  def fallbackPageUrl = s"${FbSettings.webviewViewPath}/fallback"
 
   private implicit def commentConv(c: Comment): FbComment = {
     val body = c.getMessage

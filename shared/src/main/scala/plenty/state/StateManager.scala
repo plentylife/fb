@@ -64,8 +64,10 @@ object StateManager {
   }
 
   def getRelatedBids(state: State, donationId: String): Set[Bid] = (state.bids ++ state.bidsPendingSettle) filter {
-    _.donation == donationId
+    _.donation.id == donationId
   }
+
+  def getDonation(id: String)(implicit state: State) = state.donations.find(_.id == id)
 
   def updateChains(state: State, newChains: Chains): State = state.copy(chains = newChains)
 

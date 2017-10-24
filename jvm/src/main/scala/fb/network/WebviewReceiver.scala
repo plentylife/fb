@@ -47,10 +47,26 @@ private[network] object WebviewReceiver {
   private[this] val logger = Logger.getLogger("Webview Receiver")
   private def routeWithAgent(msg: BaseMessage, apf: Future[AgentPointer]): server.Route = {
     pathPrefix("donation") {
-      post {
+      put {
+        path(Segment) { id ⇒
+          val respFuture = apf map { ap ⇒
+            val bidAmount: String = msg.payload.asObject.flatMap(_.apply("amount")
+              .flatMap(_.asNumber).map(_.toString): Option[String])
+              .getOrElse("")
+            PlentyWebviewUtils.bid(ap, id, bidAmount) match {
+              case Some(reason) ⇒ error(reason)
+              case None ⇒ respond("")
+            }
+          }
+
+          complete(respFuture map {_.toResponse})
+        }
+
+      } ~ post {
         path(Segment / "highest_bid") { id ⇒
           val r: Future[Response[_]] = apf map { ap ⇒
-            respond(highestCurrentBid(ap, id))
+            val bid = highestCurrentBid(ap, id)
+            respond(bid map attachInfo)
           }
 
           complete(r map {_.toResponse})
