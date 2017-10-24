@@ -1,3 +1,5 @@
+import java.util.Date
+
 import org.scalatest.FreeSpec
 import plenty.agent.model.Agent
 import plenty.state.StateIO
@@ -11,7 +13,7 @@ class StateTests extends FreeSpec {
     val node = Node("node_id")
     val t = DemurageTransaction("tid", 0, Set(), node, Node("to"))
     val state = State(nodes = Set(node))
-    val agent = Agent(Node("agent_id"), state = state)
+    val agent = Agent(Node("agent_id"), state = state, new Date().getTime)
 
     "can_be_saved" in {
       StateIO.save(agent)

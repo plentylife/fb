@@ -1,3 +1,5 @@
+import java.util.Date
+
 import org.scalatest.{FreeSpec, Matchers}
 import plenty.MockSendReceiveInterface
 import plenty.TestUtilities._
@@ -22,7 +24,7 @@ class BasicInteractionFlowTests extends FreeSpec with Matchers {
     c map {_.copy(belongsTo = n)}
   } toSet
 
-  val as = ns map {n =>Agent(n, State(coins = cs))}
+  val as = ns map { n => Agent(n, State(coins = cs), new Date().getTime) }
   var aps = Seq[AgentPointer]()
 
   val donation = StateManager.createEmptyDonation(as(0).node)

@@ -22,7 +22,7 @@ class DemurageTests extends FreeSpec with Matchers {
     val cs = MintPress.fillCoinSet(Set(), ns(0))
     val csg = cs.grouped(100).toSeq
     val s = State(nodes = ns.toSet, coins = cs)
-    val as = ns.map(n => Agent(n, s))
+    val as = ns.map(n => Agent(n, s, new Date().getTime))
     val ap = as map { a ⇒ Network.registerAgent(a, MockSendReceiveInterface) }
 
     // giving all coins from 0 to 1, so that 1 has transactions of spending
@@ -92,7 +92,7 @@ class TransactionTests extends FreeSpec {
   val cs: Set[Coin] = MintPress.fillCoinSet(Set(), ns(0))
   val csg: Iterator[Set[Coin]] = cs.grouped(100)
   val s = State(nodes = ns.toSet, coins = cs)
-  val as: immutable.IndexedSeq[Agent] = ns.map(n => Agent(n, s))
+  val as: immutable.IndexedSeq[Agent] = ns.map(n => Agent(n, s, new Date().getTime))
 
   "Illegal transactions" - {
     Network.clear

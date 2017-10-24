@@ -39,6 +39,7 @@ object Accounting {
     val lastDemurageTime = getLastDemurageTime(a)
     val rate = calculateDemurageRate(a)
 
+    // fixme. per coin sounds pretty silly
     val perCoin = coins.toList map { c ⇒
       // dumurage accrue start time
       lastDemurageTime getOrElse c.lastTransactionTime
@@ -50,6 +51,20 @@ object Accounting {
       1 - Math.pow(1 - rate, p)
     }
     perCoin.sum
+  }
+
+  /** @return unix time until the next single coin expiration */
+  def timeUntilNextDemurage(a: Agent): Long = {
+    val coins = getOwnCoins(a)
+    val rate = calculateDemurageRate(a)
+    val lastDemurageTime = getLastDemurrageTimeOrCreation(a)
+
+    val b = coins.size.toDouble
+    // num periods
+    val p = Math.log((b - 1) / b) / Math.log(1 - rate)
+
+    val rawTime: Long = Math.ceil(p * demuragePeriod).toLong + lastDemurageTime - new Date().getTime
+    rawTime
   }
 
   /** The mathematical function for calculating the demurage rate given the ratio of currency flow out / flow in
@@ -81,6 +96,8 @@ object Accounting {
   def getLastDemurageTime(a: Agent): Option[Long] = a.state.chains.transactions.collectFirst {
     case t if t.transactionType == TransactionType.DEMURAGE ⇒ t.timestamp
   }
+
+  def getLastDemurrageTimeOrCreation(a: Agent) = getLastDemurageTime(a) getOrElse a.creationTime
 
   /* Balances */
 

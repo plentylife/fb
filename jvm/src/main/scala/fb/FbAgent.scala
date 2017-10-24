@@ -1,5 +1,7 @@
 package fb
 
+import java.util.Date
+
 import fb.network.FbSendReceiveInterface
 import plenty.agent.AgentPointer
 import plenty.agent.model.Agent
@@ -28,7 +30,7 @@ object FbAgent {
 
   private def create: AgentPointer = {
     // manual creation as to not create coins
-    val a = Agent(node, state = State())
+    val a = Agent(node, state = State(), new Date().getTime)
     Network.registerAgent(a, FbSendReceiveInterface)
   }
 

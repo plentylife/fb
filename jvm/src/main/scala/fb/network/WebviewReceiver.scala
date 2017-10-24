@@ -83,6 +83,12 @@ private[network] object WebviewReceiver {
           complete(r map {_.toResponse})
         }
       }
+    } ~ (path("account") & post) {
+      val r = apf map { ap ⇒
+        val s = accountStatus(ap)
+        respond(s) toResponse
+      }
+      complete(r)
     }
   }
 
