@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.{MalformedQueryParamRejection, Rejection, Route
 import fb.Utility
 import fb.donation.DonationFlow
 import fb.network.FbWebviewUtils._
-import fb.network.PlentyWebviewUtils._
+import fb.network.PlentyWebviewUtils.{amountDecoder, _}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.circe.{Encoder, ObjectEncoder}
@@ -50,12 +50,13 @@ private[network] object WebviewReceiver {
       put {
         path(Segment) { id ⇒
           val respFuture = apf map { ap ⇒
-            val bidAmount: String = msg.payload.asObject.flatMap(_.apply("amount")
-              .flatMap(_.asNumber).map(_.toString): Option[String])
-              .getOrElse("")
-            PlentyWebviewUtils.bid(ap, id, bidAmount) match {
-              case Some(reason) ⇒ error(reason)
-              case None ⇒ respond("")
+            msg.payload.as[Amount] match {
+              case Left(e) ⇒ error("the number was likely not an integer")
+              case Right(amount) ⇒
+                PlentyWebviewUtils.bid(ap, id, amount.amount) match {
+                  case Some(reason) ⇒ error(reason)
+                  case None ⇒ respond("")
+                }
             }
           }
 
