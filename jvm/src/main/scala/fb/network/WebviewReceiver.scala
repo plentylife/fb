@@ -6,14 +6,15 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{MalformedQueryParamRejection, Rejection, Route}
-import fb.Utility
 import fb.donation.DonationFlow
 import fb.network.FbWebviewUtils._
 import fb.network.PlentyWebviewUtils.{amountDecoder, _}
+import fb.{FbAgent, Utility}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.circe.{Encoder, ObjectEncoder}
 import plenty.agent.AgentPointer
+import plenty.state.Search
 import plenty.state.StateCodecs._
 import plenty.state.model.Node
 
@@ -30,6 +31,9 @@ private[network] object WebviewReceiver {
           val rej: Rejection = MalformedQueryParamRejection("post id", "Failed to get the post data from FB")
           reject(rej)
       }
+    } ~ (path("search") & parameter("q")) { q ⇒
+      val search = Search.searchDescriptionsByString(q, FbAgent.lastState)
+      complete(respond(search).toResponse)
     } ~ WebviewSecurity.extractWithAgent() { case (msg, agentPointer) ⇒
       val agentIsNew = agentPointer.isEmpty
 
