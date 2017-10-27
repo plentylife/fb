@@ -88,6 +88,7 @@ object FbServer {
                 .replace("[VIEW_PATH]", FbSettings.webviewViewPath)
                 .replace("[BACK_PATH]", FbSettings.webviewBackendPath)
                 .replace("[APP_ID]", FbSettings.appId)
+                .replace("[IS_IN_TEST_MODE]", (!FbSettings.prod).toString)
               complete(HttpEntity(modIndex).withContentType(ContentTypes.`text/html(UTF-8)`))
             }
           }
