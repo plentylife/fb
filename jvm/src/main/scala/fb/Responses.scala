@@ -30,10 +30,19 @@ object Responses {
   def accountStatus(agent: AgentPointer) = {
     val balance = Accounting.getSelfBalance(agent.agentInLastState)
     val rate = Accounting.calculateDemurageRate(agent.agentInLastState)
-    val expirationBlock = s"decaying at ${Math.ceil(rate * 100)}% per day"
+    val expirationBlock = s"expiring at ${Math.ceil(rate * 100)}% per day"
 
     val msg = s"Your account balance is ${balance} ${thanksSymbol}hanks:\n$expirationBlock"
     sendSimpleMessage(agent.id, msg)
+  }
+
+  def updateToAccountBalance(a: AgentPointer, byHowMuch: Int): Unit = {
+    val amount = if (byHowMuch > 0) s"increased by +$byHowMuch" else s"decreased by -$byHowMuch"
+    if (byHowMuch == 0) {
+      return
+    }
+    val msg = s"Your account balance $amount"
+    sendSimpleMessage(a.id, msg)
   }
 
   def bidEntered(bid: Bid) = {

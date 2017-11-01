@@ -35,7 +35,7 @@ object Utility {
     FbAgent.registerNode(n)
     val p = Network.registerAgent(a, FbSendReceiveInterface)
     Network.notifyAllAgents(n, ActionIdentifiers.REGISTER_NODE, FbAgent.node)
-    CoinDistributor.give(p) map { _ ⇒ p }
+    CoinDistributor.giveNewAgent(p) map { _ ⇒ p }
   }
 
   /** gets the node of the sender from FB agent [[plenty.state.model.State]] */

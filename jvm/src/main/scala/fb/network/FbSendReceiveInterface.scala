@@ -2,8 +2,8 @@ package fb.network
 
 import java.util.logging.Logger
 
+import fb._
 import fb.donation.{DonationResponses, ExternalDonationUtils}
-import fb.{FbAgent, FbState, Responses, UserInfo}
 import plenty.network._
 import plenty.state.model.{Bid, RejectedBid}
 
@@ -61,6 +61,23 @@ object FbSendReceiveInterface extends SendReceiveInterface {
           }
         }
         Network.receive(msg)
+
+      case m if m.payloadId == DonateAction ⇒
+        DonateAction.run(m ⇒ {
+          val d = m.payload
+          if (!FbState.isSettled(d)) {
+            Utility.getAgent(d.by.id).fold({
+              logger.warning(s"Could not find agent ${d.by.id} while trying to give them bonus for donating")
+            })(p ⇒ {
+              CoinDistributor.giveForDonating(p)
+              FbState.settleDonationBonus(d)
+              Responses.updateToAccountBalance(p, CoinDistributor.coinsPerDonation)
+            })
+
+          }
+        })
+        Network.receive(msg)
+
 
       // fixme add ondenysettlebid
 
