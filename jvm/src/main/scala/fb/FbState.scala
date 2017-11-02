@@ -63,6 +63,7 @@ object FbState {
     save()
   }
 
+  /** @param userId user that made the bid, not the referrer */
   def settleShareBonus(userId: String, donationId: String) = synchronized {
     settledShareBonuses += donationId → {settledShareBonuses.getOrElse(donationId, Set()) + userId}
     save()

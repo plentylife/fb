@@ -54,7 +54,7 @@ object PlentyWebviewUtils {
       Utility.getAgent(ref) match {
         case Some(refA) ⇒
           CoinDistributor.giveForSharing(refA)
-          FbState.settleShareBonus(ref, d.id)
+          FbState.settleShareBonus(ap.id, d.id)
           val ui = UserInfo.get(ap.id)
           Responses.updateToAccountBalance(ref, CoinDistributor.coinsPerShare, s"because ${ui.name} placed a bid")
         case _ ⇒ logger.severe(s"Could not distribute bid bonus to ref $ref, agent ${ap.id}")

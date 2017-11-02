@@ -22,6 +22,8 @@ object FbMain {
     // loading coins as well
     FbAgent.load()
 
+    FbState.load()
+
     if (FbSettings.prod) FbServer.start()
     else FbServer.startAndWait()
   }
