@@ -62,6 +62,31 @@ object FbState {
     settledDonationBonuses += d.id
     save()
   }
+
+  def settleShareBonus(userId: String, donationId: String) = synchronized {
+    settledShareBonuses += donationId → {settledShareBonuses.getOrElse(donationId, Set()) + userId}
+    save()
+  }
+  def isSettled(d: Donation) = settledDonationBonuses.contains(d.id)
+  def isSettled(userId: String, donationId: String): Boolean =
+    settledShareBonuses.get(donationId).exists(_.contains(userId))
+
+  /* saving / loading */
+
+  implicit val decoder = deriveDecoder[Stored]
+  implicit val encoder = deriveEncoder[Stored]
+
+  def load() = {
+    val source = scala.io.Source.fromFile(storedIn).mkString
+    decode[Stored](source).fold(e ⇒ {
+      logger.warning(s"Could not load stored FbState. ${e.getMessage}")
+    }, s ⇒ {
+      settledDonationBonuses = s.settledDonationBonuses
+      settledShareBonuses = s.settledShares
+      logger.finer("Loaded FbState from file")
+    })
+  }
+
   def save(): Unit = {
     val buffer = new BufferedOutputStream(new FileOutputStream(storedIn))
 
@@ -73,25 +98,6 @@ object FbState {
     w.close()
 
     buffer.close()
-  }
-  def settleShareBonus(userId: String, donation: Donation) = synchronized {
-    settledShareBonuses += donation.id → {settledShareBonuses(donation.id) + userId}
-    save()
-  }
-  def isSettled(d: Donation) = settledDonationBonuses.contains(d.id)
-
-  implicit val decoder = deriveDecoder[Stored]
-  implicit val encoder = deriveEncoder[Stored]
-  def isSettled(userId: String, d: Donation): Boolean = settledShareBonuses(d.id).contains(userId)
-  def load() = {
-    val source = scala.io.Source.fromFile(storedIn).mkString
-    decode[Stored](source).fold(e ⇒ {
-      logger.warning(s"Could not load stored FbState. ${e.getMessage}")
-    }, s ⇒ {
-      settledDonationBonuses = s.settledDonationBonuses
-      settledShareBonuses = s.settledShares
-      logger.finer("Loaded FbState from file")
-    })
   }
 
   protected[fb] case class Stored(settledDonationBonuses: Set[String], settledShares: Map[String, Set[String]])

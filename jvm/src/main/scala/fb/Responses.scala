@@ -36,13 +36,22 @@ object Responses {
     sendSimpleMessage(agent.id, msg)
   }
 
-  def updateToAccountBalance(a: AgentPointer, byHowMuch: Int): Unit = {
+  def updateToAccountBalance(a: AgentPointer, byHowMuch: Int, comment: String = ""): Unit = {
     val amount = if (byHowMuch > 0) s"increased by +$byHowMuch" else s"decreased by -$byHowMuch"
     if (byHowMuch == 0) {
       return
     }
     val msg = s"Your account balance $amount"
     sendSimpleMessage(a.id, msg)
+  }
+
+  def updateToAccountBalance(aId: String, byHowMuch: Int, comment: String): Unit = {
+    val amount = if (byHowMuch > 0) s"increased by +$byHowMuch" else s"decreased by -$byHowMuch"
+    if (byHowMuch == 0) {
+      return
+    }
+    val msg = s"Your account balance $amount $comment"
+    sendSimpleMessage(aId, msg)
   }
 
   def bidEntered(bid: Bid) = {

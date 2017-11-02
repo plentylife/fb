@@ -6,10 +6,10 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{MalformedQueryParamRejection, Rejection, Route}
+import fb._
 import fb.donation.DonationFlow
 import fb.network.FbWebviewUtils._
 import fb.network.PlentyWebviewUtils.{amountDecoder, _}
-import fb.{FbAgent, Utility}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.circe.{Encoder, ObjectEncoder}
@@ -51,15 +51,16 @@ private[network] object WebviewReceiver {
   private[this] val logger = Logger.getLogger("Webview Receiver")
   private def routeWithAgent(msg: BaseMessage, apf: Future[AgentPointer]): server.Route = {
     pathPrefix("donation") {
-      put {
-        path(Segment) { id ⇒
+      (path(Segment) & parameterMap) { (id, params) ⇒
+        put {
           val respFuture = apf map { ap ⇒
             msg.payload.as[Amount] match {
               case Left(e) ⇒ error("the number was likely not an integer")
               case Right(amount) ⇒
-                PlentyWebviewUtils.bid(ap, id, amount.amount) match {
+                PlentyWebviewUtils.bid(ap, id, amount.amount, params.get("ref")) match {
                   case Some(reason) ⇒ error(reason)
-                  case None ⇒ respond("")
+                  case None ⇒
+                    respond("")
                 }
             }
           }
