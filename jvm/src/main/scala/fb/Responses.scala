@@ -1,6 +1,7 @@
 package fb
 
 import java.text.SimpleDateFormat
+import java.util.logging.Logger
 
 import com.restfb.Parameter
 import com.restfb.types.GraphResponse
@@ -14,6 +15,7 @@ import plenty.state.model.{Bid, Donation, RejectedBid}
   * Created by anton on 8/11/17.
   */
 object Responses {
+  private val logger = Logger.getLogger("Responses")
 
   def displayTyping(id: String) = {
     import com.restfb.Parameter
@@ -116,6 +118,22 @@ object Responses {
     if (!isBidding) {
       accountStatus(agent)
       sendDonateButton(userInfo)
+    }
+  }
+
+  def notifyOfComment(d: Donation, comment: String, commentId: String) = {
+    val msg = s"New comment: `$comment`\n(to reply, make sure your are logged in to Facebook)"
+    val r = new IdMessageRecipient(d.by.id)
+    val t = new ButtonTemplatePayload(msg)
+    val b = new WebButton("Reply", s"https://www.facebook.com/$commentId")
+    t.addButton(b)
+    try {
+      fbClient.publish("me/messages", classOf[GraphResponse],
+        Parameter.`with`("recipient", r),
+        Parameter.`with`("message", new Message(new TemplateAttachment(t))))
+    } catch {
+      case e: Throwable ⇒ logger.fine(s"Could not send out a message notifying of a comment. " +
+        s"Donation $d, comment id $commentId, error ${e.getMessage}")
     }
   }
 

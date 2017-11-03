@@ -5,6 +5,7 @@ import com.restfb.types.webhook.messaging.{MessageItem, MessagingItem, QuickRepl
 import com.restfb.types.webhook.{WebhookEntry, WebhookObject}
 import com.restfb.{DefaultJsonMapper, Parameter}
 import fb.donation.{DonationFlow, DonationResponses}
+import fb.network.CommentWatcher
 import plenty.agent.AgentPointer
 import plenty.agent.logic.AgentActions
 import plenty.executionContext
@@ -28,6 +29,7 @@ object ReceiverFlow {
   }
 
   private def process(entry: WebhookEntry): Unit = {
+    CommentWatcher.receiveWebhook(entry)
     val msgIter = entry.getMessaging.iterator()
     while (msgIter.hasNext) {
       processMessagingItem(msgIter.next())
