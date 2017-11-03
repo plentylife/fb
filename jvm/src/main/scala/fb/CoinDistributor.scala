@@ -15,7 +15,7 @@ object CoinDistributor {
   /** how many coins to give out at a time to a new account */
   val coinsPerAccount = 1
 
-  val coinsPerDonation = 1
+  val coinsPerDonation = 5
 
   val coinsPerShare = 1
 

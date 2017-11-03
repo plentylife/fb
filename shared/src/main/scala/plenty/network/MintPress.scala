@@ -10,7 +10,7 @@ import plenty.state.model.{Coin, Node}
   */
 object MintPress {
   /** the largest possible id of a coin; also equal to the total number of coins in the system */
-  private val maxCoinId: Long = 2023L
+  private val maxCoinId: Long = 41000L
 
   private def coinRange = 1L to maxCoinId
 
