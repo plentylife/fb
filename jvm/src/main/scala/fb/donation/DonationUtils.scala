@@ -127,7 +127,7 @@ private[fb] object ExternalDonationUtils {
     * assumes that the donation id is post id */
   def markPostAsSettled(winningBid: Bid): Unit = {
     val updater = (oldMessage: String, d: Donation) ⇒ {
-      val header = s"This auction is CLOSED. The winning bid amount is ${winningBid.amount}$thanksSymbol\n===\n\n"
+      val header = s"This auction is CLOSED. The winning bid amount was ${winningBid.amount}$thanksSymbol\n===\n\n"
       header + oldMessage
     }
     DonationUtils.updateDonation(winningBid.donation, updater)
