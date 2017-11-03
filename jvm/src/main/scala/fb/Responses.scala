@@ -108,17 +108,34 @@ object Responses {
     sendWithCancelOption(ui, s"Your bid was rejected. Reason: ${rejection.reason}. Try again", "CANCEL_BID_POSTBACK")
   }
 
-  def firstContact(agent: AgentPointer, isBidding: Boolean = false) = {
+  def firstContact(agent: AgentPointer) = {
     val userInfo = UserInfo.get(agent.id)
     sendSimpleMessage(userInfo.id, s"Hey ${userInfo.name}!")
-    sendSimpleMessage(userInfo.id, "Plenty is simple to use")
+    sendSimpleMessage(userInfo.id,
+      "Plenty is an auction with a kick: money that you earn expires." +
+        "Don't worry though, you can't set a price on your items, so use Plenty to get rid of stuff you don't want" +
+        "anyways")
 
-    sendPageLinkButton(userInfo)
+    sendIntroInfoButton(userInfo)
+  }
 
-    if (!isBidding) {
-      accountStatus(agent)
-      sendDonateButton(userInfo)
-    }
+  /** sends a brief message with a button link to the page */
+  def sendIntroInfoButton(userInfo: UserInfo): Unit = {
+    val recipient = new IdMessageRecipient(userInfo.id)
+    val template = new ButtonTemplatePayload("Plenty is simple to use. There is an action menu icon by the message " +
+      "composer at the bottom. Start by `Searching` for items, or making a `Donation`.")
+    val db = new WebButton("Donate", FbWebviewUtils.makeUriGlobal(FbWebviewUtils.createDonationUrl))
+    db.setMessengerExtensions(true, null)
+    //    db.setMessengerExtensions(true, FbWebviewUtils.makeUriGlobal(FbWebviewUtils.fallbackPageUrl))
+    db.setWebviewHeightRatio(WebviewHeightEnum.full)
+    template.addButton(db)
+    val sb = new WebButton("Search", FbWebviewUtils.makeUriGlobal(FbWebviewUtils.searchDonationUrl))
+    sb.setMessengerExtensions(true, null)
+    //    sb.setMessengerExtensions(true, FbWebviewUtils.makeUriGlobal(FbWebviewUtils.fallbackPageUrl))
+    db.setWebviewHeightRatio(WebviewHeightEnum.full)
+    template.addButton(sb)
+    fbClientPublish(userInfo, "me/messages", Parameter.`with`("recipient", recipient),
+      Parameter.`with`("message", new Message(new TemplateAttachment(template))))
   }
 
   def notifyOfComment(d: Donation, comment: String, commentId: String) = {
@@ -135,17 +152,6 @@ object Responses {
       case e: Throwable ⇒ logger.fine(s"Could not send out a message notifying of a comment. " +
         s"Donation $d, comment id $commentId, error ${e.getMessage}")
     }
-  }
-
-  /** sends a brief message with a button link to the page */
-  def sendPageLinkButton(userInfo: UserInfo): Unit = {
-    val recipient = new IdMessageRecipient(userInfo.id)
-    val template = new ButtonTemplatePayload("Visit `Plenty of Thanks` page for details")
-    val pageLink = s"facebook.com/${FbSettings.pageId}"
-    val button = new WebButton("Plenty of Thanks", pageLink)
-    template.addButton(button)
-    fbClientPublish(userInfo, "me/messages", Parameter.`with`("recipient", recipient),
-      Parameter.`with`("message", new Message(new TemplateAttachment(template))))
   }
 
   /** sends a message asking if the user would like to make a donation */

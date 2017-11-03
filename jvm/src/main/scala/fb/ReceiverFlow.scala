@@ -54,7 +54,7 @@ object ReceiverFlow {
       val biddingCallback: Option[() ⇒ Unit] = msgReferralTree(a, item)
       val isBidding = biddingCallback.nonEmpty
 
-      if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a, isBidding = isBidding)
+      if (needsInto && postback != "GET_STARTED_PAYLOAD") Responses.firstContact(a)
       // this is for formatting purposes. The bid action should come after into
       biddingCallback foreach (f ⇒ f())
     }
@@ -109,7 +109,7 @@ object ReceiverFlow {
       val ui = UserInfo.get(a.id)
       val unallocatedCases: PartialFunction[String, Unit] = {
         case "GET_STARTED_PAYLOAD" ⇒
-          Responses.firstContact(a, isBidding = pb.getReferral != null)
+          Responses.firstContact(a)
           if (pb.getReferral != null) {
             processRefString(pb.getReferral.getRef, a)
           }

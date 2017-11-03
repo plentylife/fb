@@ -54,7 +54,13 @@ object FbWebviewUtils {
 
   def viewDonationUrl(d: Donation) = s"${FbSettings.webviewViewPath}/donation/${d.id}"
 
+  def createDonationUrl = s"${FbSettings.webviewViewPath}/donation/create"
+
+  def searchDonationUrl = s"${FbSettings.webviewViewPath}/search"
+
   def fallbackPageUrl = s"${FbSettings.webviewViewPath}/fallback"
+
+  def makeUriGlobal(o: String) = s"${FbSettings.baseUri}$o"
 
   private implicit def commentConv(c: Comment): FbComment = {
     val body = c.getMessage

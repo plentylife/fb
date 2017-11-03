@@ -15,7 +15,7 @@ object FbSettings {
   lazy val appId = s(5)
   lazy val appSecret = s(15)
   lazy val indexFile: String = webviewFolderPath + "index.html"
-  lazy val uri = s(7)
+  lazy val baseUri = s(7)
   lazy val webviewFolderPath = s(9)
   lazy val webviewResourceDir: String = webviewFolderPath + "/resources"
   lazy val webviewViewPath: String = if (prod) "/webview" else "/test/webview"
