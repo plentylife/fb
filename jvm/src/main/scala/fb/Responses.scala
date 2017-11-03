@@ -114,7 +114,7 @@ object Responses {
     sendSimpleMessage(userInfo.id,
       "Plenty is an auction with a kick: money that you earn expires." +
         "Don't worry though, you can't set a price on your items, so use Plenty to get rid of stuff you don't want" +
-        "anyways")
+        " anyways")
 
     sendIntroInfoButton(userInfo)
   }

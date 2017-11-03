@@ -2,7 +2,7 @@ package fb.network
 
 import java.util.logging.Logger
 
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{MalformedQueryParamRejection, Rejection, Route}
@@ -40,6 +40,7 @@ private[network] object WebviewReceiver {
       if (agentIsNew) {
         // unsafe get, but this point should not be reachable if option is not full
         val apf = Utility.createAgent(Node(msg.userId.get))
+        apf map Responses.firstContact
         routeWithAgent(msg, apf)
       } else {
         routeWithAgent(msg, Future(agentPointer.get))
@@ -95,6 +96,8 @@ private[network] object WebviewReceiver {
         respond(s) toResponse
       }
       complete(r)
+    } ~ path("heartbeat") {
+      complete(StatusCodes.OK)
     }
   }
 
