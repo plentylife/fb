@@ -17,7 +17,7 @@ import scala.language.postfixOps
 object ActionLogic {
   private val logger = Logger.getLogger("ActionLogic")
 
-  private val periodBeforeBidAcceptance: Long = plenty.daysToMillis(2)
+  private val periodBeforeBidAcceptance: Long = plenty.daysToMillis(1)
 
   /**
     * Sends out a transaction, after several conditions are met:
