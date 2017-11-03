@@ -67,7 +67,7 @@ object StateManager {
     _.donation.id == donationId
   }
 
-  def getDonation(id: String)(implicit state: State) = state.donations.find(_.id == id)
+  def getDonation(id: String)(implicit state: State): Option[Donation] = state.donations.find(_.id == id)
 
   def updateChains(state: State, newChains: Chains): State = state.copy(chains = newChains)
 

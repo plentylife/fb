@@ -113,7 +113,7 @@ object ActionLogic {
     }
     if (bids.isEmpty) return
 
-    logger.fine(s"agent ${agent.id} looking to accept bids from $bids")
+    logger.fine(s"agent ${agent.id} looking to accept bids from ${bids.map(_.id).mkString("\n")}")
     val bidsByDonation = bids.groupBy(_.donation.id)
     val accepted = bidsByDonation.flatMap(kv => {
       val (_, bids) = kv
