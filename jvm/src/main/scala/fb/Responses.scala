@@ -111,10 +111,11 @@ object Responses {
   def firstContact(agent: AgentPointer) = {
     val userInfo = UserInfo.get(agent.id)
     sendSimpleMessage(userInfo.id, s"Hey ${userInfo.name}!")
-    sendSimpleMessage(userInfo.id,
-      "Plenty is an auction with a kick: money that you earn expires." +
-        "Don't worry though, you can't set a price on your items, so use Plenty to get rid of stuff you don't want" +
-        " anyways")
+    //    sendSimpleMessage(userInfo.id,
+    //      "Plenty is an auction with a kick: money that you earn expires." +
+    //        "Don't worry though, you can't set a price on your items, so use Plenty to get rid of stuff you don't
+    // want" +
+    //        " anyways")
 
     sendIntroInfoButton(userInfo)
   }
@@ -122,8 +123,9 @@ object Responses {
   /** sends a brief message with a button link to the page */
   def sendIntroInfoButton(userInfo: UserInfo): Unit = {
     val recipient = new IdMessageRecipient(userInfo.id)
-    val template = new ButtonTemplatePayload("Plenty is simple to use. There is an action menu icon by the message " +
-      "composer at the bottom. Start by `Searching` for items, or making a `Donation`.")
+    val template = new ButtonTemplatePayload("Plenty is simple to use. To open it in Messenger, use the" +
+      "action menu icon by the message composer at the bottom of the screen. Start by Searching for items, or " +
+      "Donating unused stuff.")
     val db = new WebButton("Donate", FbWebviewUtils.makeUriGlobal(FbWebviewUtils.createDonationUrl))
     db.setMessengerExtensions(true, null)
     //    db.setMessengerExtensions(true, FbWebviewUtils.makeUriGlobal(FbWebviewUtils.fallbackPageUrl))
