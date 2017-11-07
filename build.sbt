@@ -36,7 +36,7 @@ lazy val core = crossProject.in(file(".")).
       "javax.mail" % "javax.mail-api" % "1.6.0",
       "com.sun.mail" % "javax.mail" % "1.6.0",
       "com.typesafe.akka" %% "akka-http" % "10.0.10",
-      "com.restfb" % "restfb" % "1.43.0"
+      "com.restfb" % "restfb" % "1.47.0"
     ),
     mainClass in assembly := Some("fb.FbMain"),
     assemblyJarName in assembly := "plenty.jar",

@@ -37,6 +37,7 @@ object PlentyWebviewUtils {
   implicit val encoderAccountStatus: Encoder[AccountStatus] = deriveEncoder[AccountStatus]
   implicit val encoderBidInfo: Encoder[BidWithInfo] = deriveEncoder[BidWithInfo]
   implicit val encoderUserInfo: Encoder[UserInfo] = deriveEncoder[UserInfo]
+
   def bid(ap: AgentPointer, donationId: String, bidAmount: Int, referrer: Option[String]): Option[String] = {
     StateManager.getDonation(donationId)(ap.state) match {
       case None ⇒ Option("No such donation")
@@ -61,6 +62,12 @@ object PlentyWebviewUtils {
       }
     }
   })
+
+  def donationUserInfo(id: String) = {
+    StateManager.getDonation(id)(FbAgent.lastState) map { d ⇒
+      UserInfo.get(d.by.id)
+    }
+  }
 }
 
 case class AccountStatus(balance: Int, timeUntilNextDemurrage: Long)

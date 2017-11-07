@@ -68,15 +68,25 @@ private[network] object WebviewReceiver {
 
           complete(respFuture map {_.toResponse})
         }
-
       } ~ post {
-        path(Segment / "highest_bid") { id ⇒
-          val r: Future[Response[_]] = apf map { ap ⇒
-            val bid = highestCurrentBid(ap, id)
-            respond(bid map attachInfo)
+        pathPrefix(Segment) { id ⇒
+          path("highest_bid") {
+            val r: Future[Response[_]] = apf map { ap ⇒
+              val bid = highestCurrentBid(ap, id)
+              respond(bid map attachInfo)
+            }
+
+            complete(r map {_.toResponse})
+
+          } ~ path("user") {
+            val resp = PlentyWebviewUtils.donationUserInfo(id) match {
+              case Some(ui) ⇒ respond(ui)
+              case None ⇒ error("could not get information about the user who made the donation")
+            }
+
+            complete(resp.toResponse)
           }
 
-          complete(r map {_.toResponse})
         } ~ pathEndOrSingleSlash {
           val r: Future[Response[_]] =
             apf map { ap ⇒

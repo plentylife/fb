@@ -27,7 +27,7 @@ class MiscFbTests extends FreeSpec with Matchers {
   "Report a problem button should be present beside leaving a comment" in {
     // anton in test
     val anton = "1783146675033183"
-    DonationResponses.askToLeaveContact(UserInfo(anton, "anton", "last name"),
+    DonationResponses.askToLeaveContact(UserInfo(anton, "anton", "last name", ""),
       Donation(id = "fake", by = Node(anton), timestamp = 0), explanation = "explanation")
   }
 

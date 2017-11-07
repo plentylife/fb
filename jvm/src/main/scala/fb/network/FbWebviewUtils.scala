@@ -19,7 +19,6 @@ object FbWebviewUtils {
   def getPost(postId: String): Option[FbPost] = {
     getPostBody(postId) map { body ⇒
       FbPost(body, getPostComments(postId))
-
     }
   }
 
