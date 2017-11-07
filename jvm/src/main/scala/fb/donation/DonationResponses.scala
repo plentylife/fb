@@ -2,8 +2,9 @@ package fb.donation
 
 import com.restfb.Parameter
 import com.restfb.types.send._
-import fb.Responses.{createBidButton, sendSimpleMessage}
+import fb.Responses.sendSimpleMessage
 import fb._
+import fb.network.FbWebviewUtils
 import plenty.agent.AgentPointer
 import plenty.state.StateManager
 import plenty.state.model.{BidTransaction, Donation}
@@ -81,40 +82,20 @@ object DonationResponses {
 
   def showDonationBubble(a: AgentPointer, donation: Donation, postId: Option[String],
                          biddingMode: Boolean = false) = {
-    ???
     val payload = new GenericTemplatePayload
-    val bubble = new Bubble(s"Bid and Share: missing title")
-    val localBidButton = createBidButton(donation)
-    val remoteBidButton = new WebButton("Bid", s"m.me/${FbSettings.pageId}?ref=BID_${donation.id}")
-    val shareButton = new ShareButton()
 
-    // images
-    // fixme the images come from a CDN and are temporary
-    // that means that they soon disappear from the bubble
-    // for now, removing
-//    donation.attachments.headOption foreach bubble.setImageUrl
-    // view link
-    postId foreach {pid =>
-      bubble.addButton(donationLinkButton(pid))
-    }
-    // bid button
-    if (!biddingMode)
-      bubble.addButton(remoteBidButton)
-    else bubble.addButton(localBidButton)
-    // share button
-    if (postId.nonEmpty) bubble.addButton(shareButton)
-    payload.addBubble(bubble)
+    val bubble = new Bubble(s"To bid on or view the offer click: ")
+    val viewButton = new WebButton("View and Bid", FbWebviewUtils.makeUriGlobal(FbWebviewUtils.viewDonationUrl
+    (donation)))
+    viewButton.setMessengerExtensions(true, null)
+    viewButton.setWebviewHeightRatio(WebviewHeightEnum.full)
 
-    //    var subtitle = donation.what.getOrElse("")
     var subtitle = ""
     if (subtitle.length > subtitleWhatMaxLength) subtitle = subtitle.take(subtitleWhatMaxLength) + "..."
-    //    donation.where foreach {where ⇒
-    //      val subWhere = if (where.length > subtitleWhereMaxLength) where.take(subtitleWhereMaxLength) + "..." else
-    // where
-    //      subtitle += s"\n$subWhere"
-    //    }
 
     bubble.setSubtitle(subtitle)
+    bubble.addButton(viewButton)
+    payload.addBubble(bubble)
 
     val recipient = new IdMessageRecipient(a.id)
     try {
@@ -129,15 +110,13 @@ object DonationResponses {
   }
 
   /** creates a [[WebButton]] that links to the given post with title view */
-  private def donationLinkButton(postId: String, title: String = "View") = {
+  private def donationLinkButton(postId: String, title: String = "View"): WebButton = {
     val url = s"https://www.facebook.com/$postId"
     new WebButton(title, url)
   }
 
   /** sends a message to all bidders, and the donor when a bid wins */
   def donationSettled(fromTransaction: BidTransaction) = {
-    // fixme
-    ???
     val fromBid = fromTransaction.bid
     val relatedBids = StateManager.getRelatedBids(FbAgent.lastState, fromBid)
     relatedBids foreach { relBid ⇒

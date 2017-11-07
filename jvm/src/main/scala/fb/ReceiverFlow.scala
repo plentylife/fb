@@ -168,8 +168,8 @@ object ReceiverFlow {
   }
 
   private def processRefString(ref: String, a: AgentPointer): Unit = {
-    if (ref.startsWith("BID_")) {
-      val donationId = ref.replace("BID_", "")
+    if (ref.startsWith("OPEN_")) {
+      val donationId = ref.replace("OPEN_", "")
       FbAgent.lastState.donations.find(_.id == donationId) match {
         case Some(donation) => DonationResponses.showDonationBubble(a, donation, None, biddingMode = true)
         case _ =>
