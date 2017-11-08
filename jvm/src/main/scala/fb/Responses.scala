@@ -123,7 +123,7 @@ object Responses {
   /** sends a brief message with a button link to the page */
   def sendIntroInfoButton(userInfo: UserInfo): Unit = {
     val recipient = new IdMessageRecipient(userInfo.id)
-    val template = new ButtonTemplatePayload("Plenty is simple to use. To open it in Messenger, use the" +
+    val template = new ButtonTemplatePayload("Plenty is simple to use. To open it in Messenger, use the " +
       "action menu icon by the message composer at the bottom of the screen. Start by Searching for items, or " +
       "Donating unused stuff.")
     val db = new WebButton("Donate", FbWebviewUtils.makeUriGlobal(FbWebviewUtils.createDonationUrl))
