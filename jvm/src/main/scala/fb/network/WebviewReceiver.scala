@@ -41,16 +41,16 @@ private[network] object WebviewReceiver {
         // unsafe get, but this point should not be reachable if option is not full
         val apf = Utility.createAgent(Node(msg.userId.get))
         apf map Responses.firstContact
-        routeWithAgent(msg, apf)
+        routeWithAgent(msg, apf, agentIsNew)
       } else {
-        routeWithAgent(msg, Future(agentPointer.get))
+        routeWithAgent(msg, Future(agentPointer.get), agentIsNew)
       }
 
 
     }
   }
   private[this] val logger = Logger.getLogger("Webview Receiver")
-  private def routeWithAgent(msg: BaseMessage, apf: Future[AgentPointer]): server.Route = {
+  private def routeWithAgent(msg: BaseMessage, apf: Future[AgentPointer], agentIsNew: Boolean): server.Route = {
     pathPrefix("donation") {
       (path(Segment) & parameterMap) { (id, params) ⇒
         put {
@@ -107,7 +107,16 @@ private[network] object WebviewReceiver {
       }
       complete(r)
     } ~ path("heartbeat") {
-      complete(StatusCodes.OK)
+      val resp = apf map { ap ⇒
+        val ui = UserInfo.get(ap.id)
+        if (ui.hasFailed) HttpResponse.apply(status = StatusCodes.BadRequest)
+        else {
+          var r = Response(isError = false, ui).toResponse
+          if (agentIsNew) r = r.copy(status = StatusCodes.NotFound)
+          r
+        }
+      }
+      complete(resp)
     }
   }
 

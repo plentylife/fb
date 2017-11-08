@@ -33,4 +33,7 @@ object UserInfo {
 }
 
 case class UserInfo(id: String, name: String, lastName: String, profilePic: String,
-                    lastAccess: Long = new Date().getTime)
+                    lastAccess: Long = new Date().getTime) {
+
+  def hasFailed = name == null || lastName == null
+}
