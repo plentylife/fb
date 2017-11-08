@@ -67,11 +67,26 @@ private[donation] object DonationUtils {
         classOf[Post],
         Parameter.`with`("message", msg)
       )
+      publishEngageComment(publishMessageResponse.getId)
       Some(donation -> publishMessageResponse.getId)
     } catch {
       case e: Throwable =>
         Responses.errorPersonal(a, s"publishingPostInUtils $e")
         None
+    }
+  }
+
+  /** Publishes the first comment on a post, attempting to engage the users to ask details */
+  private def publishEngageComment(id: String): Unit = {
+    try {
+      val msg = "Feel free to ask for details, pictures or to add those, here in the comments"
+      fbClient.publish(s"$id/comments",
+        classOf[GraphResponse],
+        Parameter.`with`("message", msg)
+      )
+    } catch {
+      case e: Throwable ⇒
+        logger.warning(s"Could not post engage comment. ${e.getMessage}")
     }
   }
 
