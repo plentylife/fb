@@ -16,7 +16,7 @@ import io.circe.{Encoder, ObjectEncoder}
 import plenty.agent.AgentPointer
 import plenty.state.Search
 import plenty.state.StateCodecs._
-import plenty.state.model.Node
+import plenty.state.model.{Donation, Node}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -32,7 +32,12 @@ private[network] object WebviewReceiver {
           reject(rej)
       }
     } ~ (path("search") & parameter("q")) { q ⇒
-      val search = Search.searchDescriptionsByString(q, FbAgent.lastState)
+      var search: List[Donation] = List()
+      if (q.trim().isEmpty) {
+        search = FbAgent.lastState.donations.toSeq.sortBy(_.timestamp).takeRight(10).toList
+      } else {
+        search = Search.searchDescriptionsByString(q, FbAgent.lastState)
+      }
       complete(respond(search).toResponse)
     } ~ WebviewSecurity.extractWithAgent() { case (msg, agentPointer) ⇒
       val agentIsNew = agentPointer.isEmpty
