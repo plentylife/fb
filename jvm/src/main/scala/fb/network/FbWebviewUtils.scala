@@ -3,6 +3,7 @@ package fb.network
 import java.util
 
 import com.restfb.Parameter
+import com.restfb.types.send.{WebButton, WebviewHeightEnum}
 import com.restfb.types.{Comment, Photo, Post, StoryAttachment}
 import fb.FbSettings
 import io.circe.Encoder
@@ -60,6 +61,12 @@ object FbWebviewUtils {
   def fallbackPageUrl = s"${FbSettings.webviewViewPath}/fallback"
 
   def makeUriGlobal(o: String) = s"${FbSettings.baseUri}$o"
+
+  def setButtonAsWebview(b: WebButton): WebButton = {
+    b.setMessengerExtensions(true, null)
+    b.setWebviewHeightRatio(WebviewHeightEnum.full)
+    b
+  }
 
   private implicit def commentConv(c: Comment): FbComment = {
     val body = c.getMessage

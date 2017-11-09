@@ -109,12 +109,6 @@ object DonationResponses {
     }
   }
 
-  /** creates a [[WebButton]] that links to the given post with title view */
-  private def donationLinkButton(postId: String, title: String = "View"): WebButton = {
-    val url = s"https://www.facebook.com/$postId"
-    new WebButton(title, url)
-  }
-
   /** sends a message to all bidders, and the donor when a bid wins */
   def donationSettled(fromTransaction: BidTransaction) = {
     val fromBid = fromTransaction.bid
@@ -122,12 +116,14 @@ object DonationResponses {
     relatedBids foreach { relBid ⇒
       val ui = UserInfo.get(relBid.by.id)
       //      val title = fromBid.donation.title.getOrElse("missing title")
-      val title = "fixme"
+      val title = "fixme" // fixme show tags
       if (relBid.by == fromTransaction.from) {
-        sendSimpleMessage(ui.id, s"You have WON the auction for `$title`!")
+        sendSimpleMessage(ui.id, s"You have WON an auction!")
         askToLeaveContact(ui, fromBid.donation, "This will allow the donor to contact you")
       } else {
-        sendSimpleMessage(ui.id, s"You have LOST the auction for `$title`")
+        //        sendSimpleMessage(ui.id, s"You have LOST an auction")
+        // fixme remove when this is properly implemented
+        Responses.sendLink("You have LOST an auction", donationPostLink(fromBid.donation.id), "View post", relBid.by.id)
       }
     }
     // notifying the donor
@@ -136,22 +132,28 @@ object DonationResponses {
     // fixme
     //    sendSimpleMessage(donor, s"The auction for '${donation.title.getOrElse("missing title")}' has closed with
     // the " +
-    sendSimpleMessage(donor, s"The auction for has closed with the " +
+    sendSimpleMessage(donor, s"An auction has closed with the " +
       s"highest bid of ${fromTransaction.coins.size}")
     askToLeaveContact(UserInfo.get(donor), fromBid.donation, "This will allow the auction winner to contact you")
   }
-
+  private def donationPostLink(postId: String) = s"https://www.facebook.com/$postId"
   /** sends a message asking to leave contact information */
   def askToLeaveContact(userInfo: UserInfo, donation: Donation, explanation: String): Unit = {
     val template = new ButtonTemplatePayload(s"Please leave your contact information in the comments. $explanation")
     val button = donationLinkButton(donation.id, "Leave comment")
-    val reportBtn = new PostbackButton("Report a problem", ReportProblem.POSTBACK)
+    //    val reportBtn = new PostbackButton("Report a problem", ReportProblem.POSTBACK)
     template.addButton(button)
-    template.addButton(reportBtn)
+    // fixme. add this when reporting becomes available
+    //    template.addButton(reportBtn)
     val msg = new Message(new TemplateAttachment(template))
     Responses.fbClientPublish(userInfo, "me/messages",
       Parameter.`with`("message", msg), Parameter.`with`("recipient", new IdMessageRecipient(userInfo.id))
     )
+  }
+  /** creates a [[WebButton]] that links to the given post with title view */
+  private def donationLinkButton(postId: String, title: String = "View"): WebButton = {
+    val url = donationPostLink(postId)
+    new WebButton(title, url)
   }
 
 }

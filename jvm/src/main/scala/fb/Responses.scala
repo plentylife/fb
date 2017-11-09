@@ -89,13 +89,20 @@ object Responses {
       //      s"for '${bid.donation.title.getOrElse("missing title")}'. The highest bid is ${maxBid}${thanksSymbol}. You can " +
         "close the auction now or wait until it closes automatically")
     val button = new PostbackButton("Close auction", s"BID_ACCEPT_POSTBACK_${donation.id}")
+    val viewButton = FbWebviewUtils.setButtonAsWebview(
+      new WebButton("View offer", FbWebviewUtils.makeUriGlobal(FbWebviewUtils.viewDonationUrl(donation)))
+    )
+
+    template.addButton(viewButton)
     template.addButton(button)
     fbClientPublish(ui, "me/messages", Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", new Message(new TemplateAttachment(template))))
   }
   def createBidButton(donation: Donation) = {
-    val b = new WebButton("up your Bid", FbWebviewUtils.viewDonationUrl(donation))
-    b.setMessengerExtensions(true, FbWebviewUtils.fallbackPageUrl)
+    val b = FbWebviewUtils.setButtonAsWebview(
+      new WebButton("up your Bid", FbWebviewUtils.makeUriGlobal(FbWebviewUtils.viewDonationUrl
+      (donation))))
+    b.setMessengerExtensions(true, null)
     b
   }
   def bidStart(a: AgentPointer) = {
@@ -194,6 +201,21 @@ object Responses {
     fbClient.publish("me/messages", classOf[SendResponse],
       Parameter.`with`("recipient", recipient),
       Parameter.`with`("message", new Message(msg)))
+  }
+
+
+  def sendLink(msg: String, url: String, linkTitle: String, toId: String): Unit = {
+    try {
+      val recipient = new IdMessageRecipient(toId)
+      val template = new ButtonTemplatePayload(msg)
+      val button = new WebButton(linkTitle, url)
+      template.addButton(button)
+      fbClient.publish("me/messages", classOf[SendResponse],
+        Parameter.`with`("recipient", recipient),
+        Parameter.`with`("message", new Message(new TemplateAttachment(template))))
+    } catch {
+      case e: Throwable ⇒ logger.warning(s"Could not send link. ${e.getMessage}")
+    }
   }
 
   /** Sends a message with a quick option to cancel */
