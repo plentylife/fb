@@ -47,7 +47,7 @@ class ExamineAgent extends FreeSpec with Matchers {
     }
 
     "All server agents" in {
-      FbSettings.prod = true
+      FbSettings.prodOverride = Option(true)
 
       val as = StateIO.loadAll("onserver/")
       val fbAgent = as find (_.id == "facebook_agent") get;
@@ -90,7 +90,7 @@ class ExamineAgent extends FreeSpec with Matchers {
 
   "Using server agents" - {
     "Send bubbles" in {
-      FbSettings.prod = true
+      FbSettings.prodOverride = Option(true)
       val as = StateIO.loadAll("onserver/")
       val antonNode = Node("767613720030082")
 
@@ -105,7 +105,7 @@ class ExamineAgent extends FreeSpec with Matchers {
   }
 
   "Modifying server agents" - {
-    FbSettings.prod = true
+    FbSettings.prodOverride = Option(true)
     var as = StateIO.loadAll("onserver/")
 
     "Outputting basic info" in {

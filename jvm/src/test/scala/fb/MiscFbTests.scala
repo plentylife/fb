@@ -41,7 +41,7 @@ class MiscFbTests extends FreeSpec with Matchers {
   }
 
   "Get user name" in {
-    FbSettings.prod = true
+    FbSettings.prodOverride = Option(true)
     println(UserInfo.get("1655394271201727"))
   }
 

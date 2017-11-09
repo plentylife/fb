@@ -6,10 +6,8 @@ import org.scalatest.FreeSpec
   * Saving state, modifying state by agents
   */
 class FbRestSettings extends FreeSpec {
-  FbSettings.prod = true
+  FbSettings.prodOverride = Option(true)
   val antonId = "1783146675033183"
-
-  import sys.process._
 
   "Get whitelisted domains" - {
     val command =

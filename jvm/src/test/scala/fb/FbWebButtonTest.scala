@@ -10,7 +10,7 @@ import org.scalatest.FeatureSpec
   * Saving state, modifying state by agents
   */
 class FbWebButtonTest extends FeatureSpec {
-  //  FbSettings.prod = true
+  //  FbSettings.prodOverride = Option(true)
   // test
   val anton = "1783146675033183"
   // prod

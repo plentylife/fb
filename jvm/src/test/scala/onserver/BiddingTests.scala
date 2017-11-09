@@ -19,7 +19,7 @@ import scala.language.postfixOps
 class BiddingTests extends FreeSpec with Matchers {
   private val logger = Logger.getAnonymousLogger()
 
-  FbSettings.prod = true
+  FbSettings.prodOverride = Option(true)
   val as: Set[Agent] = StateIO.loadAll("onserver/")
   as filterNot (_.id == "facebook_agent") foreach { a ⇒
     val ui = UserInfo.get(a.id)
