@@ -11,7 +11,8 @@ package plenty.state.model
                    val bids: Set[Bid] = Set(),
                    val bidsPendingSettle: Set[Bid] = Set(),
                    val transactionsPendingSettle: Set[Transaction] = Set(),
-                   val chains: Chains = Chains()
+                   val chains: Chains = Chains(),
+                   val stateVersion: String = "091117"
                    //                  val relay: Relay = Relay()
                 )
 

@@ -7,8 +7,8 @@ import scala.io.Source
   */
 object FbSettings {
   lazy val fileMod: String = if (prod) ".prod" else ""
-  lazy val s: Seq[String] = Source.fromFile(s"./private/settings$fileMod.txt").getLines().map(_.trim).toSeq
-  lazy val webhookVerification: String = Source.fromFile("./private/webhook-verification.txt").mkString.trim
+  lazy val s: Seq[String] = Source.fromFile(s"$settingsDir/private/settings$fileMod.txt").getLines().map(_.trim).toSeq
+  lazy val webhookVerification: String = Source.fromFile(s"$settingsDir/private/webhook-verification.txt").mkString.trim
 
   lazy val pageToken = s(1)
   lazy val pageId = s(3)
@@ -20,9 +20,13 @@ object FbSettings {
   lazy val webviewResourceDir: String = webviewFolderPath + "/resources"
   lazy val webviewViewPath: String = if (prod) "/webview" else "/test/webview"
   lazy val webviewBackendPath: String = if (prod) "/backend/webview" else "/test/backend/webview"
-  var prod: Boolean = Source.fromFile("./private/mode.txt").mkString.trim == "prod"
   lazy val googleShortnerApiKey = s(11)
   lazy val privacyPolicyFile = s(13)
 
-  println(s"Production mode on: $prod")
+  var settingsDir = "."
+  var prodOverride: Option[Boolean] = None
+  def prod: Boolean = prodOverride.getOrElse(Source.fromFile(s"$settingsDir/private/mode.txt").mkString.trim == "prod")
+
+
+  //  println(s"Production mode on: $prod")
 }

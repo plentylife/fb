@@ -15,6 +15,7 @@ lazy val plenty = project.
 lazy val core = crossProject.in(file(".")).
   settings(
     name := "plenty-core",
+    organization := "life.plenty",
     version := "0.1-SNAPSHOT",
     scalaVersion := "2.12.3",
     libraryDependencies ++= Seq(

@@ -45,8 +45,8 @@ trait StateIO[LoadType] {
     decoderRes.toOption
   }
 
-  def loadAll(subFolder: String = "current/"): Set[LoadType] = {
-    val currentDir = new File(s"./data-stores/$subFolder")
+  def loadAll(subFolder: String = "current/", dataDir: String = "./data-stores"): Set[LoadType] = {
+    val currentDir = new File(s"$dataDir/$subFolder")
     val allAgentFiles = currentDir.listFiles()
     val agents = allAgentFiles flatMap { f => loadFromFile(f.getAbsolutePath) }
     val agentSet = agents.toSet
