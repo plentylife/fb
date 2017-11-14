@@ -29,6 +29,8 @@ object FbState {
   /** donation -> user id, for shares that have been given the coins */
   private var settledShareBonuses = Map[String, Set[String]]()
 
+  private var hadWebviewIntro = Set[String]()
+
   def getDonation(node: Node): Option[Donation] = {
     donationsInProgress.get(node)
   }
@@ -72,6 +74,13 @@ object FbState {
   def isSettled(userId: String, donationId: String): Boolean =
     settledShareBonuses.get(donationId).exists(_.contains(userId))
 
+  def hadIntro(userId: String): Boolean = {
+    val flag = hadWebviewIntro.contains(userId)
+    hadWebviewIntro += userId
+    save()
+    flag
+  }
+
   /* saving / loading */
 
   implicit val decoder = deriveDecoder[Stored]
@@ -84,6 +93,7 @@ object FbState {
     }, s ⇒ {
       settledDonationBonuses = s.settledDonationBonuses
       settledShareBonuses = s.settledShares
+      hadWebviewIntro = s.hadWebviewIntro
       logger.finer("Loaded FbState from file")
     })
   }
@@ -91,7 +101,7 @@ object FbState {
   def save(): Unit = {
     val buffer = new BufferedOutputStream(new FileOutputStream(storedIn))
 
-    val pickle = Stored(settledDonationBonuses, settledShareBonuses).asJson.noSpaces
+    val pickle = Stored(settledDonationBonuses, settledShareBonuses, hadWebviewIntro).asJson.noSpaces
 
     val w = new PrintWriter(buffer)
     w.write(pickle)
@@ -101,7 +111,8 @@ object FbState {
     buffer.close()
   }
 
-  protected[fb] case class Stored(settledDonationBonuses: Set[String], settledShares: Map[String, Set[String]])
+  protected[fb] case class Stored(settledDonationBonuses: Set[String], settledShares: Map[String, Set[String]],
+                                  hadWebviewIntro: Set[String])
 
 }
 

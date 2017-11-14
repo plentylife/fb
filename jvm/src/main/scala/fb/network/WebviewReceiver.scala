@@ -34,7 +34,7 @@ private[network] object WebviewReceiver {
     } ~ (path("search") & parameter("q")) { q ⇒
       var search: List[Donation] = List()
       if (q.trim().isEmpty) {
-        search = FbAgent.lastState.donations.toSeq.sortBy(_.timestamp).takeRight(10).toList
+        search = FbAgent.lastState.donations.toSeq.sortBy(_.timestamp).takeRight(50).toList.reverse
       } else {
         search = Search.searchDescriptionsByString(q, FbAgent.lastState)
       }
@@ -117,7 +117,7 @@ private[network] object WebviewReceiver {
         if (ui.hasFailed) HttpResponse.apply(status = StatusCodes.BadRequest)
         else {
           var r = Response(isError = false, ui).toResponse
-          if (agentIsNew) r = r.copy(status = StatusCodes.NotFound)
+          if (agentIsNew || !FbState.hadIntro(ap.id)) r = r.copy(status = StatusCodes.NotFound)
           r
         }
       }
