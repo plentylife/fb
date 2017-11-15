@@ -7,8 +7,10 @@ import io.circe.generic.semiauto._
 import io.circe.parser.decode
 import io.circe.syntax._
 import plenty.agent.AgentPointer
+import plenty.executionContext
 import plenty.state.model.{Donation, Node}
 
+import scala.concurrent.Future
 /**
   * Created by anton on 8/15/17.
   */
@@ -98,17 +100,19 @@ object FbState {
     })
   }
 
-  def save(): Unit = {
-    val buffer = new BufferedOutputStream(new FileOutputStream(storedIn))
+  def save(): Unit = synchronized {
+    Future {
+      val buffer = new BufferedOutputStream(new FileOutputStream(storedIn))
 
-    val pickle = Stored(settledDonationBonuses, settledShareBonuses, hadWebviewIntro).asJson.noSpaces
+      val pickle = Stored(settledDonationBonuses, settledShareBonuses, hadWebviewIntro).asJson.noSpaces
 
-    val w = new PrintWriter(buffer)
-    w.write(pickle)
-    w.flush()
-    w.close()
+      val w = new PrintWriter(buffer)
+      w.write(pickle)
+      w.flush()
+      w.close()
 
-    buffer.close()
+      buffer.close()
+    }
   }
 
   protected[fb] case class Stored(settledDonationBonuses: Set[String], settledShares: Map[String, Set[String]],
